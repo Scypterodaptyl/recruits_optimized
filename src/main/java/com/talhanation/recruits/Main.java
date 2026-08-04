@@ -8,6 +8,7 @@ import com.talhanation.recruits.client.gui.commandscreen.CombatCategory;
 import com.talhanation.recruits.client.gui.commandscreen.MovementCategory;
 import com.talhanation.recruits.client.gui.commandscreen.OtherCategory;
 import com.talhanation.recruits.network.MessageSaveTeamSettings;
+import com.talhanation.recruits.util.CollidableEntityTracker;
 import com.talhanation.recruits.commands.PatrolSpawnCommand;
 import com.talhanation.recruits.commands.RecruitsAdminCommands;
 import com.talhanation.recruits.config.RecruitsClientConfig;
@@ -96,6 +97,7 @@ public class Main {
         MinecraftForge.EVENT_BUS.register(new DamageEvent());
         MinecraftForge.EVENT_BUS.register(new UpdateChecker());
         MinecraftForge.EVENT_BUS.register(new ClaimEvents());
+        MinecraftForge.EVENT_BUS.register(new CollidableEntityTracker());
         MinecraftForge.EVENT_BUS.register(this);
 
         SIMPLE_CHANNEL = CommonRegistry.registerChannel(Main.MOD_ID, "default");
