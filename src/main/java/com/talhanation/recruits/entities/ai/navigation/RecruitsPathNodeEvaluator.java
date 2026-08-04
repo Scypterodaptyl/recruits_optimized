@@ -1,5 +1,7 @@
 package com.talhanation.recruits.entities.ai.navigation;
 
+import com.talhanation.recruits.mixin.PathNavigationRegionAccessor;
+import com.talhanation.recruits.pathfinding.SharedBlockPathTypeCache;
 import it.unimi.dsi.fastutil.longs.Long2ObjectMap;
 import it.unimi.dsi.fastutil.longs.Long2ObjectOpenHashMap;
 import it.unimi.dsi.fastutil.objects.Object2BooleanMap;
@@ -13,6 +15,7 @@ import net.minecraft.tags.FluidTags;
 import net.minecraft.util.Mth;
 import net.minecraft.world.entity.Mob;
 import net.minecraft.world.level.BlockGetter;
+import net.minecraft.world.level.Level;
 import net.minecraft.world.level.PathNavigationRegion;
 import net.minecraft.world.level.block.BaseRailBlock;
 import net.minecraft.world.level.block.Block;
@@ -538,6 +541,11 @@ public class RecruitsPathNodeEvaluator extends NodeEvaluator {
     }
 
     public BlockPathTypes getBlockPathType(BlockGetter p_77576_, int p_77577_, int p_77578_, int p_77579_) {
+        if (p_77576_ instanceof PathNavigationRegion region) {
+            Level level = ((PathNavigationRegionAccessor) region).talhanation$getLevel();
+            return SharedBlockPathTypeCache.computeIfAbsent(level, p_77577_, p_77578_, p_77579_,
+                    () -> getBlockPathTypeStatic(p_77576_, new BlockPos.MutableBlockPos(p_77577_, p_77578_, p_77579_)));
+        }
         return getBlockPathTypeStatic(p_77576_, new BlockPos.MutableBlockPos(p_77577_, p_77578_, p_77579_));
     }
 
