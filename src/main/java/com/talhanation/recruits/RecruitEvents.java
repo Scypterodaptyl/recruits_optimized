@@ -168,6 +168,7 @@ public class RecruitEvents {
 
         // Fix: Async-Executor sauber herunterfahren damit der Server nicht hängt
         AsyncPathProcessor.shutdown();
+        DelayedExecutor.shutdown();
     }
 
     @SubscribeEvent
@@ -469,6 +470,20 @@ public class RecruitEvents {
         }
     }
 
+    public static boolean canAttack(LivingEntity attacker, LivingEntity target, Map<Entity, Team> teams) {
+        if (target == null || !target.isAlive()) return false;
+
+        if (target instanceof Player player) {
+            return canAttackPlayer(attacker, player, teams);
+        } else if (target instanceof AbstractRecruitEntity targetRecruit) {
+            return canAttackRecruit(attacker, targetRecruit, teams);
+        } else if (target instanceof Animal animal) {
+            return canAttackAnimal(attacker, animal, teams);
+        } else {
+            return canHarmTeam(attacker, target, teams);
+        }
+    }
+
     public static boolean canAttackAnimal(LivingEntity attacker, Animal animal) {
         if (attacker instanceof AbstractRecruitEntity recruit ){
             if(recruit.getVehicle() != null && recruit.getVehicle().getUUID().equals(animal.getUUID())) return false;
@@ -483,6 +498,20 @@ public class RecruitEvents {
         return canHarmTeam(attacker, animal);
     }
 
+    public static boolean canAttackAnimal(LivingEntity attacker, Animal animal, Map<Entity, Team> teams) {
+        if (attacker instanceof AbstractRecruitEntity recruit ){
+            if(recruit.getVehicle() != null && recruit.getVehicle().getUUID().equals(animal.getUUID())) return false;
+
+            if (recruit.getProtectUUID() != null && recruit.getProtectUUID().equals(recruit.getProtectUUID())) return false;
+
+            if(animal.isVehicle()){
+                if(animal.getFirstPassenger() instanceof AbstractRecruitEntity targetRecruit) return canAttackRecruit(attacker, targetRecruit, teams);
+                if(animal.getFirstPassenger() instanceof Player playerTarget) return canAttackPlayer(attacker, playerTarget, teams);
+            }
+        }
+        return canHarmTeam(attacker, animal, teams);
+    }
+
     public static boolean canAttackPlayer(LivingEntity attacker, Player player) {
         if (attacker instanceof AbstractRecruitEntity recruit) {
             if(player.getUUID().equals(recruit.getOwnerUUID())
@@ -493,6 +522,18 @@ public class RecruitEvents {
                 return false;
         }
         return canHarmTeam(attacker, player);
+    }
+
+    public static boolean canAttackPlayer(LivingEntity attacker, Player player, Map<Entity, Team> teams) {
+        if (attacker instanceof AbstractRecruitEntity recruit) {
+            if(player.getUUID().equals(recruit.getOwnerUUID())
+                    || player.getUUID().equals(recruit.getProtectUUID())
+                    || player.isCreative()
+                    || player.isSpectator()
+            )
+                return false;
+        }
+        return canHarmTeam(attacker, player, teams);
     }
 
     public static boolean canAttackRecruit(LivingEntity attacker, AbstractRecruitEntity targetRecruit) {
@@ -530,6 +571,44 @@ public class RecruitEvents {
         return canHarmTeam(attacker, targetRecruit);
     }
 
+    public static boolean canAttackRecruit(LivingEntity attacker, AbstractRecruitEntity targetRecruit, Map<Entity, Team> teams) {
+        if (attacker.equals(targetRecruit)) return false;
+
+        if (attacker instanceof AbstractRecruitEntity attackerRecruit) {
+            // Same player owner → never attack
+            if (attackerRecruit.isOwned() && targetRecruit.isOwned() &&
+                    attackerRecruit.getOwnerUUID().equals(targetRecruit.getOwnerUUID())) {
+                return false;
+            }
+
+            Team attackerTeam = teams.get(attackerRecruit);
+            Team targetTeam = teams.get(targetRecruit);
+
+            // Same scoreboards team with friendly fire off → never attack
+            if (attackerTeam != null && targetTeam != null &&
+                    attackerTeam.equals(targetTeam) &&
+                    !attackerTeam.isAllowFriendlyFire()) {
+                return false;
+            }
+
+            // Same patrol group (protectUUID points to same leader) → never attack
+            if (attackerRecruit.getProtectUUID() != null &&
+                    attackerRecruit.getProtectUUID().equals(targetRecruit.getProtectUUID())) {
+                return false;
+            }
+
+            // Same RecruitsGroup UUID → never attack (covers NPC patrol units with no owner/team)
+            if (attackerRecruit.getGroup() != null &&
+                    attackerRecruit.getGroup().equals(targetRecruit.getGroup())) {
+                return false;
+            }
+
+            if(targetRecruit instanceof MessengerEntity messenger && messenger.isAtMission()) return false;
+        }
+
+        return canHarmTeam(attacker, targetRecruit, teams);
+    }
+
     public static boolean isAlly(Team team1, Team team2) {
         if (team1 == null || team2 == null || FactionEvents.recruitsDiplomacyManager == null) {
             return false;
@@ -557,6 +636,23 @@ public class RecruitEvents {
     public static boolean canHarmTeam(LivingEntity attacker, LivingEntity target) {
         Team attackerTeam = attacker.getTeam();
         Team targetTeam = target.getTeam();
+
+        if (attackerTeam == null || targetTeam == null) return true;
+
+        if (attackerTeam.equals(targetTeam) && !attackerTeam.isAllowFriendlyFire()) return false;
+
+        if (isAlly(attackerTeam, targetTeam)) return false;
+
+        if (FactionEvents.recruitsTreatyManager != null && FactionEvents.recruitsTreatyManager.hasTreaty(attackerTeam.getName(), targetTeam.getName())) {
+            return false;
+        }
+
+        return true;
+    }
+
+    public static boolean canHarmTeam(LivingEntity attacker, LivingEntity target, Map<Entity, Team> teams) {
+        Team attackerTeam = teams.get(attacker);
+        Team targetTeam = teams.get(target);
 
         if (attackerTeam == null || targetTeam == null) return true;
 
