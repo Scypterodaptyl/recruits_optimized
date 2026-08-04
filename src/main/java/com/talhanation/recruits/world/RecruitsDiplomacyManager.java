@@ -14,15 +14,22 @@ import net.minecraftforge.common.MinecraftForge;
 import net.minecraftforge.network.PacketDistributor;
 
 import java.util.*;
+import java.util.concurrent.ConcurrentHashMap;
 
 public class RecruitsDiplomacyManager {
 
-    public Map<String, Map<String, DiplomacyStatus>> diplomacyMap = new HashMap<>();
+    public Map<String, Map<String, DiplomacyStatus>> diplomacyMap = new ConcurrentHashMap<>();
 
     public void load(ServerLevel level) {
         RecruitsDiplomacySaveData data = RecruitsDiplomacySaveData.get(level);
-        diplomacyMap = data.getDiplomacyMap();
-        embargoMap = data.getEmbargoMap();
+        diplomacyMap = toConcurrent(data.getDiplomacyMap());
+        embargoMap = new ConcurrentHashMap<>(data.getEmbargoMap());
+    }
+
+    private static Map<String, Map<String, DiplomacyStatus>> toConcurrent(Map<String, Map<String, DiplomacyStatus>> source) {
+        Map<String, Map<String, DiplomacyStatus>> result = new ConcurrentHashMap<>();
+        source.forEach((team, relations) -> result.put(team, new ConcurrentHashMap<>(relations)));
+        return result;
     }
 
     public void save(ServerLevel level) {
@@ -53,7 +60,7 @@ public class RecruitsDiplomacyManager {
                 new DiplomacyEvent.RelationChanged(team, otherTeam, level, currentRelation, relation);
         if (MinecraftForge.EVENT_BUS.post(relEvent)) return;
 
-        diplomacyMap.computeIfAbsent(team, k -> new HashMap<>()).put(otherTeam, relation);
+        diplomacyMap.computeIfAbsent(team, k -> new ConcurrentHashMap<>()).put(otherTeam, relation);
         if(notifyPlayers) this.notifyPlayersInTeam(team, otherTeam, relation, level);
 
         this.save(level);
@@ -149,7 +156,7 @@ public class RecruitsDiplomacyManager {
     // Value: comma-separated list of team stringIDs that declared the embargo
     // -------------------------------------------------------------------------
 
-    public Map<UUID, String> embargoMap = new HashMap<>();
+    public Map<UUID, String> embargoMap = new ConcurrentHashMap<>();
 
     public void addEmbargo(UUID embargoedPlayerUUID, String declaringTeamID, ServerLevel level) {
         String current = embargoMap.get(embargoedPlayerUUID);
