@@ -5,6 +5,7 @@ import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.LivingEntity;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
@@ -34,12 +35,13 @@ public final class NearbyEntityCache {
         Snapshot snapshot = snapshot(level);
         List<LivingEntity> living = snapshot.living;
         if (living == null) {
-            living = new ArrayList<>();
+            List<LivingEntity> filtered = new ArrayList<>();
             for (Entity entity : snapshot.all) {
                 if (entity instanceof LivingEntity livingEntity) {
-                    living.add(livingEntity);
+                    filtered.add(livingEntity);
                 }
             }
+            living = Collections.unmodifiableList(filtered);
             snapshot.living = living;
         }
         return living;
@@ -51,7 +53,7 @@ public final class NearbyEntityCache {
         if (snapshot == null || snapshot.gameTime != time) {
             List<Entity> all = new ArrayList<>();
             level.getEntities().getAll().forEach(all::add);
-            snapshot = new Snapshot(time, all);
+            snapshot = new Snapshot(time, Collections.unmodifiableList(all));
             CACHE.put(level, snapshot);
         }
         return snapshot;
