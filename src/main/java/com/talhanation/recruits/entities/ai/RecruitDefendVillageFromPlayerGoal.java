@@ -17,16 +17,22 @@ public class RecruitDefendVillageFromPlayerGoal extends TargetGoal {
     @Nullable
     private LivingEntity potentialTarget;
     private final TargetingConditions attackTargeting = TargetingConditions.forCombat().range(64.0D).ignoreLineOfSight();
+    private int scanDelay;
 
     public RecruitDefendVillageFromPlayerGoal(AbstractRecruitEntity p_26029_) {
         super(p_26029_, false, true);
         this.recruit = p_26029_;
         this.setFlags(EnumSet.of(Flag.TARGET));
+        this.scanDelay = p_26029_.getRandom().nextInt(20);
     }
     public boolean canUse() {
+        if (--this.scanDelay > 0) return false;
+        this.scanDelay = 20 + this.recruit.getRandom().nextInt(10);
+
+        this.potentialTarget = null;
+
         AABB aabb = this.recruit.getBoundingBox().inflate(30.0D, 8.0D, 30.0D);
         List<Villager> list = this.recruit.getCommandSenderWorld().getEntitiesOfClass(Villager.class, aabb, (livingEntity) -> !this.attackTargeting.test(this.recruit, livingEntity));
-
         List<Player> list1 = this.recruit.getCommandSenderWorld().getEntitiesOfClass(Player.class, aabb);
 
         for(Villager villager : list) {
