@@ -9,6 +9,10 @@ import com.talhanation.recruits.compat.smallships.SmallShips;
 import com.talhanation.recruits.config.RecruitsClientConfig;
 import com.talhanation.recruits.config.RecruitsServerConfig;
 import com.talhanation.recruits.entities.ai.*;
+import com.talhanation.recruits.entities.ai.async.AsyncAttackContext;
+import com.talhanation.recruits.entities.ai.async.AsyncManager;
+import com.talhanation.recruits.entities.ai.async.AsyncTaskWithCallback;
+import com.talhanation.recruits.entities.ai.async.NearbyEntityCache;
 import com.talhanation.recruits.entities.ai.compat.BlockWithWeapon;
 import com.talhanation.recruits.entities.ai.navigation.RecruitPathNavigation;
 import com.talhanation.recruits.entities.ai.navigation.RecruitsOpenDoorGoal;
@@ -47,6 +51,7 @@ import net.minecraft.world.entity.ai.goal.LookAtPlayerGoal;
 import net.minecraft.world.entity.ai.goal.RandomLookAroundGoal;
 import net.minecraft.world.entity.ai.navigation.PathNavigation;
 import net.minecraft.world.entity.ai.targeting.TargetingConditions;
+import net.minecraft.world.entity.animal.Animal;
 import net.minecraft.world.entity.animal.IronGolem;
 import net.minecraft.world.entity.animal.horse.AbstractHorse;
 import net.minecraft.world.entity.boss.enderdragon.EnderDragon;
@@ -79,6 +84,7 @@ import org.jetbrains.annotations.NotNull;
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
 import java.util.*;
+import java.util.concurrent.ThreadLocalRandom;
 
 public abstract class AbstractRecruitEntity extends AbstractInventoryEntity{
     private static final EntityDataAccessor<Integer> DATA_REMAINING_ANGER_TIME = SynchedEntityData.defineId(AbstractRecruitEntity.class, EntityDataSerializers.INT);
@@ -114,6 +120,7 @@ public abstract class AbstractRecruitEntity extends AbstractInventoryEntity{
     private static final EntityDataAccessor<Boolean> SHOULD_REST = SynchedEntityData.defineId(AbstractRecruitEntity.class, EntityDataSerializers.BOOLEAN);
     private static final EntityDataAccessor<Boolean> SHOULD_RANGED = SynchedEntityData.defineId(AbstractRecruitEntity.class, EntityDataSerializers.BOOLEAN);
     public int blockCoolDown;
+    private volatile boolean targetSearchPending;
     public boolean needsTeamUpdate = true;
     public boolean needsGroupUpdate = true;
     public boolean forcedUpkeep;
@@ -129,11 +136,6 @@ public abstract class AbstractRecruitEntity extends AbstractInventoryEntity{
     public int rotateTicks;
     public int formationPos = -1;
     private int maxFallDistance;
-    // Stagger periodic work (target search, arrow pickup, LoS re-check) across ticks so the cost
-    // is spread evenly instead of spiking every 20th tick. Derived from the entity id (uniformly
-    // distributed) rather than spawn time, so armies that spawn together still scatter. 60 is the
-    // largest search interval, so id % 60 distributes both the 20-tick and 60-tick cases evenly
-    // (60 is a multiple of 20, so the 20-tick phases stay balanced too).
     private int getTickPhase() {
         return Math.floorMod(this.getId(), 60);
     }
@@ -241,11 +243,6 @@ public abstract class AbstractRecruitEntity extends AbstractInventoryEntity{
         LivingEntity currentTarget = this.getTarget();
         if(currentTarget != null && (currentTarget.isDeadOrDying() || currentTarget.isRemoved())) this.setTarget(null);
 
-            // Option 2 safety net: drop a target that is no longer visible, covering the case where a
-            // recruit saw an enemy but lost sight before any attack/move goal took over (e.g. target
-            // stepped behind cover while still out of melee range). Throttled so that, in the worst
-            // case where no goal queried line of sight this tick, we don't run a raycast every tick per
-            // recruit. EntitySensing caches per tick, so when a goal already queried LoS this is free.
         else if(currentTarget != null && (this.tickCount + getTickPhase()) % 10 == 0 && !this.getSensing().hasLineOfSight(currentTarget)){
             this.setTarget(null);
         }
@@ -261,12 +258,6 @@ public abstract class AbstractRecruitEntity extends AbstractInventoryEntity{
 
     }
 
-    /**
-     * Adaptive cadence for the (expensive) area target scan.
-     * A recruit that already has a live target does not need to re-scan the full
-     * 80x80x80 box every second - that scan is the real main-thread cost in big battles.
-     * Idle recruits keep the original 20-tick responsiveness for first contact.
-     */
     private int getTargetSearchInterval() {
         LivingEntity target = this.getTarget();
         if (target != null && target.isAlive() && !target.isRemoved()) {
@@ -278,7 +269,64 @@ public abstract class AbstractRecruitEntity extends AbstractInventoryEntity{
     public void searchForTargets() {
         if (!(this.getCommandSenderWorld() instanceof ServerLevel serverLevel)) return;
 
-        searchForTargetsSync(serverLevel);
+        if (RecruitsServerConfig.UseAsyncTargetFinding.get()) {
+            searchForTargetsAsync(serverLevel);
+        } else {
+            searchForTargetsSync(serverLevel);
+        }
+    }
+
+    private void searchForTargetsAsync(ServerLevel serverLevel) {
+        if (this.targetSearchPending) return;
+        this.targetSearchPending = true;
+
+        List<LivingEntity> nearby = NearbyEntityCache.livingEntities(serverLevel);
+        Vec3 selfPos = this.position();
+        double rangeSqr = 40D * 40D;
+
+        Map<Entity, Team> teams = new HashMap<>();
+        teams.put(this, this.getTeam());
+        List<LivingEntity> inRange = new ArrayList<>();
+        for (LivingEntity potTarget : nearby) {
+            if (potTarget == this) continue;
+            if (potTarget.distanceToSqr(selfPos) > rangeSqr) continue;
+            inRange.add(potTarget);
+            teams.put(potTarget, potTarget.getTeam());
+            if (potTarget instanceof Animal animal && animal.isVehicle()
+                    && animal.getFirstPassenger() instanceof LivingEntity rider) {
+                teams.put(rider, rider.getTeam());
+            }
+        }
+        AsyncAttackContext ctx = new AsyncAttackContext(
+                teams,
+                new HashSet<>(RecruitsServerConfig.TargetBlackList.get()),
+                this.getOwner()
+        );
+
+        AsyncManager.executor.execute(new AsyncTaskWithCallback<>(
+                () -> {
+                    List<LivingEntity> candidates = new ArrayList<>();
+                    for (LivingEntity potTarget : inRange) {
+                        if (!potTarget.canBeSeenByAnyone()) continue;
+                        if (!this.shouldAttack(potTarget, ctx)) continue;
+                        if (!RecruitEvents.canHarmTeam(this, potTarget, ctx.teams())) continue;
+                        candidates.add(potTarget);
+                    }
+
+                    if (candidates.isEmpty()) return null;
+
+                    candidates.sort(Comparator.comparingDouble(e -> e.distanceToSqr(selfPos)));
+                    int pool = Math.min(10, candidates.size());
+                    return candidates.get(ThreadLocalRandom.current().nextInt(pool));
+                },
+                result -> {
+                    this.targetSearchPending = false;
+                    if (result != null && this.isAlive() && result.isAlive() && !result.isRemoved()) {
+                        this.setTarget(result);
+                    }
+                },
+                serverLevel
+        ));
     }
 
     private void searchForTargetsSync(ServerLevel serverLevel) {
@@ -1935,6 +1983,13 @@ public abstract class AbstractRecruitEntity extends AbstractInventoryEntity{
         if(RecruitsServerConfig.TargetBlackList.get().contains(target.getEncodeId())) return false;
         return RecruitEvents.canAttack(this, target);
     }
+
+    public boolean canAttack(@Nonnull LivingEntity target, AsyncAttackContext ctx) {
+        if(target instanceof MessengerEntity messenger && messenger.isAtMission()) return false;
+        if(ctx.blacklist().contains(target.getEncodeId())) return false;
+        return RecruitEvents.canAttack(this, target, ctx.teams());
+    }
+
     // 0 = NEUTRAL
     // 1 = AGGRESSIVE
     // 2 = RAID
@@ -1949,27 +2004,47 @@ public abstract class AbstractRecruitEntity extends AbstractInventoryEntity{
         };
     }
 
+    public boolean shouldAttack(LivingEntity target, AsyncAttackContext ctx) {
+        Team myTeam = ctx.teams().get(this);
+        Team targetTeam = ctx.teams().get(target);
+        return switch (this.getState()) {
+            case 3 -> false; // Passive mode: never attack
+            case 0 -> shouldAttackOnNeutral(target, myTeam, targetTeam, ctx.owner()) && canAttack(target, ctx);
+            case 1 -> (shouldAttackOnNeutral(target, myTeam, targetTeam, ctx.owner()) || shouldAttackOnAggressive(target, myTeam, targetTeam)) && canAttack(target, ctx);
+            case 2 -> !RecruitEvents.isAlly(myTeam, targetTeam) && canAttack(target, ctx);
+            default -> canAttack(target, ctx);
+        };
+    }
+
     private boolean shouldAttackOnNeutral(LivingEntity target){
-        if(isMonster(target) || isAttackingOwnerOrSelf(this, target)) return true;
+        return shouldAttackOnNeutral(target, this.getTeam(), target.getTeam(), this.getOwner());
+    }
+
+    private boolean shouldAttackOnNeutral(LivingEntity target, @Nullable Team myTeam, @Nullable Team targetTeam, @Nullable Player owner){
+        if(isMonster(target) || isAttackingOwnerOrSelf(this, target, owner)) return true;
 
         if(target instanceof Villager) return false;
 
-        return RecruitEvents.isEnemy(this.getTeam(), target.getTeam());
+        return RecruitEvents.isEnemy(myTeam, targetTeam);
     }
 
     private boolean shouldAttackOnAggressive(LivingEntity target){
+        return shouldAttackOnAggressive(target, this.getTeam(), target.getTeam());
+    }
+
+    private boolean shouldAttackOnAggressive(LivingEntity target, @Nullable Team myTeam, @Nullable Team targetTeam){
         if(target instanceof Villager) return false;
 
-        return (target instanceof AbstractRecruitEntity || target instanceof Player) && (RecruitEvents.isNeutral(this.getTeam(), target.getTeam()) || RecruitEvents.isEnemy(this.getTeam(), target.getTeam()));
+        return (target instanceof AbstractRecruitEntity || target instanceof Player) && (RecruitEvents.isNeutral(myTeam, targetTeam) || RecruitEvents.isEnemy(myTeam, targetTeam));
     }
 
     private boolean isMonster(LivingEntity target) {
         return target instanceof Enemy;
     }
 
-    private boolean isAttackingOwnerOrSelf(AbstractRecruitEntity recruit, LivingEntity target) {
+    private boolean isAttackingOwnerOrSelf(AbstractRecruitEntity recruit, LivingEntity target, @Nullable Player owner) {
         return target.getLastHurtByMob() != null &&
-                (target.getLastHurtByMob().equals(recruit) || target.getLastHurtByMob().equals(recruit.getOwner()));
+                (target.getLastHurtByMob().equals(recruit) || target.getLastHurtByMob().equals(owner));
     }
 
     public boolean isAlliedTo(Entity target) {
