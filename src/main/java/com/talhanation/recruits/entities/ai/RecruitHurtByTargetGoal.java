@@ -1,13 +1,13 @@
 package com.talhanation.recruits.entities.ai;
 
 import com.talhanation.recruits.entities.AbstractRecruitEntity;
+import com.talhanation.recruits.entities.ai.async.NearbyEntityCache;
+import net.minecraft.server.level.ServerLevel;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.ai.goal.target.HurtByTargetGoal;
 import net.minecraft.world.entity.ai.targeting.TargetingConditions;
 import net.minecraft.world.phys.AABB;
 import org.jetbrains.annotations.NotNull;
-
-import java.util.List;
 
 public class RecruitHurtByTargetGoal extends HurtByTargetGoal {
     private static final TargetingConditions HURT_BY_TARGETING = TargetingConditions.forCombat().ignoreLineOfSight().ignoreInvisibilityTesting();
@@ -52,16 +52,19 @@ public class RecruitHurtByTargetGoal extends HurtByTargetGoal {
     }
 
     protected void alertOthers() {
+        if (!(this.recruit.getCommandSenderWorld() instanceof ServerLevel serverLevel)) return;
+
         double d0 = this.getFollowDistance();
         AABB axisalignedbb = AABB.unitCubeFromLowerCorner(this.recruit.position())
                 .inflate(d0, 16.0D, d0);
-        List<? extends AbstractRecruitEntity> list = this.recruit.getCommandSenderWorld()
-                .getEntitiesOfClass(this.recruit.getClass(), axisalignedbb);
 
-        for (AbstractRecruitEntity recruitToAlert : list) {
+        for (LivingEntity entity : NearbyEntityCache.livingEntities(serverLevel)) {
+            if (!(entity instanceof AbstractRecruitEntity recruitToAlert)) continue;
+            if (recruitToAlert.getClass() != this.recruit.getClass()) continue;
+            if (!axisalignedbb.contains(recruitToAlert.position())) continue;
+
             if (this.recruit == recruitToAlert ||
                     recruitToAlert.getTarget() != null ||
-                    this.recruit.getLastHurtByMob() == null ||
                     this.recruit.getLastHurtByMob() == null ||
                     recruitToAlert.getOwnerUUID() == null ||
                     !recruitToAlert.getOwnerUUID().equals(this.recruit.getOwnerUUID()) ||
