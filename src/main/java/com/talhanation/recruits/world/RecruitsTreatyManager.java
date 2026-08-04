@@ -11,11 +11,12 @@ import net.minecraft.server.level.ServerPlayer;
 import net.minecraftforge.network.PacketDistributor;
 
 import java.util.*;
+import java.util.concurrent.ConcurrentHashMap;
 
 public class RecruitsTreatyManager {
 
     // key: "factionA|factionB" (sorted) -> expiry time in milliseconds (real time)
-    private final Map<String, Long> treaties = new HashMap<>();
+    private final Map<String, Long> treaties = new ConcurrentHashMap<>();
 
     public void load(ServerLevel level) {
         RecruitsTreatySaveData data = RecruitsTreatySaveData.get(level);
