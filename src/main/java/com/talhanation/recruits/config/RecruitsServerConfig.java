@@ -755,6 +755,16 @@ public class RecruitsServerConfig {
                 .worldRestart()
                 .defineInRange("AsyncPathfindingThreadsCount", 1, 1, Runtime.getRuntime().availableProcessors());
 
+        UseAsyncTargetFinding = BUILDER.comment("""
+                        Run the enemy-search scan (target acquisition, ally alerting) on a background executor
+                        instead of the main thread.
+                        Helps TPS a lot in big recruit battles (e.g. 100 vs 100), where every recruit
+                        re-scanning nearby entities on the main thread is the main cost.
+                        \t(takes effect after restart)
+                        \tdefault: true""")
+                .worldRestart()
+                .define("UseAsyncTargetFinding", true);
+
         BUILDER.pop();
         BUILDER.pop();
         BUILDER.comment("Claiming Config:").push("Claiming");
