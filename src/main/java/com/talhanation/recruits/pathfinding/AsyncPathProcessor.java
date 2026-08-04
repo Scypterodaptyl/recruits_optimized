@@ -26,24 +26,18 @@ public class AsyncPathProcessor {
         }
 
         int workersCount = Math.max(1, RecruitsServerConfig.AsyncPathfindingThreadsCount.get());
-        int queueCapacity = workersCount * 8;
 
         pathFindingExecutor = new ThreadPoolExecutor(
                 1,
                 workersCount,
                 60,
                 TimeUnit.SECONDS,
-                new LinkedBlockingQueue<>(queueCapacity),
+                new LinkedBlockingQueue<>(),
                 new ThreadFactoryBuilder()
                         .setNameFormat("recruits-path-processor-%d")
                         .setDaemon(true)
                         .setPriority(Thread.NORM_PRIORITY - 2)
-                        .build(),
-                (task, executor) -> {
-                    if (!executor.isShutdown()) {
-                        task.run();
-                    }
-                }
+                        .build()
         );
     }
 
@@ -69,7 +63,11 @@ public class AsyncPathProcessor {
             path.process();
             return;
         }
-        CompletableFuture.runAsync(path::process, executor);
+        try {
+            executor.execute(path::process);
+        } catch (RejectedExecutionException e) {
+            path.processAsUnreachable();
+        }
     }
     
     public static void awaitProcessing(@Nullable Path path, MinecraftServer server, Consumer<@Nullable Path> afterProcessing) {
