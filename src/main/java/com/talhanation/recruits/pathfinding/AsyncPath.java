@@ -111,14 +111,25 @@ public class AsyncPath extends Path {
     /**
      * starts processing this path
      */
-    public synchronized void process() {
+    public void process() {
+        complete(this.pathSupplier.get());
+    }
+
+    /**
+     * completes this path as unreachable without running the (potentially expensive) pathSupplier -
+     * used when the path processor's queue is full, so a burst of pathfinding requests can never
+     * block whichever thread is submitting them.
+     */
+    public void processAsUnreachable() {
+        complete(null);
+    }
+
+    private synchronized void complete(@Nullable Path bestPath) {
         if (this.processState == ProcessState.COMPLETED || this.processState == ProcessState.PROCESSING) {
             return;
         }
 
         processState = ProcessState.PROCESSING;
-
-        final Path bestPath = this.pathSupplier.get();
 
         if (bestPath != null) {
             this.nodes.addAll(bestPath.nodes);
