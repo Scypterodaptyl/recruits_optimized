@@ -10,6 +10,7 @@
     "AnimalMixin",
     "CamelMixin",
     "ClassInstanceMultiMapMixin",
+    "EntityCollisionMixin",
     "GoalUtilsMixin",
     "LivingEntityMixin",
     "MobMixin",
