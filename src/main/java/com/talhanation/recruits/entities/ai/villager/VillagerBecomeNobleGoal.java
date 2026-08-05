@@ -2,11 +2,15 @@ package com.talhanation.recruits.entities.ai.villager;
 
 import com.talhanation.recruits.VillagerEvents;
 import com.talhanation.recruits.entities.VillagerNobleEntity;
+import com.talhanation.recruits.entities.ai.async.NearbyEntityCache;
+import net.minecraft.server.level.ServerLevel;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.ai.goal.Goal;
 import net.minecraft.world.entity.npc.Villager;
 import net.minecraft.world.entity.npc.VillagerProfession;
+import net.minecraft.world.phys.AABB;
 
+import java.util.ArrayList;
 import java.util.List;
 
 public class VillagerBecomeNobleGoal extends Goal {
@@ -45,9 +49,15 @@ public class VillagerBecomeNobleGoal extends Goal {
     public void stop() {
         super.stop();
         if(this.villager.getCommandSenderWorld().isClientSide()) return;
-        List<LivingEntity> list = this.villager.getCommandSenderWorld().getEntitiesOfClass(LivingEntity.class, this.villager.getBoundingBox().inflate(100))
-                .stream()
-                .toList();
+        if (!(this.villager.getCommandSenderWorld() instanceof ServerLevel serverLevel)) return;
+
+        AABB aabb = this.villager.getBoundingBox().inflate(100);
+        List<LivingEntity> list = new ArrayList<>();
+        for (LivingEntity entity : NearbyEntityCache.livingEntities(serverLevel)) {
+            if (aabb.contains(entity.getX(), entity.getY(), entity.getZ())) {
+                list.add(entity);
+            }
+        }
 
         boolean noblePresent = list.stream().anyMatch(living -> living instanceof VillagerNobleEntity);
         if (noblePresent) {
