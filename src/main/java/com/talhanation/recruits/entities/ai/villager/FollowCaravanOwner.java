@@ -1,12 +1,15 @@
 package com.talhanation.recruits.entities.ai.villager;
 
 import com.talhanation.recruits.entities.RecruitEntity;
+import com.talhanation.recruits.entities.ai.async.NearbyEntityCache;
+import net.minecraft.server.level.ServerLevel;
+import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.ai.goal.Goal;
 import net.minecraft.world.entity.npc.AbstractVillager;
 import net.minecraft.world.entity.npc.Villager;
+import net.minecraft.world.phys.AABB;
 
 import javax.annotation.Nullable;
-import java.util.List;
 import java.util.UUID;
 
 public class FollowCaravanOwner extends Goal {
@@ -33,13 +36,17 @@ public class FollowCaravanOwner extends Goal {
 
     @Nullable
     private RecruitEntity getPatrolOwner() {
-        List<RecruitEntity> recruits = villager.getCommandSenderWorld().getEntitiesOfClass(
-                RecruitEntity.class,
-                villager.getBoundingBox().inflate(16D),
-                (recruit) -> recruit.getUUID().equals(uuid)
-        );
+        if (!(villager.getCommandSenderWorld() instanceof ServerLevel serverLevel)) return null;
 
-        return recruits.isEmpty() ? null : recruits.get(0);
+        AABB aabb = villager.getBoundingBox().inflate(16D);
+        for (LivingEntity entity : NearbyEntityCache.livingEntities(serverLevel)) {
+            if (entity instanceof RecruitEntity recruit
+                    && aabb.contains(recruit.getX(), recruit.getY(), recruit.getZ())
+                    && recruit.getUUID().equals(uuid)) {
+                return recruit;
+            }
+        }
+        return null;
     }
 
     @Override
