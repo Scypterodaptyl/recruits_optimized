@@ -3,6 +3,7 @@ package com.talhanation.recruits.entities;
 import com.talhanation.recruits.Main;
 import com.talhanation.recruits.compat.smallships.SmallShips;
 import com.talhanation.recruits.entities.ai.controller.IAttackController;
+import com.talhanation.recruits.entities.ai.async.NearbyEntityCache;
 import com.talhanation.recruits.inventory.PatrolLeaderContainer;
 import com.talhanation.recruits.network.MessageOpenSpecialScreen;
 import com.talhanation.recruits.network.MessageToClientUpdateLeaderScreen;
@@ -35,6 +36,7 @@ import net.minecraft.world.item.Items;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.Blocks;
 import net.minecraft.world.level.block.state.BlockState;
+import net.minecraft.world.phys.AABB;
 import net.minecraft.world.phys.Vec3;
 import net.minecraftforge.network.NetworkHooks;
 import net.minecraftforge.network.PacketDistributor;
@@ -161,7 +163,7 @@ public abstract class AbstractLeaderEntity extends AbstractChunkLoaderEntity imp
         this.waitingTime = nbt.getInt("waiting_time");
         this.waitForRecruitsUpkeepTime = nbt.getInt("waitForRecruitsUpkeepTime");
         this.setInfoMode(nbt.getByte("infoMode"));
-        this.ownerName = nbt.getString("ownerName");
+        this.ownerName = nbt.getString("OwnerName");
         this.setPatrolSpeed(nbt.getByte("patrolSpeed"));
         this.setEnemyAction(nbt.getByte("enemyAction"));
         if (nbt.hasUUID("routeId")) this.setRouteID(nbt.getUUID("routeId"));
@@ -349,25 +351,29 @@ public abstract class AbstractLeaderEntity extends AbstractChunkLoaderEntity imp
     }
 
     private void checkForPotentialEnemies() {
-        if(!level().isClientSide()){
-            List<LivingEntity> targets = this.getCommandSenderWorld().getEntitiesOfClass(LivingEntity.class, this.getBoundingBox().inflate(100D)).stream()
-                    .filter((target) -> shouldAttack(target) && this.hasLineOfSight(target) && !target.isUnderWater())
-                    .toList();
+        if (!(this.getCommandSenderWorld() instanceof ServerLevel serverLevel)) return;
 
-            if(targets.isEmpty()) return;
-
-            this.enemyArmy = new NPCArmy((ServerLevel) level(), targets, null);
-            EnemyAction action = EnemyAction.fromIndex(getEnemyAction());
-            if (action == EnemyAction.KEEP_PATROLLING) return; // ignore enemies, keep walking
-            if(state != State.ATTACKING && canAttackWhilePatrolling()) {
-                if (action == EnemyAction.HOLD) {
-                    // Stop moving, let recruits fight in place
-                    this.getNavigation().stop();
-                }
-                this.setPatrolState(State.ATTACKING);
+        AABB scanBox = this.getBoundingBox().inflate(100D);
+        List<LivingEntity> targets = new ArrayList<>();
+        for (LivingEntity candidate : NearbyEntityCache.livingEntities(serverLevel)) {
+            if (scanBox.contains(candidate.getX(), candidate.getY(), candidate.getZ())
+                    && shouldAttack(candidate) && this.hasLineOfSight(candidate) && !candidate.isUnderWater()) {
+                targets.add(candidate);
             }
         }
 
+        if(targets.isEmpty()) return;
+
+        this.enemyArmy = new NPCArmy(serverLevel, targets, null);
+        EnemyAction action = EnemyAction.fromIndex(getEnemyAction());
+        if (action == EnemyAction.KEEP_PATROLLING) return; // ignore enemies, keep walking
+        if(state != State.ATTACKING && canAttackWhilePatrolling()) {
+            if (action == EnemyAction.HOLD) {
+                // Stop moving, let recruits fight in place
+                this.getNavigation().stop();
+            }
+            this.setPatrolState(State.ATTACKING);
+        }
     }
 
     public boolean canAttackWhilePatrolling() {

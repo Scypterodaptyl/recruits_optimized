@@ -1,7 +1,6 @@
 package com.talhanation.recruits.inventory;
 
 import com.mojang.datafixers.util.Pair;
-import com.talhanation.recruits.Main;
 import com.talhanation.recruits.entities.AbstractRecruitEntity;
 import com.talhanation.recruits.init.ModScreens;
 import de.maxhenkel.corelib.inventory.ContainerBase;
@@ -10,7 +9,6 @@ import net.minecraft.world.Container;
 import net.minecraft.world.entity.EquipmentSlot;
 import net.minecraft.world.entity.player.Inventory;
 import net.minecraft.world.entity.player.Player;
-import net.minecraft.world.inventory.HorseInventoryMenu;
 import net.minecraft.world.inventory.InventoryMenu;
 import net.minecraft.world.inventory.Slot;
 import net.minecraft.world.item.BannerItem;
@@ -20,6 +18,14 @@ import net.minecraftforge.api.distmarker.Dist;
 import net.minecraftforge.api.distmarker.OnlyIn;
 
 public class RecruitInventoryMenu extends ContainerBase {
+    private static final int PLAYER_INV_START = 0;
+    private static final int PLAYER_INV_END = 36;
+    private static final int OFFHAND_SLOT = 36;
+    private static final int MAINHAND_SLOT = 37;
+    private static final int ARMOR_SLOT_START = 38;
+    private static final int ARMOR_SLOT_END = 42;
+    private static final int RECRUIT_INV_START = 42;
+
     private final Container recruitInventory;
     private final AbstractRecruitEntity recruit;
     private static final ResourceLocation[] TEXTURE_EMPTY_SLOTS = new ResourceLocation[]{
@@ -173,73 +179,57 @@ public class RecruitInventoryMenu extends ContainerBase {
         }
     }
 
-    public ItemStack quickMoveStack(Player playerIn, int index) {
-        ItemStack itemstack = ItemStack.EMPTY;
+    @Override
+    public ItemStack quickMoveStack(Player player, int index) {
         Slot slot = this.getSlot(index);
-        if (slot != null && slot.hasItem()) {
-            ItemStack stack = slot.getItem();
-            itemstack = stack.copy();
-            if (index <= 35){// <= 35 Itemstack from player inventory
-
-                //HEAD
-                if (this.getSlot(38).mayPlace(stack) && !this.getSlot(38).hasItem()) {
-                    if (!this.moveItemStackTo(stack, 38, this.slots.size(), false)) {
-                        return ItemStack.EMPTY;
-                    }
-                }
-                //CHEST
-                else if (this.getSlot(39).mayPlace(stack) && !this.getSlot(39).hasItem()) {
-                    if (!this.moveItemStackTo(stack, 39, this.slots.size(), false)) {
-                        return ItemStack.EMPTY;
-                    }
-                }
-                //LEGS
-                else if (this.getSlot(40).mayPlace(stack) && !this.getSlot(40).hasItem()) {
-                    if (!this.moveItemStackTo(stack, 40, this.slots.size(), false)) {
-                        return ItemStack.EMPTY;
-                    }
-                }
-                //FEET
-                else if (this.getSlot(41).mayPlace(stack) && !this.getSlot(41).hasItem()) {
-                    if (!this.moveItemStackTo(stack, 41, this.slots.size(),  false)) {
-                        return ItemStack.EMPTY;
-                    }
-                }
-
-                //OFFHAND
-                else if (this.getSlot(36).mayPlace(stack) && !this.getSlot(36).hasItem()) {
-                    if (!this.moveItemStackTo(stack, 36, this.slots.size(), false)) {
-                        return ItemStack.EMPTY;
-                    }
-                }
-                //MAINHAND
-                else if (this.getSlot(37).mayPlace(stack) && !this.getSlot(37).hasItem()) {
-                    if (!this.moveItemStackTo(stack, 37, this.slots.size(), false)) {
-                        return ItemStack.EMPTY;
-                    }
-                }
-
-                //RECRUIT INV
-                //par1: ItemStack, par2: TargetSlot, par3: inventory size, par4: reverse
-                else if (!this.moveItemStackTo(stack, 42, this.slots.size(), false)) {
-                    return ItemStack.EMPTY;
-                }
-            }
-            //Itemstack from RecruitInventory
-            //Note: par3 must be 35 as if not there is a duplication bug
-            else if (!this.moveItemStackTo(stack, 0, 35, false)) {
-                return ItemStack.EMPTY;
-            }
-
-            if (stack.isEmpty()) {
-                slot.set(ItemStack.EMPTY);
-            } else {
-                slot.setChanged();
-            }
+        if (slot == null || !slot.hasItem()) {
+            return ItemStack.EMPTY;
         }
 
-        return itemstack;
+        ItemStack stack = slot.getItem();
+        ItemStack original = stack.copy();
+
+        if (index >= PLAYER_INV_START && index < PLAYER_INV_END) {
+            boolean equipped = moveToFirstEmptySlot(stack, ARMOR_SLOT_START, ARMOR_SLOT_END)
+                    || moveToEmptySlot(stack, OFFHAND_SLOT)
+                    || (stack.getMaxStackSize() == 1 && moveToEmptySlot(stack, MAINHAND_SLOT));
+
+            if (!equipped && !this.moveItemStackTo(stack, RECRUIT_INV_START, this.slots.size(), false)) {
+                return ItemStack.EMPTY;
+            }
+        }
+        else if (!this.moveItemStackTo(stack, PLAYER_INV_START, PLAYER_INV_END, true)) {
+            return ItemStack.EMPTY;
+        }
+
+        if (stack.isEmpty()) {
+            slot.set(ItemStack.EMPTY);
+        } else {
+            slot.setChanged();
+        }
+
+        if (stack.getCount() == original.getCount()) {
+            return ItemStack.EMPTY;
+        }
+
+        slot.onTake(player, stack);
+        return original;
     }
+
+    private boolean moveToFirstEmptySlot(ItemStack stack, int start, int end) {
+        for (int index = start; index < end; index++) {
+            if (moveToEmptySlot(stack, index)) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    private boolean moveToEmptySlot(ItemStack stack, int index) {
+        Slot target = this.getSlot(index);
+        return !target.hasItem() && target.mayPlace(stack) && this.moveItemStackTo(stack, index, index + 1, false);
+    }
+
     //Handslots
     // 37: Mainhand
     // 36: Offhand

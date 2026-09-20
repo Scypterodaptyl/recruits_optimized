@@ -399,7 +399,7 @@ public abstract class AbstractRecruitEntity extends AbstractInventoryEntity{
         this.goalSelector.addGoal(10, new RecruitWanderGoal(this));
         this.goalSelector.addGoal(11, new LookAtPlayerGoal(this, Player.class, 8.0F));
         this.goalSelector.addGoal(12, new RandomLookAroundGoal(this));
-        //this.goalSelector.addGoal(13, new RecruitPickupWantedItemGoal(this));
+        this.goalSelector.addGoal(9, new RecruitPickupWantedItemGoal(this));
 
         this.targetSelector.addGoal(1, new RecruitProtectHurtByTargetGoal(this));
         this.targetSelector.addGoal(2, new RecruitOwnerHurtByTargetGoal(this));
@@ -557,12 +557,13 @@ public abstract class AbstractRecruitEntity extends AbstractInventoryEntity{
         this.setIsOwned(nbt.getBoolean("isOwned"));
         this.setCost(nbt.getInt("Cost"));
         this.setMountTimer(nbt.getInt("mountTimer"));
-        this.setUpkeepTimer(nbt.getInt("UpkeepTimer"));
+        this.setUpkeepTimer(nbt.getInt("upkeepTimer"));
         this.setColor(nbt.getByte("Color"));
 
         this.setMaxFallDistance(nbt.getInt("MaxFallDistance"));
         this.formationPos = (nbt.getInt("formationPos"));
         this.setShouldRest(nbt.getBoolean("ShouldRest"));
+        this.setShouldRanged(nbt.getBoolean("ShouldRanged"));
         this.isInFormation = nbt.getBoolean("isInFormation");
         this.holdFormation = nbt.getBoolean("holdFormation");
 
@@ -804,6 +805,17 @@ public abstract class AbstractRecruitEntity extends AbstractInventoryEntity{
         //return entityData.get(HOLD_POS).orElse(null);
     }
 
+    @Override
+    public boolean isPushable() {
+        if (isInFormation && getShouldHoldPos() && getTarget() == null) {
+            Vec3 pos = getHoldPos();
+            if (pos != null && this.distanceToSqr(pos) < 0.36) {
+                return false;
+            }
+        }
+        return super.isPushable();
+    }
+
     @Nullable
     public BlockPos getMovePos(){
         return entityData.get(MOVE_POS).orElse(null);
@@ -815,12 +827,11 @@ public abstract class AbstractRecruitEntity extends AbstractInventoryEntity{
 
     @Nullable
     public LivingEntity getProtectingMob(){
-        List<LivingEntity> list = this.getCommandSenderWorld().getEntitiesOfClass(
-                LivingEntity.class,
-                this.getBoundingBox().inflate(64D),
-                (living) -> this.getProtectUUID() != null && living.getUUID().equals(this.getProtectUUID()) && living.isAlive()
-        );
-        return list.isEmpty() ? null : list.get(0);
+        UUID protectUUID = this.getProtectUUID();
+        if (protectUUID == null || !(this.getCommandSenderWorld() instanceof ServerLevel serverLevel)) return null;
+
+        Entity entity = serverLevel.getEntity(protectUUID);
+        return entity instanceof LivingEntity living && living.isAlive() ? living : null;
     }
 
     public int getColor() {
@@ -1268,7 +1279,7 @@ public abstract class AbstractRecruitEntity extends AbstractInventoryEntity{
     }
 
     public boolean isOwnedBy(Player player){
-        return player.getUUID() == this.getOwnerUUID() || player == this.getOwner();
+        return player.getUUID().equals(this.getOwnerUUID()) || player == this.getOwner();
     }
 
     ////////////////////////////////////ON FUNCTIONS////////////////////////////////////
@@ -1429,7 +1440,7 @@ public abstract class AbstractRecruitEntity extends AbstractInventoryEntity{
                 if(this.getFollowState() == 5){//Protecting
                     List<AbstractRecruitEntity> list = this.getCommandSenderWorld().getEntitiesOfClass(AbstractRecruitEntity.class, this.getBoundingBox().inflate(32D));
                     for(AbstractRecruitEntity recruit : list){
-                        if (recruit.getUUID().equals(recruit.getProtectUUID()) && recruit.isAlive() && !recruit.equals(living)){
+                        if (recruit.getUUID().equals(this.getProtectUUID()) && recruit.isAlive() && !recruit.equals(living)){
                             //Patrolleader
                             recruit.setTarget(living);
                         }
@@ -1635,13 +1646,19 @@ public abstract class AbstractRecruitEntity extends AbstractInventoryEntity{
     }
 
     public boolean needsToGetFood(){
-        int timer = this.getUpkeepTimer();
-        boolean needsToEat = this.needsToEat();
-        boolean hasFood = this.hasFoodInInv();
-        boolean isChest = this.getUpkeepPos() != null;
-        boolean isEntity = this.getUpkeepUUID() != null;
-
-        return (forcedUpkeep || (!hasFood && timer == 0 && needsToEat) && (isChest || isEntity)) && !getShouldProtect();
+        if (getShouldProtect()) {
+            return false;
+        }
+        if (forcedUpkeep) {
+            return true;
+        }
+        if (this.getUpkeepTimer() != 0 || !this.needsToEat()) {
+            return false;
+        }
+        if (this.getUpkeepPos() == null && this.getUpkeepUUID() == null) {
+            return false;
+        }
+        return !this.hasFoodInInv();
     }
 
     public boolean hasFoodInInv(){
