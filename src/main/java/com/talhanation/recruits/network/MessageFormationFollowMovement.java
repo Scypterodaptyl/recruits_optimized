@@ -32,8 +32,9 @@ public class MessageFormationFollowMovement implements Message<MessageFormationF
     }
 
     public void executeServerSide(NetworkEvent.Context context){
-        List<AbstractRecruitEntity> list = Objects.requireNonNull(context.getSender()).getCommandSenderWorld().getEntitiesOfClass(AbstractRecruitEntity.class, context.getSender().getBoundingBox().inflate(100));
-        list.removeIf(recruit -> !recruit.isEffectedByCommand(this.player_uuid, this.group));
+        UUID senderId = Objects.requireNonNull(context.getSender()).getUUID();
+        List<AbstractRecruitEntity> list = context.getSender().getCommandSenderWorld().getEntitiesOfClass(AbstractRecruitEntity.class, context.getSender().getBoundingBox().inflate(100));
+        list.removeIf(recruit -> !recruit.isEffectedByCommand(senderId, this.group));
 
         CommandEvents.applyFormation(formation, list, context.getSender(), context.getSender().position());
     }

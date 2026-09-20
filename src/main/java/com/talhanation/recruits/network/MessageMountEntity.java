@@ -37,6 +37,7 @@ public class MessageMountEntity implements Message<MessageMountEntity> {
 
     public void executeServerSide(NetworkEvent.Context context) {
         ServerPlayer player = Objects.requireNonNull(context.getSender());
+        UUID senderId = player.getUUID();
         List<Entity> entityList = player.getCommandSenderWorld().getEntitiesOfClass(
                 Entity.class,
                 player.getBoundingBox().inflate(100),
@@ -49,8 +50,8 @@ public class MessageMountEntity implements Message<MessageMountEntity> {
         player.getCommandSenderWorld().getEntitiesOfClass(
                 AbstractRecruitEntity.class,
                 player.getBoundingBox().inflate(100),
-                (recruit) -> recruit.isEffectedByCommand(uuid, group)
-        ).forEach((recruit) -> CommandEvents.onMountButton(uuid, recruit, target, group));
+                (recruit) -> recruit.isEffectedByCommand(senderId, group)
+        ).forEach((recruit) -> CommandEvents.onMountButton(senderId, recruit, target, group));
     }
 
     public MessageMountEntity fromBytes(FriendlyByteBuf buf) {

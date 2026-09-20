@@ -49,13 +49,17 @@ public class MessagePatrolLeaderSetRoute implements Message<MessagePatrolLeaderS
         return Dist.DEDICATED_SERVER;
     }
 
+    private static final int MAX_WAYPOINTS = 64;
+
     @Override
     public void executeServerSide(NetworkEvent.Context context) {
         ServerPlayer player = Objects.requireNonNull(context.getSender());
+        if (waypoints.size() > MAX_WAYPOINTS || waypoints.size() != waitSeconds.size()) return;
+
         player.getCommandSenderWorld().getEntitiesOfClass(
                 AbstractLeaderEntity.class,
                 player.getBoundingBox().inflate(64.0D),
-                leader -> leader.getUUID().equals(this.recruit) && leader.isAlive()
+                leader -> leader.getUUID().equals(this.recruit) && leader.isAlive() && leader.isEffectedByCommand(player.getUUID())
         ).forEach(leader -> {
             if (routeId != null) {
                 leader.setRouteID(routeId);

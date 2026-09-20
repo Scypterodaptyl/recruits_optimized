@@ -32,10 +32,10 @@ public class MessageRangedFire implements Message<MessageRangedFire> {
     }
 
     public void executeServerSide(NetworkEvent.Context context) {
-        ServerPlayer serverPlayer = context.getSender();
-        List<AbstractRecruitEntity> list = Objects.requireNonNull(context.getSender()).getCommandSenderWorld().getEntitiesOfClass(AbstractRecruitEntity.class, context.getSender().getBoundingBox().inflate(100));
+        ServerPlayer serverPlayer = Objects.requireNonNull(context.getSender());
+        List<AbstractRecruitEntity> list = serverPlayer.getCommandSenderWorld().getEntitiesOfClass(AbstractRecruitEntity.class, serverPlayer.getBoundingBox().inflate(100));
         for (AbstractRecruitEntity recruits : list) {
-                CommandEvents.onRangedFireCommand(serverPlayer, this.player, recruits, group, should);
+                CommandEvents.onRangedFireCommand(serverPlayer, serverPlayer.getUUID(), recruits, group, should);
         }
     }
     public MessageRangedFire fromBytes(FriendlyByteBuf buf) {

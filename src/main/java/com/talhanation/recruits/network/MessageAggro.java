@@ -40,6 +40,7 @@ public class MessageAggro implements Message<MessageAggro> {
 
     public void executeServerSide(NetworkEvent.Context context) {
         ServerPlayer player = Objects.requireNonNull(context.getSender());
+        UUID senderId = player.getUUID();
 
         double boundBoxInflateModifier = 16.0D;
         if(!fromGui) {
@@ -55,7 +56,7 @@ public class MessageAggro implements Message<MessageAggro> {
                 return;
             }
 
-            CommandEvents.onAggroCommand(this.player, recruit, this.state, group, fromGui);
+            CommandEvents.onAggroCommand(senderId, recruit, this.state, group, fromGui);
         });
     }
 
@@ -63,8 +64,8 @@ public class MessageAggro implements Message<MessageAggro> {
         this.player = buf.readUUID();
         this.state = buf.readInt();
         this.group = buf.readUUID();
-        if (this.recruit != null) this.recruit = buf.readUUID();
         this.fromGui = buf.readBoolean();
+        if (this.fromGui) this.recruit = buf.readUUID();
         return this;
     }
 
@@ -73,6 +74,6 @@ public class MessageAggro implements Message<MessageAggro> {
         buf.writeInt(this.state);
         buf.writeUUID(this.group);
         buf.writeBoolean(this.fromGui);
-        if (this.recruit != null) buf.writeUUID(this.recruit);
+        if (this.fromGui) buf.writeUUID(this.recruit);
     }
 }

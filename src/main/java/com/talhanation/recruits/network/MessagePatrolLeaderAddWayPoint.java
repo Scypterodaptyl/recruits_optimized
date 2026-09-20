@@ -46,7 +46,7 @@ public class MessagePatrolLeaderAddWayPoint implements Message<MessagePatrolLead
         player.getCommandSenderWorld().getEntitiesOfClass(
                 AbstractLeaderEntity.class,
                 player.getBoundingBox().inflate(100.0D),
-                v -> v.getUUID().equals(this.worker) && v.isAlive()
+                v -> v.getUUID().equals(this.worker) && v.isAlive() && v.isEffectedByCommand(player.getUUID())
         ).forEach((merchant) -> this.addWayPoint(new BlockPos(x, y, z), player, merchant));
     }
 

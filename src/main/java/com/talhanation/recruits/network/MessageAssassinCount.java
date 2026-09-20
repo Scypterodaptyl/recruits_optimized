@@ -34,7 +34,7 @@ public class MessageAssassinCount implements Message<MessageAssassinCount> {
                 AssassinLeaderEntity.class,
                 player.getBoundingBox().inflate(16.0D),
                 (leader) -> leader.getUUID().equals(this.uuid)
-        ).forEach((leader) -> leader.setCount(this.count));
+        ).forEach((leader) -> leader.setCount(Math.max(0, Math.min(this.count, leader.getMaxAssassinCount()))));
     }
     public MessageAssassinCount fromBytes(FriendlyByteBuf buf) {
         this.count = buf.readInt();

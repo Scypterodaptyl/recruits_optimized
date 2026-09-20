@@ -46,7 +46,7 @@ public class MessageSendMessenger implements Message<MessageSendMessenger> {
         player.getCommandSenderWorld().getEntitiesOfClass(
                 MessengerEntity.class,
                 player.getBoundingBox().inflate(16D),
-                (messenger) -> messenger.getUUID().equals(this.recruit)
+                (messenger) -> messenger.getUUID().equals(this.recruit) && messenger.isOwnedBy(player)
         ).forEach((messenger) -> {
             if (messenger.getUUID().equals(this.recruit)){
 

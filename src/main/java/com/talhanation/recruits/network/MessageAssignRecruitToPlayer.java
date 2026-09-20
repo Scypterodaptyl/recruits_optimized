@@ -31,17 +31,30 @@ public class MessageAssignRecruitToPlayer implements Message<MessageAssignRecrui
     }
 
     public void executeServerSide(NetworkEvent.Context context) {
-        ServerPlayer serverPlayer = context.getSender();
-        List<AbstractRecruitEntity> list = Objects.requireNonNull(context.getSender()).getCommandSenderWorld().getEntitiesOfClass(AbstractRecruitEntity.class, context.getSender().getBoundingBox().inflate(64.0D));
+        ServerPlayer serverPlayer = Objects.requireNonNull(context.getSender());
+        List<AbstractRecruitEntity> list = serverPlayer.getCommandSenderWorld().getEntitiesOfClass(AbstractRecruitEntity.class, serverPlayer.getBoundingBox().inflate(64.0D));
         ServerLevel serverLevel = (ServerLevel) serverPlayer.getCommandSenderWorld();
 
         for (AbstractRecruitEntity recruit : list) {
             if(recruit.getUUID().equals(this.recruit)){
+                if (!canAssign(serverPlayer, recruit)) return;
+
                 recruit.assignToPlayer(newOwner, null);
                 FactionEvents.notifyPlayer(serverLevel, new RecruitsPlayerInfo(newOwner, ""), 0, serverPlayer.getName().getString());
                 break;
             }
         }
+    }
+
+    private boolean canAssign(ServerPlayer serverPlayer, AbstractRecruitEntity recruit) {
+        UUID senderId = serverPlayer.getUUID();
+        UUID currentOwner = recruit.getOwnerUUID();
+        if (currentOwner != null && currentOwner.equals(senderId)) return true;
+
+        if (recruit.getTeam() == null || !senderId.equals(newOwner)) return false;
+        if (FactionEvents.recruitsFactionManager == null) return false;
+        var faction = FactionEvents.recruitsFactionManager.getFactionByStringID(recruit.getTeam().getName());
+        return faction != null && senderId.equals(faction.getTeamLeaderUUID());
     }
 
     public MessageAssignRecruitToPlayer fromBytes(FriendlyByteBuf buf) {
