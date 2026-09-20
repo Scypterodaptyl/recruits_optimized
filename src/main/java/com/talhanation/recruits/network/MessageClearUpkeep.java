@@ -28,11 +28,12 @@ public class MessageClearUpkeep implements Message<MessageClearUpkeep> {
     }
 
     public void executeServerSide(NetworkEvent.Context context) {
-        Objects.requireNonNull(context.getSender()).getCommandSenderWorld().getEntitiesOfClass(
+        UUID senderId = Objects.requireNonNull(context.getSender()).getUUID();
+        context.getSender().getCommandSenderWorld().getEntitiesOfClass(
                 AbstractRecruitEntity.class,
                 context.getSender().getBoundingBox().inflate(100)
         ).forEach(
-                (recruit) -> CommandEvents.onClearUpkeepButton(uuid, recruit, group)
+                (recruit) -> CommandEvents.onClearUpkeepButton(senderId, recruit, group)
         );
     }
 

@@ -58,11 +58,13 @@ public class MessageHireFromNobleVillager implements Message<MessageHireFromNobl
     public void executeServerSide(NetworkEvent.Context context) {
         ServerPlayer player = Objects.requireNonNull(context.getSender());
         ServerLevel serverLevel = player.serverLevel();
-        VillagerNobleEntity villagerNoble = player.getCommandSenderWorld().getEntitiesOfClass(
+        Optional<VillagerNobleEntity> villagerNobleOptional = player.getCommandSenderWorld().getEntitiesOfClass(
                 VillagerNobleEntity.class,
                 player.getBoundingBox().inflate(32.0D),
                 noble -> noble.getUUID().equals(this.nobleUUID) && noble.isAlive()
-        ).stream().findAny().get();
+        ).stream().findAny();
+        if (villagerNobleOptional.isEmpty()) return;
+        VillagerNobleEntity villagerNoble = villagerNobleOptional.get();
 
         if(closing){
             villagerNoble.isTrading(false);

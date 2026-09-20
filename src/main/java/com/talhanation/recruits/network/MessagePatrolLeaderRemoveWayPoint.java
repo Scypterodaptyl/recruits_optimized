@@ -33,7 +33,7 @@ public class MessagePatrolLeaderRemoveWayPoint implements Message<MessagePatrolL
         player.getCommandSenderWorld().getEntitiesOfClass(
                 AbstractLeaderEntity.class,
                 player.getBoundingBox().inflate(100.0D),
-                v -> v.getUUID().equals(this.worker) && v.isAlive()
+                v -> v.getUUID().equals(this.worker) && v.isAlive() && v.isEffectedByCommand(player.getUUID())
         ).forEach((merchant) -> this.removeLastWayPoint(player, merchant));
     }
 

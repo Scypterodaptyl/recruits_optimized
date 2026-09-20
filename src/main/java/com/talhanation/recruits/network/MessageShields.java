@@ -32,13 +32,14 @@ public class MessageShields implements Message<MessageShields> {
 
     public void executeServerSide(NetworkEvent.Context context) {
         ServerPlayer player = Objects.requireNonNull(context.getSender());
+        UUID senderId = player.getUUID();
         player.getCommandSenderWorld().getEntitiesOfClass(
                 AbstractRecruitEntity.class,
                 context.getSender().getBoundingBox().inflate(100),
-                (recruit) -> recruit.isEffectedByCommand(this.player, group)
+                (recruit) -> recruit.isEffectedByCommand(senderId, group)
         ).forEach((recruit) -> CommandEvents.onShieldsCommand(
                         player,
-                        this.player,
+                        senderId,
                         recruit,
                         group,
                         should

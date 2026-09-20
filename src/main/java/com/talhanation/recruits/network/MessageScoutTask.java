@@ -3,6 +3,7 @@ package com.talhanation.recruits.network;
 import com.talhanation.recruits.entities.ScoutEntity;
 import de.maxhenkel.corelib.net.Message;
 import net.minecraft.network.FriendlyByteBuf;
+import net.minecraft.server.level.ServerPlayer;
 import net.minecraftforge.api.distmarker.Dist;
 import net.minecraftforge.network.NetworkEvent;
 
@@ -27,10 +28,11 @@ public class MessageScoutTask implements Message<MessageScoutTask> {
     }
 
     public void executeServerSide(NetworkEvent.Context context){
-        List<ScoutEntity> list = Objects.requireNonNull(context.getSender()).getCommandSenderWorld().getEntitiesOfClass(ScoutEntity.class, context.getSender().getBoundingBox().inflate(16D));
+        ServerPlayer player = Objects.requireNonNull(context.getSender());
+        List<ScoutEntity> list = player.getCommandSenderWorld().getEntitiesOfClass(ScoutEntity.class, player.getBoundingBox().inflate(16D));
         for (ScoutEntity scoutEntity : list){
 
-            if (scoutEntity.getUUID().equals(this.recruit)){
+            if (scoutEntity.getUUID().equals(this.recruit) && scoutEntity.isOwnedBy(player)){
 
                 scoutEntity.startTask(ScoutEntity.State.fromIndex(state));
                 break;

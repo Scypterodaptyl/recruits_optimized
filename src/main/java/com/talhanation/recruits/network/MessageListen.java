@@ -32,7 +32,7 @@ public class MessageListen implements Message<MessageListen> {
         player.getCommandSenderWorld().getEntitiesOfClass(
                 AbstractRecruitEntity.class,
                 player.getBoundingBox().inflate(100),
-                (recruit) -> recruit.getUUID().equals(this.uuid)
+                (recruit) -> recruit.getUUID().equals(this.uuid) && recruit.isOwnedBy(player)
         ).forEach((recruit) -> recruit.setListen(bool));
     }
 

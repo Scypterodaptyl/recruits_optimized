@@ -44,7 +44,7 @@ public class MessageMountEntityGui implements Message<MessageMountEntityGui> {
         player.getCommandSenderWorld().getEntitiesOfClass(
                 AbstractRecruitEntity.class,
                 player.getBoundingBox().inflate(32.0D),
-                v -> v.getUUID().equals(this.recruit) && v.isAlive()
+                v -> v.getUUID().equals(this.recruit) && v.isAlive() && v.isOwnedBy(player)
         ).forEach(this::mount);
     }
 

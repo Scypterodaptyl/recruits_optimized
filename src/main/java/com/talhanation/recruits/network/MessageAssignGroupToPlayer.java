@@ -44,6 +44,7 @@ public class MessageAssignGroupToPlayer implements Message<MessageAssignGroupToP
         RecruitsGroup group = RecruitEvents.recruitsGroupsManager.getGroup(groupUUID);
         ServerLevel serverLevel = (ServerLevel) player.getCommandSenderWorld();
         if(group == null) return;
+        if(group.getPlayerUUID() == null || !group.getPlayerUUID().equals(player.getUUID())) return;
 
         RecruitsPlayerInfo newOwner = RecruitsPlayerInfo.getFromNBT(tag);
         group.setPlayer(newOwner);

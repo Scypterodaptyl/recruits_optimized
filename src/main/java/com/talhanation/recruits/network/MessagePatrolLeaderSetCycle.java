@@ -33,7 +33,7 @@ public class MessagePatrolLeaderSetCycle implements Message<MessagePatrolLeaderS
         player.getCommandSenderWorld().getEntitiesOfClass(
                 AbstractLeaderEntity.class,
                 player.getBoundingBox().inflate(100.0D),
-                (leader) -> leader.getUUID().equals(this.recruit)
+                (leader) -> leader.getUUID().equals(this.recruit) && leader.isEffectedByCommand(player.getUUID())
         ).forEach(leader -> leader.setCycle(this.cycle));
     }
 
