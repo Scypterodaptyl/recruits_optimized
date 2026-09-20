@@ -2,6 +2,7 @@ package com.talhanation.recruits.entities;
 
 import com.talhanation.recruits.FactionEvents;
 import com.talhanation.recruits.entities.ai.UseShield;
+import com.talhanation.recruits.entities.ai.async.NearbyEntityCache;
 import com.talhanation.recruits.util.FormationUtils;
 import com.talhanation.recruits.world.RecruitsPlayerInfo;
 import net.minecraft.ChatFormatting;
@@ -18,12 +19,13 @@ import net.minecraft.world.DifficultyInstance;
 import net.minecraft.world.entity.*;
 import net.minecraft.world.entity.ai.attributes.AttributeSupplier;
 import net.minecraft.world.entity.ai.attributes.Attributes;
-import net.minecraft.world.entity.ai.navigation.GroundPathNavigation;
+import com.talhanation.recruits.pathfinding.AsyncGroundPathNavigation;
 import net.minecraft.world.entity.item.ItemEntity;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.*;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.ServerLevelAccessor;
+import net.minecraft.world.phys.AABB;
 import net.minecraft.world.phys.Vec3;
 import net.minecraftforge.common.ForgeMod;
 
@@ -91,7 +93,7 @@ public class ScoutEntity extends BowmanEntity implements ICompanion {
     @Nullable
     public SpawnGroupData finalizeSpawn(ServerLevelAccessor world, DifficultyInstance difficultyInstance, MobSpawnType reason, @Nullable SpawnGroupData data, @Nullable CompoundTag nbt) {
         SpawnGroupData ilivingentitydata = super.finalizeSpawn(world, difficultyInstance, reason, data, nbt);
-        ((GroundPathNavigation)this.getNavigation()).setCanOpenDoors(true);
+        ((AsyncGroundPathNavigation)this.getNavigation()).setCanOpenDoors(true);
 
         this.initSpawn();
 
@@ -223,18 +225,18 @@ public class ScoutEntity extends BowmanEntity implements ICompanion {
         potentialPlayerTargets = new ArrayList<>();
         potentialRecruitTargets = new ArrayList<>();
 
-        if (!this.getCommandSenderWorld().isClientSide()) {
-            potentialPlayerTargets = this.getCommandSenderWorld().getEntitiesOfClass(
-                    ServerPlayer.class,
-                    this.getBoundingBox().inflate(SEARCH_RADIUS),
-                    (target) -> shouldAttack(target) && this.hasLineOfSight(target)
-            );
+        if (this.getCommandSenderWorld() instanceof ServerLevel serverLevel) {
+            AABB scanBox = this.getBoundingBox().inflate(SEARCH_RADIUS);
+            for (LivingEntity candidate : NearbyEntityCache.livingEntities(serverLevel)) {
+                if (!scanBox.contains(candidate.getX(), candidate.getY(), candidate.getZ())) continue;
+                if (!shouldAttack(candidate) || !this.hasLineOfSight(candidate)) continue;
 
-            potentialRecruitTargets = this.getCommandSenderWorld().getEntitiesOfClass(
-                    AbstractRecruitEntity.class,
-                    this.getBoundingBox().inflate(SEARCH_RADIUS),
-                    (target) -> shouldAttack(target) && this.hasLineOfSight(target)
-            );
+                if (candidate instanceof ServerPlayer player) {
+                    potentialPlayerTargets.add(player);
+                } else if (candidate instanceof AbstractRecruitEntity recruit) {
+                    potentialRecruitTargets.add(recruit);
+                }
+            }
 
             if(!potentialPlayerTargets.isEmpty()){
                 for(ServerPlayer player : potentialPlayerTargets){

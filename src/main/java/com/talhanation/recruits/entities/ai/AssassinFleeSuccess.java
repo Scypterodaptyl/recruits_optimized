@@ -6,6 +6,8 @@ import net.minecraft.world.entity.ai.goal.Goal;
 import net.minecraft.core.BlockPos;
 import net.minecraft.world.phys.Vec3;
 
+import java.util.EnumSet;
+
 public class AssassinFleeSuccess extends Goal {
 
     AssassinEntity entity;
@@ -14,6 +16,7 @@ public class AssassinFleeSuccess extends Goal {
 
     public AssassinFleeSuccess(AssassinEntity assassin) {
     this.entity = assassin;
+    this.setFlags(EnumSet.of(Flag.MOVE));
     }
 
     @Override

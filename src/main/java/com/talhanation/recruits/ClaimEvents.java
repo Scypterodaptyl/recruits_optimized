@@ -76,6 +76,8 @@ public class ClaimEvents {
 
     @SubscribeEvent
     public void onWorldSave(LevelEvent.Save event){
+        if (event.getLevel() != server.overworld()) return;
+
         recruitsClaimManager.save(server.overworld());
     }
 

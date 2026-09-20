@@ -5,6 +5,8 @@ import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.ai.goal.Goal;
 import net.minecraft.world.phys.Vec3;
 
+import java.util.EnumSet;
+
 public class RecruitDodgeGoal extends Goal {
     private LivingEntity target;
     private final AbstractRecruitEntity recruit;
@@ -12,11 +14,17 @@ public class RecruitDodgeGoal extends Goal {
 
     public RecruitDodgeGoal(AbstractRecruitEntity recruit) {
         this.recruit = recruit;
+        this.setFlags(EnumSet.of(Flag.MOVE));
     }
 
     @Override
     public boolean canUse() {
         return recruit.getTarget() != null;
+    }
+
+    @Override
+    public boolean canContinueToUse() {
+        return target != null && target.isAlive() && target == recruit.getTarget();
     }
 
     @Override
@@ -29,7 +37,7 @@ public class RecruitDodgeGoal extends Goal {
     @Override
     public void tick() {
         super.tick();
-        if(target == null) return;
+        if(target == null || !target.isAlive()) return;
 
         if(recruit.position().distanceTo(target.position()) < 10){
             if(timer > 0) timer--;

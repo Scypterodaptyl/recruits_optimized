@@ -6,7 +6,7 @@ import com.talhanation.recruits.Main;
 import com.talhanation.recruits.entities.AbstractRecruitEntity;
 import com.talhanation.recruits.entities.ICompanion;
 import net.minecraft.client.model.HumanoidModel;
-import net.minecraft.client.model.PlayerModel;
+import net.minecraft.client.model.geom.ModelPart;
 import net.minecraft.client.renderer.MultiBufferSource;
 import net.minecraft.client.renderer.RenderType;
 import net.minecraft.client.renderer.entity.LivingEntityRenderer;
@@ -18,14 +18,18 @@ public class RecruitHumanCompanionLayer extends RenderLayer<AbstractRecruitEntit
 
     private static final ResourceLocation LOCATION = new ResourceLocation(Main.MOD_ID,"textures/entity/human/human_assassin_cloth.png");
 
-    public RecruitHumanCompanionLayer(LivingEntityRenderer<AbstractRecruitEntity, HumanoidModel<AbstractRecruitEntity>> renderer) {
+    private final HumanoidModel<AbstractRecruitEntity> overlayModel;
+
+    public RecruitHumanCompanionLayer(LivingEntityRenderer<AbstractRecruitEntity, HumanoidModel<AbstractRecruitEntity>> renderer, ModelPart overlayRoot) {
         super(renderer);
+        this.overlayModel = new HumanoidModel<>(overlayRoot);
     }
 
     public void render(PoseStack poseStack, MultiBufferSource bufferSource, int p_117722_, AbstractRecruitEntity recruit, float p_117724_, float p_117725_, float p_117726_, float p_117727_, float p_117728_, float p_117729_) {
         if(!recruit.isInvisible() && recruit instanceof ICompanion){
             VertexConsumer vertexconsumer = bufferSource.getBuffer(RenderType.entityCutoutNoCull(LOCATION));
-            this.getParentModel().renderToBuffer(poseStack, vertexconsumer, p_117722_, OverlayTexture.NO_OVERLAY, 1.0F, 1.0F, 1.0F, 1.0F);
+            this.getParentModel().copyPropertiesTo(this.overlayModel);
+            this.overlayModel.renderToBuffer(poseStack, vertexconsumer, p_117722_, OverlayTexture.NO_OVERLAY, 1.0F, 1.0F, 1.0F, 1.0F);
         }
     }
 

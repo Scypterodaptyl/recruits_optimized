@@ -44,9 +44,11 @@ public class RecruitsGroupsManager {
         RecruitsGroup existing = groupMap.get(id);
 
         if (existing != null) {
+            if (existing.getPlayerUUID() == null || !existing.getPlayerUUID().equals(player.getUUID())) return;
             incoming.members = existing.members;
             incoming.setUUID(existing.getUUID());
         }
+        incoming.setPlayer(player);
 
         removeGroup(id);
 

@@ -39,7 +39,7 @@ public class RecruitHoldPosGoal extends Goal {
         Vec3 pos = this.recruit.getHoldPos();
         if (pos != null) {
             double distance = recruit.distanceToSqr(pos);
-            if(distance >= 0.3) {
+            if(distance >= 0.36) {
                 if (--this.timeToRecalcPath <= 0) {
                     this.timeToRecalcPath = this.recruit.getVehicle() != null ? this.adjustedTickDelay(5) : this.adjustedTickDelay(10);
                     this.recruit.getNavigation().moveTo(pos.x(), pos.y(), pos.z(), this.recruit.moveSpeed);
@@ -48,7 +48,10 @@ public class RecruitHoldPosGoal extends Goal {
                 if (recruit.horizontalCollision || recruit.minorHorizontalCollision) {
                     this.recruit.getJumpControl().jump();
                 }
-            } else{
+            } else if (distance > 1.0E-4) {
+                recruit.getNavigation().stop();
+                recruit.setPos(pos.x(), pos.y(), pos.z());
+                recruit.setDeltaMovement(Vec3.ZERO);
             }
         }
     }

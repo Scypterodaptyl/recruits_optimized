@@ -347,7 +347,7 @@ public class RecruitCommanderUtil {
             Vec3 pos = recruit.position().add(direction.scale(20));
             BlockPos blockPos = FormationUtils.getPositionOrSurface(
                     recruit.getCommandSenderWorld(),
-                    new BlockPos((int) pos.x, (int) pos.y, (int) pos.z)
+                    new BlockPos((int) Math.round(pos.x), (int) Math.round(pos.y), (int) Math.round(pos.z))
             );
 
             Vec3 targetPos = new Vec3(pos.x, blockPos.getY(), pos.z);

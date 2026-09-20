@@ -11,6 +11,8 @@ import net.minecraft.world.entity.ai.goal.Goal;
 import net.minecraft.world.entity.animal.horse.AbstractHorse;
 import net.minecraft.world.entity.vehicle.Boat;
 
+import java.util.EnumSet;
+
 public class RecruitProtectEntityGoal extends Goal {
 
     private final AbstractRecruitEntity recruit;
@@ -20,6 +22,7 @@ public class RecruitProtectEntityGoal extends Goal {
 
     public RecruitProtectEntityGoal(AbstractRecruitEntity recruit) {
         this.recruit = recruit;
+        this.setFlags(EnumSet.of(Flag.MOVE));
     }
 
     @Override

@@ -6,12 +6,15 @@ import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.ai.goal.Goal;
 import net.minecraft.world.phys.Vec3;
 
+import java.util.EnumSet;
+
 public class FleeTarget extends Goal {
 
     AsyncPathfinderMob entity;
 
     public FleeTarget(AsyncPathfinderMob creatureEntity) {
     this.entity = creatureEntity;
+    this.setFlags(EnumSet.of(Flag.MOVE));
     }
 
     @Override

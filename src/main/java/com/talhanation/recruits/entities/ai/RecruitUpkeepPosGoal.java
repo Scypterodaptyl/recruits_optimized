@@ -20,6 +20,7 @@ import net.minecraft.world.phys.Vec3;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
+import java.util.EnumSet;
 import java.util.List;
 
 
@@ -32,11 +33,13 @@ public class RecruitUpkeepPosGoal extends Goal {
     public boolean messageNeedNewChest;
     public boolean messageNotInRange;
     public int timeToRecalcPath = 0;
+    public int findPosCooldown = 0;
     public int timer = 0;
     public boolean setTimer = false;
     public boolean canResetPaymentTimer = false;
     public RecruitUpkeepPosGoal(AbstractRecruitEntity recruit) {
         this.recruit = recruit;
+        this.setFlags(EnumSet.of(Flag.MOVE));
     }
 
     @Override
@@ -52,6 +55,7 @@ public class RecruitUpkeepPosGoal extends Goal {
     public void start() {
         super.start();
         this.timeToRecalcPath = 0;
+        this.findPosCooldown = 0;
         message = true;
         messageNotChest = true;
         messageNeedNewChest = true;
@@ -151,7 +155,8 @@ public class RecruitUpkeepPosGoal extends Goal {
                 }
             }
         }
-        else {
+        else if (--this.findPosCooldown <= 0) {
+            this.findPosCooldown = this.adjustedTickDelay(20);
             this.chestPos = findInvPos();
 
             if(chestPos == null){

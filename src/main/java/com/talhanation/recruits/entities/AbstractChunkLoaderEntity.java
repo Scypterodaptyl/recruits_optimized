@@ -117,6 +117,18 @@ public abstract class AbstractChunkLoaderEntity extends BowmanEntity {
             else return false;
         }
 
+        @Override
+        public boolean equals(Object other) {
+            if (this == other) return true;
+            if (!(other instanceof RecruitsChunk otherChunk)) return false;
+            return this.x == otherChunk.x && this.z == otherChunk.z;
+        }
+
+        @Override
+        public int hashCode() {
+            return Objects.hash(x, z);
+        }
+
         public RecruitsChunk getNextChunk(Direction direction) {
             RecruitsChunk recruitsChunk = null;
             switch (direction){

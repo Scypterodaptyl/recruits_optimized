@@ -19,13 +19,25 @@ import java.lang.reflect.Constructor;
 import java.lang.reflect.Field;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
+import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
 
 public class MusketWeapon implements IWeapon {
+    private static final Map<String, Class<?>> CLASS_CACHE = new ConcurrentHashMap<>();
+
+    private static Class<?> resolveClass(String name) throws ClassNotFoundException {
+        Class<?> cached = CLASS_CACHE.get(name);
+        if (cached != null) return cached;
+        Class<?> resolved = Class.forName(name);
+        CLASS_CACHE.put(name, resolved);
+        return resolved;
+    }
+
     @Override
     @Nullable
     public Item getWeapon() {
         try {
-            Class<?> itemClass = Class.forName("ewewukek.musketmod.Items");
+            Class<?> itemClass = resolveClass("ewewukek.musketmod.Items");
             Object musketWeaponInstance = itemClass.newInstance();
 
             Field musketItemField = musketWeaponInstance.getClass().getField("MUSKET");
@@ -60,7 +72,7 @@ public class MusketWeapon implements IWeapon {
 
     public boolean isLoaded(ItemStack stack) {
         try {
-            Class<?> musketItemClass = Class.forName("ewewukek.musketmod.MusketItem");
+            Class<?> musketItemClass = resolveClass("ewewukek.musketmod.MusketItem");
 
             Method musketItemIsLoaded = musketItemClass.getMethod("isLoaded", ItemStack.class);
             return (boolean) musketItemIsLoaded.invoke(musketItemClass, stack);
@@ -74,7 +86,7 @@ public class MusketWeapon implements IWeapon {
     @Override
     public void setLoaded(ItemStack stack, boolean loaded) {
         try {
-            Class<?> musketItemClass = Class.forName("ewewukek.musketmod.MusketItem");
+            Class<?> musketItemClass = resolveClass("ewewukek.musketmod.MusketItem");
 
             Method musketItemSetLoaded = musketItemClass.getMethod("setLoaded", ItemStack.class, boolean.class);
 
@@ -88,7 +100,7 @@ public class MusketWeapon implements IWeapon {
     @Override
     public AbstractHurtingProjectile getProjectile(LivingEntity shooter) {
         try {
-            Class<?> bulletClass = Class.forName("ewewukek.musketmod.BulletEntity");
+            Class<?> bulletClass = resolveClass("ewewukek.musketmod.BulletEntity");
             Class<?>[] constructorParamTypes = {Level.class};
             Constructor<?> bulletConstructor = bulletClass.getConstructor(constructorParamTypes);
             Level level = shooter.getCommandSenderWorld();
@@ -121,7 +133,7 @@ public class MusketWeapon implements IWeapon {
             double d3 = Mth.sqrt((float) (x * x + z * z));
             Vec3 vec3 = (new Vec3(x, y + d3 * (double) 0.065, z)).normalize().scale(10F);
             try {
-                Class<?> bulletClass = Class.forName("ewewukek.musketmod.BulletEntity");
+                Class<?> bulletClass = resolveClass("ewewukek.musketmod.BulletEntity");
                 if (bulletClass.isInstance(projectile)) {
                     Object bullet = bulletClass.cast(projectile);
 
@@ -155,7 +167,7 @@ public class MusketWeapon implements IWeapon {
             Vec3 origin = new Vec3(shooter.getX(), shooter.getEyeY(), shooter.getZ());
 
             try{
-                Class<?> musketModClass = Class.forName("ewewukek.musketmod.MusketMod");
+                Class<?> musketModClass = resolveClass("ewewukek.musketmod.MusketMod");
                 Method sendSmokeEffectMethod = musketModClass.getMethod("sendSmokeEffect", ServerLevel.class, Vec3.class, Vec3.class);
                 sendSmokeEffectMethod.invoke(musketModClass, (ServerLevel) shooter.getCommandSenderWorld(), origin, forward);
 
@@ -185,7 +197,7 @@ public class MusketWeapon implements IWeapon {
     @Override
     public SoundEvent getShootSound() {
         try {
-            Class<?> itemClass = Class.forName("ewewukek.musketmod.Sounds");
+            Class<?> itemClass = resolveClass("ewewukek.musketmod.Sounds");
             Object musketWeaponInstance = itemClass.newInstance();
 
             Field musketItemField = musketWeaponInstance.getClass().getField("MUSKET_FIRE");
@@ -201,7 +213,7 @@ public class MusketWeapon implements IWeapon {
     @Override
     public SoundEvent getLoadSound() {
         try {
-            Class<?> itemClass = Class.forName("ewewukek.musketmod.Sounds");
+            Class<?> itemClass = resolveClass("ewewukek.musketmod.Sounds");
             Object musketWeaponInstance = itemClass.newInstance();
 
             Field musketItemField = musketWeaponInstance.getClass().getField("MUSKET_READY");

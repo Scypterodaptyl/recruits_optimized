@@ -37,7 +37,7 @@ public class RecruitRangedBowAttackGoal<T extends BowmanEntity> extends Goal {
         this.attackIntervalMax = attackIntervalMax;
         this.attackRadius = attackRadius;
         this.stopRange = stopRange;
-        this.setFlags(EnumSet.of(Goal.Flag.LOOK));
+        this.setFlags(EnumSet.of(Goal.Flag.LOOK, Goal.Flag.MOVE));
         this.consumeArrows = RecruitsServerConfig.RangedRecruitsNeedArrowsToShoot.get();
     }
 

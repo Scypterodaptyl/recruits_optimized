@@ -13,8 +13,20 @@ import javax.annotation.Nullable;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.util.List;
+import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
 
 public abstract class SiegeWeapon {
+    private static final Map<String, Class<?>> CLASS_CACHE = new ConcurrentHashMap<>();
+
+    private static Class<?> resolveClass(String name) throws ClassNotFoundException {
+        Class<?> cached = CLASS_CACHE.get(name);
+        if (cached != null) return cached;
+        Class<?> resolved = Class.forName(name);
+        CLASS_CACHE.put(name, resolved);
+        return resolved;
+    }
+
     public Entity entity;
     public SiegeEngineerEntity siegeEngineer;
     public abstract boolean canShoot();
@@ -36,7 +48,7 @@ public abstract class SiegeWeapon {
     public static boolean isSiegeWeapon(Entity entity) {
         if(entity == null) return false;
         try {
-            Class<?> siegeweaponClass = Class.forName("com.talhanation.siegeweapons.entities.AbstractVehicleEntity");
+            Class<?> siegeweaponClass = resolveClass("com.talhanation.siegeweapons.entities.AbstractVehicleEntity");
             if (siegeweaponClass.isInstance(entity)) {
                 return true;
             }
@@ -54,7 +66,7 @@ public abstract class SiegeWeapon {
 
     public void steerLeft(boolean left) {
         try {
-            Class<?> siegeweaponClass = Class.forName("com.talhanation.siegeweapons.entities.AbstractVehicleEntity");
+            Class<?> siegeweaponClass = resolveClass("com.talhanation.siegeweapons.entities.AbstractVehicleEntity");
             if (siegeweaponClass.isInstance(entity)) {
                 Object siegeweapon = siegeweaponClass.cast(entity);
 
@@ -69,7 +81,7 @@ public abstract class SiegeWeapon {
 
     public void steerRight(boolean right) {
         try {
-            Class<?> siegeweaponClass = Class.forName("com.talhanation.siegeweapons.entities.AbstractVehicleEntity");
+            Class<?> siegeweaponClass = resolveClass("com.talhanation.siegeweapons.entities.AbstractVehicleEntity");
             if (siegeweaponClass.isInstance(entity)) {
                 Object siegeweapon = siegeweaponClass.cast(entity);
 
@@ -84,7 +96,7 @@ public abstract class SiegeWeapon {
 
     public void forward(boolean forward) {
         try {
-            Class<?> siegeweaponClass = Class.forName("com.talhanation.siegeweapons.entities.AbstractVehicleEntity");
+            Class<?> siegeweaponClass = resolveClass("com.talhanation.siegeweapons.entities.AbstractVehicleEntity");
             if (siegeweaponClass.isInstance(entity)) {
                 Object siegeweapon = siegeweaponClass.cast(entity);
 
@@ -100,7 +112,7 @@ public abstract class SiegeWeapon {
 
     public void backward(boolean backward) {
         try {
-            Class<?> siegeweaponClass = Class.forName("com.talhanation.siegeweapons.entities.AbstractVehicleEntity");
+            Class<?> siegeweaponClass = resolveClass("com.talhanation.siegeweapons.entities.AbstractVehicleEntity");
             if (siegeweaponClass.isInstance(entity)) {
                 Object siegeweapon = siegeweaponClass.cast(entity);
 
@@ -118,7 +130,7 @@ public abstract class SiegeWeapon {
         int amount = (10 + siegeEngineer.getCommandSenderWorld().random.nextInt(5));
         try{
             if (Main.isSiegeWeaponsLoaded && entity.getEncodeId().contains("siegeweapons")) {
-                Class<?> siegeweaponClass = Class.forName("com.talhanation.siegeweapons.entities.AbstractVehicleEntity");
+                Class<?> siegeweaponClass = resolveClass("com.talhanation.siegeweapons.entities.AbstractVehicleEntity");
                 if(siegeweaponClass.isInstance(entity)) {
                     Object siegeweapon = siegeweaponClass.cast(entity);
 
@@ -159,7 +171,7 @@ public abstract class SiegeWeapon {
         float health = 0;
         double maxHealth = 0;
         try{
-            Class<?> siegeweaponClass = Class.forName("com.talhanation.siegeweapons.entities.AbstractVehicleEntity");
+            Class<?> siegeweaponClass = resolveClass("com.talhanation.siegeweapons.entities.AbstractVehicleEntity");
             if(siegeweaponClass.isInstance(entity)) {
                 Object siegeweapon = siegeweaponClass.cast(entity);
 
@@ -180,6 +192,7 @@ public abstract class SiegeWeapon {
 
     @Nullable
     public static ItemStack getSiegeWeaponItem() {
+        if (!Main.isSiegeWeaponsLoaded) return null;
         return ForgeRegistries.ITEMS.getDelegateOrThrow(ResourceLocation.tryParse("siegeweapons:catapult")).get().getDefaultInstance();
     }
 }

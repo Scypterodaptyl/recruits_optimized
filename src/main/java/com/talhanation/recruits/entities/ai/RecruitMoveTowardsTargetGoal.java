@@ -22,6 +22,7 @@ public class RecruitMoveTowardsTargetGoal extends Goal {
         this.recruit = recruit;
         this.speedModifier = speedModifier;
         this.within = within;
+        this.setFlags(EnumSet.of(Flag.MOVE));
     }
 
     public boolean canUse() {

@@ -33,7 +33,7 @@ public class RecruitRangedCrossbowAttackGoal extends Goal {
         this.crossBowman = crossBowman;
         this.speedModifier = this.weapon.getMoveSpeedAmp();
         this.stopRange = stopRange;
-        this.setFlags(EnumSet.of(Goal.Flag.LOOK));
+        this.setFlags(EnumSet.of(Goal.Flag.LOOK, Goal.Flag.MOVE));
         this.consumeArrows = RecruitsServerConfig.RangedRecruitsNeedArrowsToShoot.get();
     }
 

@@ -79,6 +79,8 @@ public class FactionEvents {
 
     @SubscribeEvent
     public void onWorldSave(LevelEvent.Save event){
+        if (event.getLevel() != server.overworld()) return;
+
         recruitsFactionManager.save(server.overworld());
         recruitsDiplomacyManager.save(server.overworld());
         recruitsTreatyManager.save(server.overworld());
@@ -248,6 +250,9 @@ public class FactionEvents {
         PlayerTeam playerTeam = server.getScoreboard().getPlayerTeam(stringID);
 
         if(serverPlayer != null){
+            boolean isLeader = recruitsFaction != null && serverPlayer.getUUID().equals(recruitsFaction.getTeamLeaderUUID());
+            if(!isLeader && !serverPlayer.hasPermissions(2)) return;
+
             if(cost > 0 && !playerHasEnoughEmeralds(serverPlayer, cost)) {
                 serverPlayer.sendSystemMessage(Component.translatable("chat.recruits.team_creation.noenough_money").withStyle(ChatFormatting.RED));
                 return;
@@ -343,6 +348,8 @@ public class FactionEvents {
         RecruitsFaction recruitsFaction = recruitsFactionManager.getFactionByStringID(teamName);
 
         if(recruitsFaction == null || playerToAdd == null || !recruitsFaction.canAddPlayer()) return;
+
+        if(player != null && !player.getUUID().equals(recruitsFaction.getTeamLeaderUUID()) && !player.hasPermissions(2)) return;
 
         if(isPlayerAlreadyAFactionLeader(playerToAdd)){
             if(player != null) player.sendSystemMessage(CAN_NOT_ADD_OTHER_LEADER());

@@ -8,18 +8,20 @@ import com.talhanation.recruits.entities.ai.UseShield;
 import com.talhanation.recruits.entities.ai.controller.siegeengineer.ISiegeController;
 import com.talhanation.recruits.entities.ai.controller.siegeengineer.SiegeWeaponBallistaController;
 import com.talhanation.recruits.entities.ai.controller.siegeengineer.SiegeWeaponCatapultController;
+import com.talhanation.recruits.entities.ai.async.NearbyEntityCache;
 import net.minecraft.core.BlockPos;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.network.chat.Component;
 import net.minecraft.network.syncher.EntityDataAccessor;
 import net.minecraft.network.syncher.EntityDataSerializers;
 import net.minecraft.network.syncher.SynchedEntityData;
+import net.minecraft.server.level.ServerLevel;
 import net.minecraft.world.DifficultyInstance;
 import net.minecraft.world.damagesource.DamageSource;
 import net.minecraft.world.entity.*;
 import net.minecraft.world.entity.ai.attributes.AttributeSupplier;
 import net.minecraft.world.entity.ai.attributes.Attributes;
-import net.minecraft.world.entity.ai.navigation.GroundPathNavigation;
+import com.talhanation.recruits.pathfinding.AsyncGroundPathNavigation;
 import net.minecraft.world.entity.animal.horse.AbstractHorse;
 import net.minecraft.world.entity.item.ItemEntity;
 import net.minecraft.world.entity.player.Player;
@@ -28,6 +30,7 @@ import net.minecraft.world.item.CrossbowItem;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.ServerLevelAccessor;
+import net.minecraft.world.phys.AABB;
 import net.minecraftforge.common.ForgeMod;
 
 import javax.annotation.Nullable;
@@ -109,7 +112,7 @@ public class SiegeEngineerEntity extends AbstractRecruitEntity implements ICompa
     @Nullable
     public SpawnGroupData finalizeSpawn(ServerLevelAccessor world, DifficultyInstance difficultyInstance, MobSpawnType reason, @Nullable SpawnGroupData data, @Nullable CompoundTag nbt) {
         SpawnGroupData ilivingentitydata = super.finalizeSpawn(world, difficultyInstance, reason, data, nbt);
-        ((GroundPathNavigation)this.getNavigation()).setCanOpenDoors(true);
+        ((AsyncGroundPathNavigation)this.getNavigation()).setCanOpenDoors(true);
         this.populateDefaultEquipmentEnchantments(random, difficultyInstance);
 
         this.initSpawn();
@@ -263,9 +266,16 @@ public class SiegeEngineerEntity extends AbstractRecruitEntity implements ICompa
         else siegeController.setTargetPos(null);
 
 
-        List<Entity> targets = new ArrayList<>(this.getCommandSenderWorld().getEntitiesOfClass(LivingEntity.class, this.getBoundingBox().inflate(200D)).stream()
-                .filter((target) -> shouldAttack(target) && this.hasLineOfSight(target) && !target.isUnderWater())
-                .toList());
+        if (!(this.getCommandSenderWorld() instanceof ServerLevel serverLevel)) return;
+
+        AABB scanBox = this.getBoundingBox().inflate(200D);
+        List<Entity> targets = new ArrayList<>();
+        for (LivingEntity candidate : NearbyEntityCache.livingEntities(serverLevel)) {
+            if (scanBox.contains(candidate.getX(), candidate.getY(), candidate.getZ())
+                    && shouldAttack(candidate) && this.hasLineOfSight(candidate) && !candidate.isUnderWater()) {
+                targets.add(candidate);
+            }
+        }
 
         if(targets.isEmpty()) return;
 
@@ -340,7 +350,10 @@ public class SiegeEngineerEntity extends AbstractRecruitEntity implements ICompa
         }
 
         // Also check nearby siege weapons that have passengers
-        List<Entity> allEntities = this.getCommandSenderWorld().getEntitiesOfClass(Entity.class, this.getBoundingBox().inflate(200D)).stream()
+        if (!(this.getCommandSenderWorld() instanceof ServerLevel serverLevel)) return null;
+        AABB scanBox = this.getBoundingBox().inflate(200D);
+        List<Entity> allEntities = NearbyEntityCache.allEntities(serverLevel).stream()
+                .filter(e -> scanBox.contains(e.getX(), e.getY(), e.getZ()))
                 .filter(e -> SiegeWeapon.isSiegeWeapon(e) && !e.getPassengers().isEmpty())
                 .sorted(Comparator.comparing(this::enemyDistanceToThis))
                 .toList();
@@ -357,7 +370,10 @@ public class SiegeEngineerEntity extends AbstractRecruitEntity implements ICompa
         }
 
         // Also check nearby ships that have passengers
-        List<Entity> ships = this.getCommandSenderWorld().getEntitiesOfClass(Entity.class, this.getBoundingBox().inflate(200D)).stream()
+        if (!(this.getCommandSenderWorld() instanceof ServerLevel serverLevel)) return null;
+        AABB scanBox = this.getBoundingBox().inflate(200D);
+        List<Entity> ships = NearbyEntityCache.allEntities(serverLevel).stream()
+                .filter(e -> scanBox.contains(e.getX(), e.getY(), e.getZ()))
                 .filter(e -> SmallShips.isSmallShip(e) && !e.getPassengers().isEmpty())
                 .sorted(Comparator.comparing(this::enemyDistanceToThis))
                 .toList();

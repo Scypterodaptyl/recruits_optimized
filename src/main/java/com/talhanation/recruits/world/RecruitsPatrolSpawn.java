@@ -37,8 +37,8 @@ import java.util.*;
 
 public class RecruitsPatrolSpawn {
     public static final Random random = new Random();
-    public static int timer;
-    public static double chance;
+    private int timer;
+    private double chance;
     public final ServerLevel world;
 
     public RecruitsPatrolSpawn(ServerLevel level) {

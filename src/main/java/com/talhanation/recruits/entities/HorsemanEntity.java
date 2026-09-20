@@ -154,14 +154,6 @@ public class HorsemanEntity extends RecruitShieldmanEntity {
     @Override
     public void aiStep() {
         super.aiStep();
-        this.getCommandSenderWorld().getProfiler().push("looting");
-        if (!this.getCommandSenderWorld().isClientSide && this.canPickUpLoot() && this.isAlive() && !this.dead && net.minecraftforge.event.ForgeEventFactory.getMobGriefingEvent(this.getCommandSenderWorld(), this)) {
-            for(ItemEntity itementity : this.getCommandSenderWorld().getEntitiesOfClass(ItemEntity.class, this.getBoundingBox().inflate(2.5D, 2.5D, 2.5D))) {
-                if (!itementity.isRemoved() && !itementity.getItem().isEmpty() && !itementity.hasPickUpDelay() && this.wantsToPickUp(itementity.getItem())) {
-                    this.pickUpItem(itementity);
-                }
-            }
-        }
         if(this.getVehicle() instanceof AbstractHorse abstractHorse){
             abstractHorse.setDeltaMovement(abstractHorse.getDeltaMovement().add(this.getDeltaMovement().scale(2)));
         }

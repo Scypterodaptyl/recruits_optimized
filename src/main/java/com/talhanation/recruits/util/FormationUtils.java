@@ -27,9 +27,9 @@ public class FormationUtils {
 
         BlockPos blockPos = FormationUtils.getPositionOrSurface(
                 level,
-                new BlockPos((int) pos.x, (int) pos.y, (int) pos.z)
+                new BlockPos((int) Math.round(pos.x), (int) Math.round(pos.y), (int) Math.round(pos.z))
         );
-        
+
         return new Vec3(blockPos.getX(), blockPos.getY(), blockPos.getZ());
 
     }
@@ -44,6 +44,16 @@ public class FormationUtils {
         lineFormation(forward, recruits, targetPos, 3, 2.0D * spacingMultiplier, hold);
     }
 
+    public static void movementFormation(ServerPlayer player, List<AbstractRecruitEntity> recruits, Vec3 targetPos, boolean tight, boolean hold) {
+        if (!tight) {
+            movementFormation(player, recruits, targetPos, 1.0, hold);
+            return;
+        }
+
+        Vec3 forward = nearestCardinalForward(player.getYRot());
+        lineFormation(forward, recruits, targetPos, 3, 1.0D, hold, true);
+    }
+
     public static void lineUpFormation(ServerPlayer player, List<AbstractRecruitEntity> recruits, Vec3 targetPos) {
         lineUpFormation(player, recruits, targetPos, 1.0, false);
     }
@@ -55,10 +65,24 @@ public class FormationUtils {
         lineFormation(forward, recruits, targetPos, maxInRow, 1.75D * spacingMultiplier, hold);
     }
 
+    public static void lineUpFormation(ServerPlayer player, List<AbstractRecruitEntity> recruits, Vec3 targetPos, boolean tight, boolean hold) {
+        if (!tight) {
+            lineUpFormation(player, recruits, targetPos, 1.0, hold);
+            return;
+        }
+
+        Vec3 forward = nearestCardinalForward(player.getYRot());
+        int maxInRow = recruits.size() <= 20 ? recruits.size() : (recruits.size() + 1) / 2;
+        lineFormation(forward, recruits, targetPos, maxInRow, 1.0D, hold, true);
+    }
+
     public static void lineFormation(Vec3 forward, List<AbstractRecruitEntity> recruits, Vec3 targetPos, int maxInRow, double spacing) {
         lineFormation(forward, recruits, targetPos, maxInRow, spacing, false);
     }
     public static void lineFormation(Vec3 forward, List<AbstractRecruitEntity> recruits, Vec3 targetPos, int maxInRow, double spacing, boolean hold) {
+        lineFormation(forward, recruits, targetPos, maxInRow, spacing, hold, false);
+    }
+    public static void lineFormation(Vec3 forward, List<AbstractRecruitEntity> recruits, Vec3 targetPos, int maxInRow, double spacing, boolean hold, boolean tight) {
         Vec3 left = new Vec3(-forward.z, forward.y, forward.x);
 
         List<FormationPosition> possiblePositions = new ArrayList<>();
@@ -70,7 +94,7 @@ public class FormationUtils {
             }
         }
 
-        double rowDistance = spacing * 1.75;
+        double rowDistance = tight ? spacing : spacing * 1.75;
 
         for (int i = 0; i < recruits.size(); i++) {
             int row = i / maxInRow;
@@ -108,7 +132,7 @@ public class FormationUtils {
             if (pos != null) {
                 BlockPos blockPos = FormationUtils.getPositionOrSurface(
                         recruit.getCommandSenderWorld(),
-                        new BlockPos((int) pos.x, (int) pos.y, (int) pos.z)
+                        new BlockPos((int) Math.round(pos.x), (int) Math.round(pos.y), (int) Math.round(pos.z))
                 );
 
                 recruit.setHoldPos(new Vec3(blockPos.getX(), blockPos.getY(), blockPos.getZ()));
@@ -130,6 +154,27 @@ public class FormationUtils {
         float yaw = player.getYRot();
         Vec3 forward = new Vec3(-Math.sin(Math.toRadians(yaw)), 0, Math.cos(Math.toRadians(yaw)));
         squareFormation(forward, recruits, targetPos, 2.5 * spacingMultiplier, hold);
+    }
+
+    public static void squareFormation(ServerPlayer player, List<AbstractRecruitEntity> recruits, Vec3 targetPos, boolean tight, boolean hold) {
+        if (!tight) {
+            squareFormation(player, recruits, targetPos, 1.0, hold);
+            return;
+        }
+
+        Vec3 forward = nearestCardinalForward(player.getYRot());
+        squareFormation(forward, recruits, targetPos, 1.0, hold);
+    }
+
+    private static Vec3 nearestCardinalForward(float yaw) {
+        float normalizedYaw = ((yaw % 360F) + 360F) % 360F;
+        int octant = Math.round(normalizedYaw / 90F) % 4;
+        return switch (octant) {
+            case 1 -> new Vec3(-1, 0, 0);
+            case 2 -> new Vec3(0, 0, -1);
+            case 3 -> new Vec3(1, 0, 0);
+            default -> new Vec3(0, 0, 1);
+        };
     }
     public static void squareFormation(Vec3 forward, List<AbstractRecruitEntity> recruits, Vec3 targetPos, double spacing) {
         squareFormation(forward, recruits, targetPos, spacing, false);
@@ -154,7 +199,7 @@ public class FormationUtils {
             int col = i % sideLength;
 
             Vec3 rowOffset = forward.scale(-row * spacing);
-            Vec3 colOffset = left.scale((col - sideLength / 2F) * spacing);
+            Vec3 colOffset = left.scale((col - (sideLength - 1) / 2.0) * spacing);
 
             Vec3 recruitPos = targetPos.add(rowOffset).add(colOffset);
             possiblePositions.add(new FormationPosition(recruitPos, true));
@@ -183,7 +228,7 @@ public class FormationUtils {
             if (pos != null) {
                 BlockPos blockPos = FormationUtils.getPositionOrSurface(
                         recruit.getCommandSenderWorld(),
-                        new BlockPos((int) pos.x, (int) pos.y, (int) pos.z)
+                        new BlockPos((int) Math.round(pos.x), (int) Math.round(pos.y), (int) Math.round(pos.z))
                 );
 
                 recruit.setHoldPos(new Vec3(blockPos.getX(), blockPos.getY(), blockPos.getZ()));
@@ -204,9 +249,22 @@ public class FormationUtils {
     public static void triangleFormation(ServerPlayer player, List<AbstractRecruitEntity> recruits, Vec3 targetPos, double spacingMultiplier, boolean hold) {
         float yaw = player.getYRot();
         Vec3 forward = new Vec3(-Math.sin(Math.toRadians(yaw)), 0, Math.cos(Math.toRadians(yaw)));
-        Vec3 left = new Vec3(-forward.z, forward.y, forward.x);
+        triangleFormation(forward, recruits, targetPos, 2.5 * spacingMultiplier, hold, false, yaw);
+    }
 
-        double spacing = 2.5 * spacingMultiplier;
+    public static void triangleFormation(ServerPlayer player, List<AbstractRecruitEntity> recruits, Vec3 targetPos, boolean tight, boolean hold) {
+        if (!tight) {
+            triangleFormation(player, recruits, targetPos, 1.0, hold);
+            return;
+        }
+
+        float yaw = player.getYRot();
+        Vec3 forward = nearestCardinalForward(yaw);
+        triangleFormation(forward, recruits, targetPos, 1.0, hold, true, yaw);
+    }
+
+    private static void triangleFormation(Vec3 forward, List<AbstractRecruitEntity> recruits, Vec3 targetPos, double spacing, boolean hold, boolean tight, float ownerRot) {
+        Vec3 left = new Vec3(-forward.z, forward.y, forward.x);
         int numRecruits = recruits.size();
 
         for(AbstractRecruitEntity rec : recruits){
@@ -216,7 +274,7 @@ public class FormationUtils {
             }
         }
 
-        double rowDistance = spacing * 1.5;
+        double rowDistance = tight ? spacing : spacing * 1.5;
 
         List<FormationPosition> possiblePositions = new ArrayList<>();
 
@@ -255,11 +313,12 @@ public class FormationUtils {
             if (pos != null) {
                 BlockPos blockPos = FormationUtils.getPositionOrSurface(
                         recruit.getCommandSenderWorld(),
-                        new BlockPos((int) pos.x, (int) pos.y, (int) pos.z)
+                        new BlockPos((int) Math.round(pos.x), (int) Math.round(pos.y), (int) Math.round(pos.z))
                 );
 
-                recruit.setHoldPos(new Vec3(pos.x, blockPos.getY(), pos.z));
-                recruit.ownerRot = player.getYRot();
+                Vec3 holdPos = tight ? new Vec3(blockPos.getX(), blockPos.getY(), blockPos.getZ()) : new Vec3(pos.x, blockPos.getY(), pos.z);
+                recruit.setHoldPos(holdPos);
+                recruit.ownerRot = ownerRot;
                 recruit.setFollowState(3);
                 recruit.isInFormation = true;
                 recruit.holdFormation = hold;
@@ -272,7 +331,19 @@ public class FormationUtils {
     }
 
     public static void hollowCircleFormation(ServerPlayer player, List<AbstractRecruitEntity> recruits, Vec3 targetPos, double spacingMultiplier, boolean hold) {
-        double spacing = 2.5 * spacingMultiplier;
+        hollowCircleFormation(recruits, targetPos, 2.5 * spacingMultiplier, hold, false, player.getYRot());
+    }
+
+    public static void hollowCircleFormation(ServerPlayer player, List<AbstractRecruitEntity> recruits, Vec3 targetPos, boolean tight, boolean hold) {
+        if (!tight) {
+            hollowCircleFormation(player, recruits, targetPos, 1.0, hold);
+            return;
+        }
+
+        hollowCircleFormation(recruits, targetPos, 1.0, hold, true, player.getYRot());
+    }
+
+    private static void hollowCircleFormation(List<AbstractRecruitEntity> recruits, Vec3 targetPos, double spacing, boolean hold, boolean tight, float ownerRot) {
         int numRecruits = recruits.size();
 
         for(AbstractRecruitEntity rec : recruits){
@@ -318,11 +389,12 @@ public class FormationUtils {
             if (pos != null) {
                 BlockPos blockPos = FormationUtils.getPositionOrSurface(
                         recruit.getCommandSenderWorld(),
-                        new BlockPos((int) pos.x, (int) pos.y, (int) pos.z)
+                        new BlockPos((int) Math.round(pos.x), (int) Math.round(pos.y), (int) Math.round(pos.z))
                 );
 
-                recruit.setHoldPos(new Vec3(pos.x, blockPos.getY(), pos.z));
-                recruit.ownerRot = player.getYRot();
+                Vec3 holdPos = tight ? new Vec3(blockPos.getX(), blockPos.getY(), blockPos.getZ()) : new Vec3(pos.x, blockPos.getY(), pos.z);
+                recruit.setHoldPos(holdPos);
+                recruit.ownerRot = ownerRot;
                 recruit.setFollowState(3);
                 recruit.isInFormation = true;
                 recruit.holdFormation = hold;
@@ -335,7 +407,19 @@ public class FormationUtils {
     }
 
     public static void circleFormation(ServerPlayer player, List<AbstractRecruitEntity> recruits, Vec3 targetPos, double spacingMultiplier, boolean hold) {
-        double spacing = 2.5 * spacingMultiplier; // Abstand zwischen den Rekruten in jedem Ring
+        circleFormation(recruits, targetPos, 2.5 * spacingMultiplier, hold, false, player.getYRot());
+    }
+
+    public static void circleFormation(ServerPlayer player, List<AbstractRecruitEntity> recruits, Vec3 targetPos, boolean tight, boolean hold) {
+        if (!tight) {
+            circleFormation(player, recruits, targetPos, 1.0, hold);
+            return;
+        }
+
+        circleFormation(recruits, targetPos, 1.0, hold, true, player.getYRot());
+    }
+
+    private static void circleFormation(List<AbstractRecruitEntity> recruits, Vec3 targetPos, double spacing, boolean hold, boolean tight, float ownerRot) {
         int numRecruits = recruits.size();
 
         for(AbstractRecruitEntity rec : recruits){
@@ -406,11 +490,12 @@ public class FormationUtils {
             if (pos != null) {
                 BlockPos blockPos = FormationUtils.getPositionOrSurface(
                         recruit.getCommandSenderWorld(),
-                        new BlockPos((int) pos.x, (int) pos.y, (int) pos.z)
+                        new BlockPos((int) Math.round(pos.x), (int) Math.round(pos.y), (int) Math.round(pos.z))
                 );
 
-                recruit.setHoldPos(new Vec3(pos.x, blockPos.getY(), pos.z));
-                recruit.ownerRot = player.getYRot();
+                Vec3 holdPos = tight ? new Vec3(blockPos.getX(), blockPos.getY(), blockPos.getZ()) : new Vec3(pos.x, blockPos.getY(), pos.z);
+                recruit.setHoldPos(holdPos);
+                recruit.ownerRot = ownerRot;
                 recruit.setFollowState(3);
                 recruit.isInFormation = true;
                 recruit.holdFormation = hold;
@@ -425,10 +510,24 @@ public class FormationUtils {
     public static void hollowSquareFormation(ServerPlayer player, List<AbstractRecruitEntity> recruits, Vec3 targetPos, double spacingMultiplier, boolean hold) {
         float yaw = player.getYRot();
         Vec3 forward = new Vec3(-Math.sin(Math.toRadians(yaw)), 0, Math.cos(Math.toRadians(yaw)));
+        hollowSquareFormation(forward, recruits, targetPos, 2.5 * spacingMultiplier, hold, false, yaw);
+    }
+
+    public static void hollowSquareFormation(ServerPlayer player, List<AbstractRecruitEntity> recruits, Vec3 targetPos, boolean tight, boolean hold) {
+        if (!tight) {
+            hollowSquareFormation(player, recruits, targetPos, 1.0, hold);
+            return;
+        }
+
+        float yaw = player.getYRot();
+        Vec3 forward = nearestCardinalForward(yaw);
+        hollowSquareFormation(forward, recruits, targetPos, 1.0, hold, true, yaw);
+    }
+
+    private static void hollowSquareFormation(Vec3 forward, List<AbstractRecruitEntity> recruits, Vec3 targetPos, double spacing, boolean hold, boolean tight, float ownerRot) {
         Vec3 left = new Vec3(-forward.z, forward.y, forward.x);
 
         int recruitsPerSide = Math.max(2, recruits.size() / 4); // Ensure at least 2 recruits per side
-        double spacing = 2.5 * spacingMultiplier;
 
         for(AbstractRecruitEntity rec : recruits){
             if(rec instanceof CaptainEntity captain && captain.smallShipsController.ship != null && captain.smallShipsController.ship.isCaptainDriver()){
@@ -484,11 +583,12 @@ public class FormationUtils {
             if (pos != null) {
                 BlockPos blockPos = FormationUtils.getPositionOrSurface(
                         recruit.getCommandSenderWorld(),
-                        new BlockPos((int) pos.x, (int) pos.y, (int) pos.z)
+                        new BlockPos((int) Math.round(pos.x), (int) Math.round(pos.y), (int) Math.round(pos.z))
                 );
 
-                recruit.setHoldPos(new Vec3(pos.x, blockPos.getY(), pos.z));
-                recruit.ownerRot = player.getYRot();
+                Vec3 holdPos = tight ? new Vec3(blockPos.getX(), blockPos.getY(), blockPos.getZ()) : new Vec3(pos.x, blockPos.getY(), pos.z);
+                recruit.setHoldPos(holdPos);
+                recruit.ownerRot = ownerRot;
                 recruit.setFollowState(3);
                 recruit.isInFormation = true;
                 recruit.holdFormation = hold;
@@ -504,9 +604,23 @@ public class FormationUtils {
     public static void vFormation(ServerPlayer player, List<AbstractRecruitEntity> recruits, Vec3 targetPos, double spacingMultiplier, boolean hold) {
         float yaw = player.getYRot();
         Vec3 forward = new Vec3(-Math.sin(Math.toRadians(yaw)), 0, Math.cos(Math.toRadians(yaw)));
+        vFormation(forward, recruits, targetPos, 2.5 * spacingMultiplier, hold, false, yaw);
+    }
+
+    public static void vFormation(ServerPlayer player, List<AbstractRecruitEntity> recruits, Vec3 targetPos, boolean tight, boolean hold) {
+        if (!tight) {
+            vFormation(player, recruits, targetPos, 1.0, hold);
+            return;
+        }
+
+        float yaw = player.getYRot();
+        Vec3 forward = nearestCardinalForward(yaw);
+        vFormation(forward, recruits, targetPos, 1.0, hold, true, yaw);
+    }
+
+    private static void vFormation(Vec3 forward, List<AbstractRecruitEntity> recruits, Vec3 targetPos, double spacing, boolean hold, boolean tight, float ownerRot) {
         Vec3 left = new Vec3(-forward.z, forward.y, forward.x);
 
-        double spacing = 2.5 * spacingMultiplier;
         int recruitsPerWing = recruits.size() / 2;
 
         for(AbstractRecruitEntity rec : recruits){
@@ -542,11 +656,12 @@ public class FormationUtils {
 
             BlockPos blockPos = FormationUtils.getPositionOrSurface(
                     recruit.getCommandSenderWorld(),
-                    new BlockPos((int) pos.x, (int) pos.y, (int) pos.z)
+                    new BlockPos((int) Math.round(pos.x), (int) Math.round(pos.y), (int) Math.round(pos.z))
             );
 
-            recruit.setHoldPos(new Vec3(pos.x, blockPos.getY(), pos.z));
-            recruit.ownerRot = player.getYRot();
+            Vec3 holdPos = tight ? new Vec3(blockPos.getX(), blockPos.getY(), blockPos.getZ()) : new Vec3(pos.x, blockPos.getY(), pos.z);
+            recruit.setHoldPos(holdPos);
+            recruit.ownerRot = ownerRot;
             recruit.setFollowState(3);
             recruit.isInFormation = true;
             recruit.holdFormation = hold;
@@ -583,7 +698,7 @@ public class FormationUtils {
 
         BlockPos blockPos = FormationUtils.getPositionOrSurface(
                 level,
-                new BlockPos((int) centerX, (int) centerY, (int) centerZ)
+                new BlockPos((int) Math.round(centerX), (int) Math.round(centerY), (int) Math.round(centerZ))
         );
 
         return new Vec3(centerX, blockPos.getY(), centerZ);
@@ -618,7 +733,7 @@ public class FormationUtils {
 
         BlockPos blockPos = FormationUtils.getPositionOrSurface(
                 level,
-                new BlockPos((int) centerX, (int) centerY, (int) centerZ)
+                new BlockPos((int) Math.round(centerX), (int) Math.round(centerY), (int) Math.round(centerZ))
         );
 
         return new Vec3(centerX, blockPos.getY(), centerZ);
@@ -661,6 +776,10 @@ public class FormationUtils {
                 denominator += weight;
             }
 
+            if (denominator == 0) {
+                break;
+            }
+
             Vec3 newGuess = new Vec3(numeratorX / denominator, numeratorY / denominator, numeratorZ / denominator);
 
             if (currentGuess.distanceTo(newGuess) < tolerance) {
@@ -672,7 +791,7 @@ public class FormationUtils {
 
         BlockPos blockPos = FormationUtils.getPositionOrSurface(
                 level,
-                new BlockPos((int) currentGuess.x, (int) currentGuess.y, (int) currentGuess.z)
+                new BlockPos((int) Math.round(currentGuess.x), (int) Math.round(currentGuess.y), (int) Math.round(currentGuess.z))
         );
 
         return new Vec3(currentGuess.x, blockPos.getY(), currentGuess.z);

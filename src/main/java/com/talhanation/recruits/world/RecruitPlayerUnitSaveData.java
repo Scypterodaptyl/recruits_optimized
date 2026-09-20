@@ -10,7 +10,7 @@ import java.util.Map;
 import java.util.UUID;
 
 public class RecruitPlayerUnitSaveData extends SavedData {
-    public static final Map<UUID, Integer> recruitCountMap = new HashMap<>();
+    private final Map<UUID, Integer> recruitCountMap = new HashMap<>();
     private static final String DATA_NAME = "recruit_player_unit_data";
 
     public RecruitPlayerUnitSaveData(){
@@ -25,7 +25,7 @@ public class RecruitPlayerUnitSaveData extends SavedData {
         for (String uuidKey : recruitCounts.getAllKeys()) {
             UUID uuid = UUID.fromString(uuidKey);
             int count = recruitCounts.getInt(uuidKey);
-            recruitCountMap.put(uuid, count);
+            data.recruitCountMap.put(uuid, count);
         }
 
         return data;

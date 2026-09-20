@@ -22,7 +22,6 @@ import net.minecraft.world.entity.animal.horse.Horse;
 import net.minecraft.world.entity.animal.horse.Markings;
 import net.minecraft.world.entity.animal.horse.Variant;
 import net.minecraft.world.entity.animal.camel.Camel;
-import net.minecraft.world.entity.item.ItemEntity;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.ServerLevelAccessor;
 import net.minecraftforge.common.ForgeMod;
@@ -152,15 +151,6 @@ public class NomadEntity extends BowmanEntity {
     @Override
     public void aiStep() {
         super.aiStep();
-        this.getCommandSenderWorld().getProfiler().push("looting");
-        if (!this.getCommandSenderWorld().isClientSide && this.canPickUpLoot() && this.isAlive() && !this.dead && net.minecraftforge.event.ForgeEventFactory.getMobGriefingEvent(this.getCommandSenderWorld(), this)) {
-            this.getCommandSenderWorld().getEntitiesOfClass(
-                    ItemEntity.class,
-                    this.getBoundingBox().inflate(2.5D, 2.5D, 2.5D),
-                    (itemEntity) -> !itemEntity.isRemoved() && !itemEntity.getItem().isEmpty() && !itemEntity.hasPickUpDelay() && this.wantsToPickUp(itemEntity.getItem())
-            ).forEach((this::pickUpItem));
-        }
-
         if (this.getVehicle() instanceof AbstractHorse abstractHorse) {
             abstractHorse.setDeltaMovement(abstractHorse.getDeltaMovement().add(this.getDeltaMovement().scale(2)));
         }

@@ -10,6 +10,7 @@ import net.minecraft.world.entity.npc.Villager;
 import net.minecraft.world.phys.AABB;
 
 import javax.annotation.Nullable;
+import java.util.EnumSet;
 import java.util.UUID;
 
 public class FollowCaravanOwner extends Goal {
@@ -21,11 +22,17 @@ public class FollowCaravanOwner extends Goal {
     public FollowCaravanOwner(AbstractVillager villager, UUID uuid) {
         this.villager = villager;
         this.uuid = uuid;
+        this.setFlags(EnumSet.of(Flag.MOVE));
     }
 
     @Override
     public boolean canUse() {
         return true;
+    }
+
+    @Override
+    public boolean canContinueToUse() {
+        return patrolOwner == null || patrolOwner.isAlive();
     }
 
     @Override

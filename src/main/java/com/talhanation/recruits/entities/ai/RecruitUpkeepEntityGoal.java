@@ -14,6 +14,7 @@ import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.phys.Vec3;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.EnumSet;
 import java.util.Optional;
 
 public class RecruitUpkeepEntityGoal extends Goal {
@@ -29,6 +30,7 @@ public class RecruitUpkeepEntityGoal extends Goal {
 
     public RecruitUpkeepEntityGoal(AbstractRecruitEntity recruit) {
         this.recruit = recruit;
+        this.setFlags(EnumSet.of(Flag.MOVE));
     }
 
     @Override

@@ -27,8 +27,8 @@ public class AsyncPathProcessor {
 
         int workersCount = Math.max(1, RecruitsServerConfig.AsyncPathfindingThreadsCount.get());
 
-        pathFindingExecutor = new ThreadPoolExecutor(
-                1,
+        ThreadPoolExecutor executor = new ThreadPoolExecutor(
+                workersCount,
                 workersCount,
                 60,
                 TimeUnit.SECONDS,
@@ -39,6 +39,8 @@ public class AsyncPathProcessor {
                         .setPriority(Thread.NORM_PRIORITY - 2)
                         .build()
         );
+        executor.allowCoreThreadTimeOut(true);
+        pathFindingExecutor = executor;
     }
 
     public static void shutdown() {

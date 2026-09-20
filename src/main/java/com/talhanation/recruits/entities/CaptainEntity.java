@@ -67,11 +67,16 @@ public class CaptainEntity extends AbstractLeaderEntity implements IStrategicFir
         return 150D;
     }
 
+    private SailorPathNavigation sailorNavigation;
+
     @Override
     @NotNull
     public PathNavigation getNavigation() {
         if (this.getVehicle() instanceof Boat) {
-            return new SailorPathNavigation(this, this.getCommandSenderWorld());
+            if (sailorNavigation == null) {
+                sailorNavigation = new SailorPathNavigation(this, this.getCommandSenderWorld());
+            }
+            return sailorNavigation;
         }
         else
             return super.getNavigation();

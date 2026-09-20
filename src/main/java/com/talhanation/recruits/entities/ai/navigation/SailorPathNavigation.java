@@ -15,10 +15,8 @@ import net.minecraft.world.level.pathfinder.PathFinder;
 import org.jetbrains.annotations.NotNull;
 
 import javax.annotation.Nullable;
-import java.util.function.BiFunction;
 
 public class SailorPathNavigation extends AsyncWaterBoundPathNavigation {
-    private static BiFunction<Integer, NodeEvaluator, PathFinder> pathfinderSupplier = (p_26453_, nodeEvaluator) -> new PathFinder(nodeEvaluator, p_26453_);
     CaptainEntity captain;
 
     private static final NodeEvaluatorGenerator nodeEvaluatorGenerator = SailorNodeEvaluator::new;
@@ -26,14 +24,14 @@ public class SailorPathNavigation extends AsyncWaterBoundPathNavigation {
     public SailorPathNavigation(CaptainEntity sailor, Level level) {
         super(sailor, level);
         this.captain = sailor;
-        if(RecruitsServerConfig.UseAsyncPathfinding.get()) {
-            pathfinderSupplier = (p_26453_, nodeEvaluator) -> new AsyncPathfinder(nodeEvaluator, p_26453_, nodeEvaluatorGenerator, this.level);
-        }
     }
 
     protected @NotNull PathFinder createPathFinder(int maxVisitedNodes) {
         this.nodeEvaluator = new SailorNodeEvaluator();
-        return pathfinderSupplier.apply(maxVisitedNodes, this.nodeEvaluator);
+        if (RecruitsServerConfig.UseAsyncPathfinding.get()) {
+            return new AsyncPathfinder(this.nodeEvaluator, maxVisitedNodes, nodeEvaluatorGenerator, this.level);
+        }
+        return new PathFinder(this.nodeEvaluator, maxVisitedNodes);
     }
 
     @Override

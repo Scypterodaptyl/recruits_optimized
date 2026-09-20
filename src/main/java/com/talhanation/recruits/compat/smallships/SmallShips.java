@@ -22,9 +22,22 @@ import net.minecraftforge.registries.ForgeRegistries;
 
 import javax.annotation.Nullable;
 
+import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
+
 import static com.talhanation.recruits.util.Kalkuel.*;
 
 public class SmallShips {
+
+    private static final Map<String, Class<?>> CLASS_CACHE = new ConcurrentHashMap<>();
+
+    private static Class<?> resolveClass(String name) throws ClassNotFoundException {
+        Class<?> cached = CLASS_CACHE.get(name);
+        if (cached != null) return cached;
+        Class<?> resolved = Class.forName(name);
+        CLASS_CACHE.put(name, resolved);
+        return resolved;
+    }
 
     private final Boat boat;
     private final CaptainEntity captain;
@@ -41,7 +54,7 @@ public class SmallShips {
     public static boolean isSmallShip(Entity entity) {
         if(entity == null) return false;
         try {
-            Class<?> shipClass = Class.forName("com.talhanation.smallships.world.entity.ship.Ship");
+            Class<?> shipClass = resolveClass("com.talhanation.smallships.world.entity.ship.Ship");
             if (shipClass.isInstance(entity)) {
                 return true;
             }
@@ -59,7 +72,7 @@ public class SmallShips {
     public float getShipSpeed() {
         float speed = 0;
         try{
-            Class<?> shipClass = Class.forName("com.talhanation.smallships.world.entity.ship.Ship");
+            Class<?> shipClass = resolveClass("com.talhanation.smallships.world.entity.ship.Ship");
             if(shipClass.isInstance(boat)) {
                 Object ship = shipClass.cast(boat);
 
@@ -76,12 +89,12 @@ public class SmallShips {
 
     public void setSailState(int state) {
         try {
-            Class<?> shipClass = Class.forName("com.talhanation.smallships.world.entity.ship.Ship");
+            Class<?> shipClass = resolveClass("com.talhanation.smallships.world.entity.ship.Ship");
             if (shipClass.isInstance(boat)) {
                 Field coolDownField = shipClass.getField("sailStateCooldown");
                 int coolDown = coolDownField.getInt(boat);
                 if (coolDown == 0) {
-                    Class<?> sailableClass = Class.forName("com.talhanation.smallships.world.entity.ship.abilities.Sailable");
+                    Class<?> sailableClass = resolveClass("com.talhanation.smallships.world.entity.ship.abilities.Sailable");
                     if (sailableClass.isInstance(boat)) {
                         Object sailable = sailableClass.cast(boat);
                         Method getSailStateCooldown = sailableClass.getMethod("getSailStateCooldown");
@@ -106,7 +119,7 @@ public class SmallShips {
 
     public void steerLeft() {
         try {
-            Class<?> shipClass = Class.forName("com.talhanation.smallships.world.entity.ship.Ship");
+            Class<?> shipClass = resolveClass("com.talhanation.smallships.world.entity.ship.Ship");
             if (shipClass.isInstance(boat)) {
                 Object ship = shipClass.cast(boat);
 
@@ -125,7 +138,7 @@ public class SmallShips {
     /*
     public void steerRight() {
         try {
-            Class<?> shipClass = Class.forName("com.talhanation.smallships.world.entity.ship.Ship");
+            Class<?> shipClass = resolveClass("com.talhanation.smallships.world.entity.ship.Ship");
             if (shipClass.isInstance(boat)) {
                 Object ship = shipClass.cast(boat);
 
@@ -146,7 +159,7 @@ public class SmallShips {
         float maxRotSp = 2.0F;
         float rotAcceleration = 0.35F;
         try {
-            Class<?> shipClass = Class.forName("com.talhanation.smallships.world.entity.ship.Ship");
+            Class<?> shipClass = resolveClass("com.talhanation.smallships.world.entity.ship.Ship");
             if (shipClass.isInstance(boat)) {
                 Object ship = shipClass.cast(boat);
                 Method getRotSpeed = shipClass.getMethod("getRotSpeed");
@@ -204,7 +217,7 @@ public class SmallShips {
     }
     public void updateControl() {
         try {
-            Class<?> shipClass = Class.forName("com.talhanation.smallships.world.entity.ship.Ship");
+            Class<?> shipClass = resolveClass("com.talhanation.smallships.world.entity.ship.Ship");
             if (shipClass.isInstance(boat)) {
                 Object ship = shipClass.cast(boat);
 
@@ -219,7 +232,7 @@ public class SmallShips {
     }
     public void updateSmallShipsControl(boolean inputLeft, boolean inputRight, int state) {
         try{
-            Class<?> shipClass = Class.forName("com.talhanation.smallships.world.entity.ship.Ship");
+            Class<?> shipClass = resolveClass("com.talhanation.smallships.world.entity.ship.Ship");
             if(shipClass.isInstance(boat)) {
                 Object ship = shipClass.cast(boat);
                 Method shipClassIsLeashed = shipClass.getMethod("isShipLeashed");
@@ -257,7 +270,7 @@ public class SmallShips {
         }
 
         try{
-            Class<?> shipClass = Class.forName("com.talhanation.smallships.world.entity.ship.Ship");
+            Class<?> shipClass = resolveClass("com.talhanation.smallships.world.entity.ship.Ship");
             if(shipClass.isInstance(boat)) {
                 Object ship = shipClass.cast(boat);
                 Method shipClassIsLeashed = shipClass.getMethod("isShipLeashed");
@@ -279,7 +292,7 @@ public class SmallShips {
         float boatRotSpeed = 0;
         float rotAcceleration = 0.35F;
         try{
-            Class<?> shipClass = Class.forName("com.talhanation.smallships.world.entity.ship.Ship");
+            Class<?> shipClass = resolveClass("com.talhanation.smallships.world.entity.ship.Ship");
             if(shipClass.isInstance(boat)) {
                 Object ship = shipClass.cast(boat);
 
@@ -343,7 +356,7 @@ public class SmallShips {
 
     private void setSmallShipsSailState(Boat boat, int state){
         try {
-            Class<?> shipClass = Class.forName("com.talhanation.smallships.world.entity.ship.Ship");
+            Class<?> shipClass = resolveClass("com.talhanation.smallships.world.entity.ship.Ship");
 
             Field coolDownFlied = shipClass.getField("sailStateCooldown");
             if(coolDownFlied != null){
@@ -351,7 +364,7 @@ public class SmallShips {
 
                 if(coolDown == 0){
                     try{
-                        Class<?> sailableClass = Class.forName("com.talhanation.smallships.world.entity.ship.abilities.Sailable");
+                        Class<?> sailableClass = resolveClass("com.talhanation.smallships.world.entity.ship.abilities.Sailable");
                         if(sailableClass.isInstance(boat)){
                             Object sailable = sailableClass.cast(boat);
                             if(sailable != null){
@@ -389,7 +402,7 @@ public class SmallShips {
 
     public boolean hasCannons() {
         try{
-            Class<?> cannonAbleClass = Class.forName("com.talhanation.smallships.world.entity.ship.abilities.Cannonable");
+            Class<?> cannonAbleClass = resolveClass("com.talhanation.smallships.world.entity.ship.abilities.Cannonable");
             if(cannonAbleClass.isInstance(boat)){
                 Object cannonAble = cannonAbleClass.cast(boat);
                 Method cannonAbleClassGetCannons = cannonAbleClass.getMethod("getCannons");
@@ -409,7 +422,7 @@ public class SmallShips {
     public static boolean canShootCannons(Entity vehicle) {
         if(vehicle instanceof Boat boat) {
             try{
-                Class<?> cannonAbleClass = Class.forName("com.talhanation.smallships.world.entity.ship.abilities.Cannonable");
+                Class<?> cannonAbleClass = resolveClass("com.talhanation.smallships.world.entity.ship.abilities.Cannonable");
                 if(cannonAbleClass.isInstance(boat)){
                     Object cannonAble = cannonAbleClass.cast(boat);
                     Method cannonAbleClassCanShootCannons = cannonAbleClass.getMethod("canShoot");
@@ -439,7 +452,7 @@ public class SmallShips {
         double angle = IRangedRecruit.calcCannonAngle(distanceToTarget, heightDiff, 2);
         double yShootVec = shootVec.y() + angle;
         try{
-            Class<?> cannonAbleClass = Class.forName("com.talhanation.smallships.world.entity.ship.abilities.Cannonable");
+            Class<?> cannonAbleClass = resolveClass("com.talhanation.smallships.world.entity.ship.abilities.Cannonable");
             if(cannonAbleClass.isInstance(boat)){
                 Object cannonAble = cannonAbleClass.cast(boat);
                 Method cannonAbleClassTriggerCannons = cannonAbleClass.getMethod("triggerCannons", Vec3.class, double.class, LivingEntity.class, double.class, double.class);
@@ -455,6 +468,7 @@ public class SmallShips {
 
     @Nullable
     public static ItemStack getSmallShipsItem() {
+        if (!Main.isSmallShipsLoaded) return null;
         return ForgeRegistries.ITEMS.getDelegateOrThrow(ResourceLocation.tryParse("smallships:oak_cog")).get().getDefaultInstance();
     }
 
@@ -462,7 +476,7 @@ public class SmallShips {
         int amount = (10 + captain.getCommandSenderWorld().random.nextInt(5));
         try{
             if (Main.isSmallShipsLoaded && Main.isSmallShipsCompatible && boat.getEncodeId().contains("smallships")) {
-                Class<?> shipClass = Class.forName("com.talhanation.smallships.world.entity.ship.Ship");
+                Class<?> shipClass = resolveClass("com.talhanation.smallships.world.entity.ship.Ship");
                 if(shipClass.isInstance(boat)) {
                     Object ship = shipClass.cast(boat);
 
@@ -499,7 +513,7 @@ public class SmallShips {
     public float getDamage() {
         float damage = 0;
         try{
-            Class<?> shipClass = Class.forName("com.talhanation.smallships.world.entity.ship.Ship");
+            Class<?> shipClass = resolveClass("com.talhanation.smallships.world.entity.ship.Ship");
             if(shipClass.isInstance(boat)) {
                 Object ship = shipClass.cast(boat);
 

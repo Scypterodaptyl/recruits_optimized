@@ -592,24 +592,13 @@ public class RecruitsAdminCommands {
                                             if(handItem.getItem() instanceof RecruitsSpawnEgg recruitsSpawnEgg){
                                                 BlockPos pos = player.getOnPos();
                                                 EntityType<?> entitytype = recruitsSpawnEgg.getType(handItem.getTag());
-                                                List<AbstractRecruitEntity> recruitEntities = new ArrayList<>();
+                                                CompoundTag itemTag = handItem.getTag();
 
-                                                for(int i = 0; i < amount; i++){
-                                                    Entity entity = entitytype.create(serverLevel);
-                                                    CompoundTag entityTag = handItem.getTag();
-
-                                                    if(entity instanceof AbstractRecruitEntity recruit && entityTag != null) {
-                                                        RecruitsSpawnEgg.fillRecruit(recruit, entityTag, pos);
-                                                        recruitEntities.add((AbstractRecruitEntity)entity);
+                                                if (itemTag != null) {
+                                                    for (int i = 0; i < amount; i++) {
+                                                        RecruitsSpawnEgg.spawnRecruitCopy(serverLevel, entitytype, itemTag, pos);
                                                     }
                                                 }
-
-                                                //FormationUtils.squareFormation(player, recruitEntities, pos.getCenter());
-
-                                                for(Entity entity : recruitEntities){
-                                                    serverLevel.addFreshEntity(entity);
-                                                }
-
                                             }
                                             else{
                                                 context.getSource().sendFailure(Component.literal("No Spawn Egg found!").withStyle(ChatFormatting.RED));

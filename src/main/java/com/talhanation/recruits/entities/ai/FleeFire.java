@@ -5,18 +5,24 @@ import com.talhanation.recruits.entities.AssassinEntity;
 import com.talhanation.recruits.pathfinding.AsyncPathfinderMob;
 import net.minecraft.core.BlockPos;
 import net.minecraft.tags.FluidTags;
+import net.minecraft.util.RandomSource;
 import net.minecraft.world.entity.ai.goal.Goal;
 import net.minecraft.world.phys.Vec3;
 
-import java.util.Random;
+import java.util.EnumSet;
 
 public class FleeFire extends Goal {
 
+    private static final int CHECK_INTERVAL = 5;
+
     AsyncPathfinderMob entity;
     BlockPos fleePos;
+    private int cooldown = 0;
+    private boolean nearLava = false;
 
     public FleeFire(AsyncPathfinderMob entity) {
     this.entity = entity;
+    this.setFlags(EnumSet.of(Flag.MOVE));
     }
 
     @Override
@@ -27,7 +33,12 @@ public class FleeFire extends Goal {
     @Override
     public void tick() {
         super.tick();
-        if (isNearLava()) {
+        if (--cooldown <= 0) {
+            cooldown = CHECK_INTERVAL;
+            nearLava = isNearLava();
+        }
+
+        if (nearLava) {
             double fleeDistance = 4D;
             Vec3 vecTarget = new Vec3(fleePos.getX(), fleePos.getY(), fleePos.getZ());
             Vec3 vecRec = new Vec3(entity.getX(), entity.getY(), entity.getZ());
@@ -57,7 +68,7 @@ public class FleeFire extends Goal {
 
 
 public boolean isNearLava() {
-        Random random = new Random();
+        RandomSource random = entity.getRandom();
         int range = 4;
 
             for(int i = 0; i < 15; i++){

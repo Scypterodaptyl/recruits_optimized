@@ -98,6 +98,9 @@ public class CommandEvents {
             applyFormation(formation, recruits, player, targetPos, tight, holdFormation);
         }
         else{
+            HitResult moveHitResult = movementState == 6 ? player.pick(100, 1F, true) : null;
+            Vec3 moveGroupCenter = movementState == 6 ? averagePosition(recruits) : null;
+
             for(AbstractRecruitEntity recruit : recruits){
                 int state = recruit.getFollowState();
 
@@ -130,12 +133,18 @@ public class CommandEvents {
                     }
                     //MOVE
                     case 6 ->{
-                        HitResult hitResult = player.pick(100, 1F, true);
-                        if (hitResult.getType() == HitResult.Type.BLOCK) {
-                            BlockHitResult blockHitResult = (BlockHitResult) hitResult;
+                        if (moveHitResult != null && moveHitResult.getType() == HitResult.Type.BLOCK) {
+                            BlockHitResult blockHitResult = (BlockHitResult) moveHitResult;
                             BlockPos blockpos = blockHitResult.getBlockPos();
 
-                            recruit.setMovePos(blockpos);// needs to be above setFollowState
+                            // Keep each recruit's offset from the group's center instead of sending
+                            // everyone to the exact same block, which used to make large groups pile
+                            // on top of each other at the destination.
+                            Vec3 offset = recruit.position().subtract(moveGroupCenter);
+                            BlockPos spreadPos = blockpos.offset((int) Math.round(offset.x), 0, (int) Math.round(offset.z));
+                            BlockPos targetBlockPos = FormationUtils.getPositionOrSurface(player.getCommandSenderWorld(), spreadPos);
+
+                            recruit.setMovePos(targetBlockPos);// needs to be above setFollowState
 
                             recruit.setFollowState(0);// needs to be above setShouldMovePos
 
@@ -189,6 +198,17 @@ public class CommandEvents {
          }
     }
 
+    private static Vec3 averagePosition(List<AbstractRecruitEntity> recruits) {
+        double sumX = 0, sumY = 0, sumZ = 0;
+        for (AbstractRecruitEntity recruit : recruits) {
+            Vec3 pos = recruit.position();
+            sumX += pos.x;
+            sumY += pos.y;
+            sumZ += pos.z;
+        }
+        return new Vec3(sumX / recruits.size(), sumY / recruits.size(), sumZ / recruits.size());
+    }
+
     private static double getForwardScale(List<AbstractRecruitEntity> recruits) {
         for (AbstractRecruitEntity recruit : recruits){
             if(recruit instanceof CaptainEntity) return getForwardScale(recruit);
@@ -207,31 +227,30 @@ public class CommandEvents {
 
     public static void applyFormation(int formation, List<AbstractRecruitEntity> recruits, ServerPlayer player, Vec3 targetPos, boolean tight, boolean holdFormation) {
         saveFormationCenter(player, targetPos);
-        double spacingMultiplier = tight ? 0.5 : 1.0;
         switch (formation){
             case 1 ->{//LINE UP
-                FormationUtils.lineUpFormation(player, recruits, targetPos, spacingMultiplier, holdFormation);
+                FormationUtils.lineUpFormation(player, recruits, targetPos, tight, holdFormation);
             }
             case 2 ->{//SQUARE
-                FormationUtils.squareFormation(player, recruits, targetPos, spacingMultiplier, holdFormation);
+                FormationUtils.squareFormation(player, recruits, targetPos, tight, holdFormation);
             }
             case 3 ->{//TRIANGLE
-                FormationUtils.triangleFormation(player, recruits, targetPos, spacingMultiplier, holdFormation);
+                FormationUtils.triangleFormation(player, recruits, targetPos, tight, holdFormation);
             }
             case 4 ->{//HOLLOW CIRCLE
-                FormationUtils.hollowCircleFormation(player, recruits, targetPos, spacingMultiplier, holdFormation);
+                FormationUtils.hollowCircleFormation(player, recruits, targetPos, tight, holdFormation);
             }
             case 5 ->{//HOLLOW SQUARE
-                FormationUtils.hollowSquareFormation(player, recruits, targetPos, spacingMultiplier, holdFormation);
+                FormationUtils.hollowSquareFormation(player, recruits, targetPos, tight, holdFormation);
             }
             case 6 ->{//V Formation
-                FormationUtils.vFormation(player, recruits, targetPos, spacingMultiplier, holdFormation);
+                FormationUtils.vFormation(player, recruits, targetPos, tight, holdFormation);
             }
             case 7 ->{//CIRCLE
-                FormationUtils.circleFormation(player, recruits, targetPos, spacingMultiplier, holdFormation);
+                FormationUtils.circleFormation(player, recruits, targetPos, tight, holdFormation);
             }
             case 8 ->{//MOVEMENT
-                FormationUtils.movementFormation(player, recruits, targetPos, spacingMultiplier, holdFormation);
+                FormationUtils.movementFormation(player, recruits, targetPos, tight, holdFormation);
             }
         }
     }

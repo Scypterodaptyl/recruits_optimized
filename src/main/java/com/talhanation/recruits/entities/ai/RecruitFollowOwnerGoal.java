@@ -20,8 +20,8 @@ public class RecruitFollowOwnerGoal extends Goal {
     public RecruitFollowOwnerGoal(AbstractRecruitEntity recruit, double speedModifier, float startDistance, float stopDistance) {
         this.recruit = recruit;
         this.speedModifier = speedModifier;
-        this.startDistance = 9;
-        this.stopDistance = 7;
+        this.startDistance = startDistance;
+        this.stopDistance = stopDistance;
     }
 
     public boolean canUse() {

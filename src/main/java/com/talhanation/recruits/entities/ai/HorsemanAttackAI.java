@@ -72,7 +72,7 @@ public class HorsemanAttackAI extends Goal {
                         this.movePos = possibleMovePosVec;
                         this.vecRotation = 0;
                         this.state = CHARGE_TARGET;
-                    } else if (vecRotation > 360) {
+                    } else if (vecRotation < 360) {
                         vecRotation += 15;
                     } else {
                         stop();

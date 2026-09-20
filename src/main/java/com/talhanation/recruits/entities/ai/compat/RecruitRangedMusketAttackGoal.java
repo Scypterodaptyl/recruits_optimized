@@ -13,6 +13,7 @@ import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.phys.Vec3;
 import org.jetbrains.annotations.NotNull;
 
+import java.util.EnumSet;
 import java.util.List;
 
 public class RecruitRangedMusketAttackGoal extends Goal {
@@ -29,6 +30,7 @@ public class RecruitRangedMusketAttackGoal extends Goal {
         this.crossBowman = crossBowman;
         this.speedModifier = this.weapon.getMoveSpeedAmp();
         this.stopRange = stopRange;
+        this.setFlags(EnumSet.of(Flag.LOOK, Flag.MOVE));
     }
 
     public boolean canUse() {

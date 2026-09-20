@@ -9,8 +9,8 @@ import java.util.*;
 
 public class RecruitsDiplomacySaveData extends SavedData {
 
-    public static final Map<String, Map<String, DiplomacyStatus>> diplomacyMap = new HashMap<>();
-    public static final Map<UUID, String> embargoMap = new HashMap<>();
+    private final Map<String, Map<String, DiplomacyStatus>> diplomacyMap = new HashMap<>();
+    private final Map<UUID, String> embargoMap = new HashMap<>();
 
     private static final String DATA_NAME = "diplomacy_data";
 
@@ -35,14 +35,14 @@ public class RecruitsDiplomacySaveData extends SavedData {
                 byte relationStatusByte = relationsTag.getByte(relationKey);
                 relations.put(relationKey, DiplomacyStatus.fromByte(relationStatusByte));
             }
-            diplomacyMap.put(teamKey, relations);
+            data.diplomacyMap.put(teamKey, relations);
         }
 
         CompoundTag embargoesTag = nbt.getCompound("embargoes");
         for (String uuidKey : embargoesTag.getAllKeys()) {
             String csv = embargoesTag.getString(uuidKey);
             if (!csv.isEmpty()) {
-                embargoMap.put(UUID.fromString(uuidKey), csv);
+                data.embargoMap.put(UUID.fromString(uuidKey), csv);
             }
         }
 

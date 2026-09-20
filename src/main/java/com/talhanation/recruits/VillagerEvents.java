@@ -105,7 +105,7 @@ public class VillagerEvents {
 
         if (entity instanceof IronGolem ironGolemEntity) {
 
-            if (!ironGolemEntity.isPlayerCreated() && RecruitsServerConfig.OverrideIronGolemSpawn.get()){
+            if (!ironGolemEntity.isPlayerCreated() && RecruitsServerConfig.OverrideIronGolemSpawn.get() && ironGolemEntity.tickCount % 20 == 0){
                 List<AbstractRecruitEntity> list1 = entity.getCommandSenderWorld().getEntitiesOfClass(
                         AbstractRecruitEntity.class,
                         ironGolemEntity.getBoundingBox().inflate(32)
