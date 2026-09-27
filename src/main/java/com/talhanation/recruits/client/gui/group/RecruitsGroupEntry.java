@@ -38,7 +38,7 @@ public class RecruitsGroupEntry extends ListScreenEntryBase<RecruitsGroupEntry> 
     public void renderContent(GuiGraphics guiGraphics, int mouseX, int mouseY, boolean hovered, float delta) {
         int index = 0;
         int top = this.getY();
-        int left = this.getX();
+        int left = this.getX() + 3; // center the row between the list border and the scrollbar
         int width = this.getWidth();
         int height = this.getHeight() - 4;
         int skinX = left + PADDING;
