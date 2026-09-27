@@ -10,7 +10,6 @@ import net.minecraft.world.entity.Mob;
 import net.minecraft.world.entity.ai.attributes.Attributes;
 import net.minecraft.world.entity.ai.goal.Goal;
 import net.minecraft.world.entity.monster.Monster;
-import net.minecraft.world.entity.monster.RangedAttackMob;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.*;
 import net.minecraft.world.phys.Vec3;
@@ -25,7 +24,7 @@ public class BlockWithWeapon extends Goal {
     public boolean canUse() {
         if(Main.isEpicKnightsLoaded && recruit.blockCoolDown == 0){
             boolean noItemInOffhand = this.recruit.getOffhandItem().isEmpty();
-            boolean canBlockWithItem = this.recruit.getMainHandItem().getDescriptionId().contains("magistu");
+            boolean canBlockWithItem = this.recruit.getMainHandItem().getItem().getDescriptionId().contains("magistu");
 
             return canBlockWithItem && shouldBlock() && !recruit.isFollowing() && recruit.canBlock() && !recruit.getShouldMovePos() && noItemInOffhand && !this.recruit.swinging;
         }
@@ -80,8 +79,8 @@ public class BlockWithWeapon extends Goal {
 
             boolean isDanger = isSelfTargeted && itemInHand instanceof CrossbowItem && CrossbowItem.isCharged(itemStackInHand)
                     || itemInHand instanceof AxeItem
-                    || itemInHand instanceof PickaxeItem
-                    || itemInHand instanceof SwordItem;
+                    || itemInHand.getDefaultInstance().is(net.minecraft.tags.ItemTags.PICKAXES)
+                    || itemInHand.getDefaultInstance().is(net.minecraft.tags.ItemTags.SWORDS);
 
             if ((isClose && (isSelfTargeted || target instanceof Player)) && (isDanger || (target instanceof Monster))){
                 return true;

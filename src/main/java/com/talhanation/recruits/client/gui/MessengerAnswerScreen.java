@@ -1,6 +1,8 @@
 package com.talhanation.recruits.client.gui;
 
-import com.mojang.blaze3d.systems.RenderSystem;
+import net.minecraft.client.input.MouseButtonEvent;
+import net.minecraft.client.renderer.RenderPipelines;
+
 import com.talhanation.recruits.Main;
 import com.talhanation.recruits.client.gui.component.RecruitsMultiLineEditBox;
 import com.talhanation.recruits.entities.MessengerEntity;
@@ -8,16 +10,15 @@ import com.talhanation.recruits.network.MessageAnswerMessenger;
 import com.talhanation.recruits.world.RecruitsPlayerInfo;
 import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.client.gui.components.Button;
-import net.minecraft.client.renderer.GameRenderer;
 import net.minecraft.network.chat.Component;
 import net.minecraft.network.chat.MutableComponent;
-import net.minecraft.resources.ResourceLocation;
+import net.minecraft.resources.Identifier;
 import net.minecraft.world.entity.player.Player;
 import net.minecraftforge.client.gui.widget.ExtendedButton;
 
 public class MessengerAnswerScreen extends RecruitsScreenBase {
 
-    private static final ResourceLocation TEXTURE = new ResourceLocation(Main.MOD_ID, "textures/gui/professions/blank_gui.png");
+    private static final Identifier TEXTURE = Identifier.fromNamespaceAndPath(Main.MOD_ID, "textures/gui/professions/blank_gui.png");
     private final Player player;
     private final MessengerEntity messenger;
     private RecruitsMultiLineEditBox textFieldMessage;
@@ -47,11 +48,14 @@ public class MessengerAnswerScreen extends RecruitsScreenBase {
     }
     public void tick() {
         super.tick();
-        if(textFieldMessage != null) this.textFieldMessage.tick();
+        
     }
 
-    public boolean mouseClicked(double p_100753_, double p_100754_, int p_100755_) {
-        return super.mouseClicked(p_100753_, p_100754_, p_100755_);
+    public boolean mouseClicked(MouseButtonEvent event, boolean doubleClick) {
+        double p_100753_ = event.x();
+        double p_100754_ = event.y();
+        int p_100755_ = event.button();
+        return super.mouseClicked(event, doubleClick);
     }
 
     private void setOKButton() {
@@ -72,11 +76,8 @@ public class MessengerAnswerScreen extends RecruitsScreenBase {
 
 
     @Override
-    public void renderBackground(GuiGraphics guiGraphics, int mouseX, int mouseY, float delta) {
-        RenderSystem.setShader(GameRenderer::getPositionTexShader);
-        RenderSystem.setShaderColor(1F, 1F, 1F, 1F);
-        RenderSystem.setShaderTexture(0, TEXTURE);
-        guiGraphics.blit(TEXTURE, guiLeft, guiTop, 0, 0, xSize, ySize);
+    public void renderRecruitsBackground(GuiGraphics guiGraphics, int mouseX, int mouseY, float delta) {
+        guiGraphics.blit(RenderPipelines.GUI_TEXTURED, TEXTURE, guiLeft, guiTop, (float) (0), (float) (0), xSize, ySize, 256, 256);
     }
 
     @Override
@@ -91,12 +92,12 @@ public class MessengerAnswerScreen extends RecruitsScreenBase {
 
         //Info
         int fontColor = 4210752;
-        guiGraphics.drawString(font, "From:", guiLeft + 9, guiTop + 9, fontColor, false);
-        guiGraphics.drawString(font, "To:", guiLeft + 9,  guiTop + 20, fontColor, false);
-        guiGraphics.drawString(font, "" + owner, guiLeft + 50,  guiTop + 9, fontColor, false);
-        guiGraphics.drawString(font, "" + targetPlayer, guiLeft + 50,  guiTop + 20, fontColor, false);
+        guiGraphics.drawString(font, "From:", guiLeft + 9, guiTop + 9, com.talhanation.recruits.client.gui.util.GuiCompat.opaque(fontColor), false);
+        guiGraphics.drawString(font, "To:", guiLeft + 9,  guiTop + 20, com.talhanation.recruits.client.gui.util.GuiCompat.opaque(fontColor), false);
+        guiGraphics.drawString(font, "" + owner, guiLeft + 50,  guiTop + 9, com.talhanation.recruits.client.gui.util.GuiCompat.opaque(fontColor), false);
+        guiGraphics.drawString(font, "" + targetPlayer, guiLeft + 50,  guiTop + 20, com.talhanation.recruits.client.gui.util.GuiCompat.opaque(fontColor), false);
 
-        guiGraphics.drawString(font, "Time: " + time + unit, guiLeft + 130, guiTop + 9, fontColor, false);
+        guiGraphics.drawString(font, "Time: " + time + unit, guiLeft + 130, guiTop + 9, com.talhanation.recruits.client.gui.util.GuiCompat.opaque(fontColor), false);
 
         if(!messenger.getMainHandItem().isEmpty()){
             guiGraphics.renderFakeItem(messenger.getMainHandItem(), guiLeft + 120, guiTop + ySize - 48);

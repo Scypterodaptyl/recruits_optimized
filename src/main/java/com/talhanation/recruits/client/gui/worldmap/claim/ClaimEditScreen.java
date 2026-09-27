@@ -186,8 +186,8 @@ public class ClaimEditScreen extends RecruitsScreenBase {
     int claimMiniY = -60;
 
     @Override
-    public void renderBackground(GuiGraphics guiGraphics, int mouseX, int mouseY, float delta) {
-        super.renderBackground(guiGraphics, mouseX, mouseY, delta);
+    public void renderRecruitsBackground(GuiGraphics guiGraphics, int mouseX, int mouseY, float delta) {
+        super.renderRecruitsBackground(guiGraphics, mouseX, mouseY, delta);
         guiGraphics.fill(
                 panelX - 1 + x,
                 panelY - 1 + y,
@@ -234,9 +234,7 @@ public class ClaimEditScreen extends RecruitsScreenBase {
         float offsetY = y + (height - usedHeight) / 2f;
 
         // Scissor aktivieren
-        int scale = (int) mc.getWindow().getGuiScale();
-        int screenHeight = mc.getWindow().getHeight();
-        RenderSystem.enableScissor(x * scale, screenHeight - (y + height) * scale, width * scale, height * scale);
+        guiGraphics.enableScissor(x, y, x + width, y + height);
 
         // Farbwerte vorbereiten
         int alpha = 190;
@@ -293,8 +291,8 @@ public class ClaimEditScreen extends RecruitsScreenBase {
 
         int textWidth = font.width(claim.getName());
         guiGraphics.drawString(
-                font, claim.getName(), (int) (cx - textWidth / 2f), (int) (cz - 6), 0xFFFFFF, false);
+                font, claim.getName(), (int) (cx - textWidth / 2f), (int) (cz - 6), 0xFFFFFFFF, false);
 
-        RenderSystem.disableScissor();
+        guiGraphics.disableScissor();
     }
 }

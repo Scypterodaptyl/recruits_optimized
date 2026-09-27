@@ -3,12 +3,12 @@ package com.talhanation.recruits.network;
 import com.talhanation.recruits.client.ClientManager;
 import com.talhanation.recruits.client.gui.worldmap.storage.WorldMapCacheManager;
 import com.talhanation.recruits.client.gui.worldmap.storage.WorldMapStorageId;
-import de.maxhenkel.corelib.net.Message;
+import com.talhanation.recruits.network.Message;
 import net.minecraft.client.Minecraft;
 import net.minecraft.network.FriendlyByteBuf;
 import net.minecraftforge.api.distmarker.Dist;
 import net.minecraftforge.api.distmarker.OnlyIn;
-import net.minecraftforge.network.NetworkEvent;
+import net.minecraftforge.event.network.CustomPayloadEvent;
 
 import java.util.UUID;
 
@@ -29,7 +29,7 @@ public class MessageToClientWorldMapIdentity implements Message<MessageToClientW
 
     @Override
     @OnlyIn(Dist.CLIENT)
-    public void executeClientSide(NetworkEvent.Context context) {
+    public void executeClientSide(CustomPayloadEvent.Context context) {
         if (worldId == null) return;
 
         WorldMapStorageId.setServerWorldId(worldId);

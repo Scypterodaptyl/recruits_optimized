@@ -2,8 +2,10 @@ package com.talhanation.recruits;
 
 import com.talhanation.recruits.world.RecruitsDiplomacyManager;
 import net.minecraft.server.level.ServerLevel;
-import net.minecraftforge.eventbus.api.Cancelable;
-import net.minecraftforge.eventbus.api.Event;
+import net.minecraftforge.eventbus.api.bus.CancellableEventBus;
+import net.minecraftforge.eventbus.api.bus.EventBus;
+import net.minecraftforge.eventbus.api.event.MutableEvent;
+import net.minecraftforge.eventbus.api.event.characteristic.Cancellable;
 
 /**
  * Events für Diplomatie-Änderungen zwischen Fraktionen. Werden auf dem
@@ -18,7 +20,7 @@ import net.minecraftforge.eventbus.api.Event;
  *   }
  * </pre>
  */
-public abstract class DiplomacyEvent extends Event {
+public abstract class DiplomacyEvent extends MutableEvent {
 
     private final String factionA;
     private final String factionB;
@@ -54,8 +56,8 @@ public abstract class DiplomacyEvent extends Event {
      *
      * @see RecruitsDiplomacyManager#setRelation(String, String, RecruitsDiplomacyManager.DiplomacyStatus, ServerLevel)
      */
-    @Cancelable
-    public static class RelationChanged extends DiplomacyEvent {
+        public static class RelationChanged extends DiplomacyEvent implements Cancellable {
+        public static final CancellableEventBus<DiplomacyEvent.RelationChanged> BUS = CancellableEventBus.create(DiplomacyEvent.RelationChanged.class);
 
         private final RecruitsDiplomacyManager.DiplomacyStatus oldStatus;
         private final RecruitsDiplomacyManager.DiplomacyStatus newStatus;

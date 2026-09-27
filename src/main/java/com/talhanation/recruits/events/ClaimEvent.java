@@ -2,8 +2,10 @@ package com.talhanation.recruits;
 
 import com.talhanation.recruits.world.RecruitsClaim;
 import net.minecraft.server.level.ServerLevel;
-import net.minecraftforge.eventbus.api.Cancelable;
-import net.minecraftforge.eventbus.api.Event;
+import net.minecraftforge.eventbus.api.bus.CancellableEventBus;
+import net.minecraftforge.eventbus.api.bus.EventBus;
+import net.minecraftforge.eventbus.api.event.MutableEvent;
+import net.minecraftforge.eventbus.api.event.characteristic.Cancellable;
 
 /**
  * Events für den Lebenszyklus von Claims. Werden auf dem
@@ -24,7 +26,7 @@ import net.minecraftforge.eventbus.api.Event;
  *   }
  * </pre>
  */
-public abstract class ClaimEvent extends Event {
+public abstract class ClaimEvent extends MutableEvent {
 
     private final RecruitsClaim claim;
     private final ServerLevel level;
@@ -54,8 +56,8 @@ public abstract class ClaimEvent extends Event {
      *
      * @see com.talhanation.recruits.world.RecruitsClaimManager#addOrUpdateClaim(ServerLevel, RecruitsClaim)
      */
-    @Cancelable
-    public static class Updated extends ClaimEvent {
+        public static class Updated extends ClaimEvent implements Cancellable {
+        public static final CancellableEventBus<ClaimEvent.Updated> BUS = CancellableEventBus.create(ClaimEvent.Updated.class);
         private final boolean isNew;
 
         public Updated(RecruitsClaim claim, ServerLevel level, boolean isNew) {
@@ -79,6 +81,7 @@ public abstract class ClaimEvent extends Event {
      * @see com.talhanation.recruits.world.RecruitsClaimManager#removeClaim(RecruitsClaim)
      */
     public static class Removed extends ClaimEvent {
+        public static final EventBus<ClaimEvent.Removed> BUS = EventBus.create(ClaimEvent.Removed.class);
         public Removed(RecruitsClaim claim, ServerLevel level) {
             super(claim, level);
         }

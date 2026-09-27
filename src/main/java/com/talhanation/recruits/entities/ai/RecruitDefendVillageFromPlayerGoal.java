@@ -6,7 +6,7 @@ import net.minecraft.server.level.ServerLevel;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.ai.goal.target.TargetGoal;
 import net.minecraft.world.entity.ai.targeting.TargetingConditions;
-import net.minecraft.world.entity.npc.Villager;
+import net.minecraft.world.entity.npc.villager.Villager;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.phys.AABB;
 
@@ -34,7 +34,7 @@ public class RecruitDefendVillageFromPlayerGoal extends TargetGoal {
 
         this.potentialTarget = null;
 
-        if (!(this.recruit.getCommandSenderWorld() instanceof ServerLevel serverLevel)) return false;
+        if (!(this.recruit.level() instanceof ServerLevel serverLevel)) return false;
 
         AABB aabb = this.recruit.getBoundingBox().inflate(30.0D, 8.0D, 30.0D);
         List<Villager> list = new ArrayList<>();
@@ -42,7 +42,7 @@ public class RecruitDefendVillageFromPlayerGoal extends TargetGoal {
         for (LivingEntity entity : NearbyEntityCache.livingEntities(serverLevel)) {
             if (!aabb.contains(entity.getX(), entity.getY(), entity.getZ())) continue;
             if (entity instanceof Villager villager) {
-                if (!this.attackTargeting.test(this.recruit, villager)) {
+                if (!this.attackTargeting.test((net.minecraft.server.level.ServerLevel) this.recruit.level(), this.recruit, villager)) {
                     list.add(villager);
                 }
             } else if (entity instanceof Player player) {

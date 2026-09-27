@@ -1,6 +1,7 @@
 package com.talhanation.recruits.client.gui.player;
 
-import com.mojang.blaze3d.systems.RenderSystem;
+import net.minecraft.client.renderer.RenderPipelines;
+
 import com.talhanation.recruits.client.gui.component.BannerRenderer;
 import com.talhanation.recruits.client.gui.widgets.ListScreenEntryBase;
 import com.talhanation.recruits.client.gui.widgets.ListScreenListBase;
@@ -8,18 +9,18 @@ import com.talhanation.recruits.util.GameProfileUtils;
 import com.talhanation.recruits.world.RecruitsPlayerInfo;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.GuiGraphics;
-import net.minecraft.util.FastColor;
+import net.minecraft.util.ARGB;
 import org.jetbrains.annotations.NotNull;
 
 
 public class RecruitsPlayerEntry extends ListScreenEntryBase<RecruitsPlayerEntry> {
     protected static final int SKIN_SIZE = 24;
     protected static final int PADDING = 4;
-    protected static final int BG_FILL = FastColor.ARGB32.color(255, 60, 60, 60);
-    protected static final int BG_FILL_HOVERED = FastColor.ARGB32.color(255, 100, 100, 100);
-    protected static final int BG_FILL_SELECTED = FastColor.ARGB32.color(255, 10, 10, 10);
-    protected static final int PLAYER_NAME_COLOR = FastColor.ARGB32.color(255, 255, 255, 255);
-    protected static final int PLAYER_NAME_COLOR_OFFLINE = FastColor.ARGB32.color(255, 140, 140, 140);
+    protected static final int BG_FILL = ARGB.color(255, 60, 60, 60);
+    protected static final int BG_FILL_HOVERED = ARGB.color(255, 100, 100, 100);
+    protected static final int BG_FILL_SELECTED = ARGB.color(255, 10, 10, 10);
+    protected static final int PLAYER_NAME_COLOR = ARGB.color(255, 255, 255, 255);
+    protected static final int PLAYER_NAME_COLOR_OFFLINE = ARGB.color(255, 140, 140, 140);
 
     protected final Minecraft minecraft;
     protected final IPlayerSelection screen;
@@ -34,7 +35,12 @@ public class RecruitsPlayerEntry extends ListScreenEntryBase<RecruitsPlayerEntry
     }
 
     @Override
-    public void render(GuiGraphics guiGraphics, int index, int top, int left, int width, int height, int mouseX, int mouseY, boolean hovered, float delta) {
+    public void renderContent(GuiGraphics guiGraphics, int mouseX, int mouseY, boolean hovered, float delta) {
+        int index = 0;
+        int top = this.getY();
+        int left = this.getX();
+        int width = this.getWidth();
+        int height = this.getHeight() - 4;
         int skinX = left + PADDING;
         int skinY = top + (height - SKIN_SIZE) / 2;
         int textX = skinX + SKIN_SIZE + PADDING;
@@ -57,15 +63,12 @@ public class RecruitsPlayerEntry extends ListScreenEntryBase<RecruitsPlayerEntry
 
         int nameColor = player.isOnline() ? PLAYER_NAME_COLOR : PLAYER_NAME_COLOR_OFFLINE;
 
-        RenderSystem.setShaderTexture(0, GameProfileUtils.getSkin(player.getUUID()));
-        guiGraphics.blit(GameProfileUtils.getSkin(player.getUUID()), skinX, skinY, SKIN_SIZE, SKIN_SIZE, 8, 8, 8, 8, 64, 64);
-        RenderSystem.enableBlend();
-        guiGraphics.blit(GameProfileUtils.getSkin(player.getUUID()), skinX, skinY, SKIN_SIZE, SKIN_SIZE, 40, 8, 8, 8, 64, 64);
+        guiGraphics.blit(RenderPipelines.GUI_TEXTURED, GameProfileUtils.getSkin(player.getUUID()), skinX, skinY, (float) (8), (float) (8), SKIN_SIZE, SKIN_SIZE, 8, 8, 64, 64);
+        guiGraphics.blit(RenderPipelines.GUI_TEXTURED, GameProfileUtils.getSkin(player.getUUID()), skinX, skinY, (float) (40), (float) (8), SKIN_SIZE, SKIN_SIZE, 8, 8, 64, 64);
         if (!player.isOnline()) {
-            guiGraphics.fill(skinX, skinY, skinX + SKIN_SIZE, skinY + SKIN_SIZE, FastColor.ARGB32.color(120, 0, 0, 0));
+            guiGraphics.fill(skinX, skinY, skinX + SKIN_SIZE, skinY + SKIN_SIZE, ARGB.color(120, 0, 0, 0));
         }
-        RenderSystem.disableBlend();
-        guiGraphics.drawString(minecraft.font, player.getName(), (float) textX, (float) textY, nameColor, false);
+        guiGraphics.drawString(minecraft.font, player.getName(), (int) ((float) textX), (int) ((float) textY), com.talhanation.recruits.client.gui.util.GuiCompat.opaque(nameColor), false);
 
         if(bannerRenderer != null){
             bannerRenderer.renderBanner(guiGraphics, left + 185, top, width, height, 15);

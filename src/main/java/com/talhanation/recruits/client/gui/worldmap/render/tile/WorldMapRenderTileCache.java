@@ -4,7 +4,7 @@ import com.mojang.blaze3d.systems.RenderSystem;
 import com.talhanation.recruits.client.gui.worldmap.pipeline.WorldMapAsync;
 import com.talhanation.recruits.client.gui.worldmap.storage.WorldMapCacheManager;
 import com.talhanation.recruits.client.gui.worldmap.storage.WorldMapRegion;
-import net.minecraft.resources.ResourceLocation;
+import net.minecraft.resources.Identifier;
 
 import java.util.ArrayList;
 import java.util.Comparator;
@@ -61,7 +61,7 @@ public final class WorldMapRenderTileCache {
     }
 
     public void prepareGpuResources() {
-        if (!RenderSystem.isOnRenderThreadOrInit()) return;
+        if (!RenderSystem.isOnRenderThread()) return;
 
         textureUploader.prepare();
         if (textureAtlases.isEmpty()) {
@@ -633,7 +633,7 @@ public final class WorldMapRenderTileCache {
     // Data
     // -------------------------------------------------------------------------
 
-    public record TileView(ResourceLocation textureId, float u1, float v1, float u2, float v2) {
+    public record TileView(Identifier textureId, float u1, float v1, float u2, float v2) {
         private static TileView full(WorldMapTextureAtlas.Slot slot) {
             return new TileView(
                     slot.atlas().textureId(),

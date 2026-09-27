@@ -237,7 +237,7 @@ public class ModScreens {
     @Nullable
     public static AbstractRecruitEntity getRecruitByUUID(Player player, UUID uuid) {
         double distance = 10D;
-        return player.getCommandSenderWorld().getEntitiesOfClass(
+        return player.level().getEntitiesOfClass(
                     AbstractRecruitEntity.class,
                     new AABB(
                             player.getX() - distance,
@@ -253,7 +253,7 @@ public class ModScreens {
     @Nullable
     public static AssassinLeaderEntity getAssassinByUUID(Player player, UUID uuid) {
         double distance = 10D;
-        return player.getCommandSenderWorld().getEntitiesOfClass(
+        return player.level().getEntitiesOfClass(
                     AssassinLeaderEntity.class,
                     new AABB(
                             player.getX() - distance,

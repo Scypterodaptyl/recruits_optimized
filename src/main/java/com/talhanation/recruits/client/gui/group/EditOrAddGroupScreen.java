@@ -1,6 +1,8 @@
 package com.talhanation.recruits.client.gui.group;
 
-import com.mojang.blaze3d.systems.RenderSystem;
+import net.minecraft.client.input.MouseButtonEvent;
+import net.minecraft.client.renderer.RenderPipelines;
+
 import com.talhanation.recruits.Main;
 import com.talhanation.recruits.client.ClientManager;
 import com.talhanation.recruits.client.gui.ConfirmScreen;
@@ -15,10 +17,9 @@ import net.minecraft.client.gui.components.Button;
 import net.minecraft.client.gui.components.EditBox;
 import net.minecraft.client.gui.components.Tooltip;
 import net.minecraft.client.gui.screens.Screen;
-import net.minecraft.client.renderer.GameRenderer;
 import net.minecraft.network.chat.Component;
 import net.minecraft.network.chat.MutableComponent;
-import net.minecraft.resources.ResourceLocation;
+import net.minecraft.resources.Identifier;
 import net.minecraft.world.entity.player.Player;
 import net.minecraftforge.client.gui.widget.ExtendedButton;
 
@@ -35,7 +36,7 @@ public class EditOrAddGroupScreen extends Screen {
     private int topPos;
     private int imageWidth;
     private int imageHeight;
-    private static final ResourceLocation RESOURCE_LOCATION = new ResourceLocation(Main.MOD_ID,"textures/gui/gui_big.png");
+    private static final Identifier RESOURCE_LOCATION = Identifier.fromNamespaceAndPath(Main.MOD_ID,"textures/gui/gui_big.png");
     private static final MutableComponent TEXT_CANCEL = Component.translatable("gui.recruits.groups.cancel");
     private static final MutableComponent TEXT_SAVE = Component.translatable("gui.recruits.groups.save");
     private static final MutableComponent TEXT_ADD = Component.translatable("gui.recruits.groups.add");
@@ -52,7 +53,7 @@ public class EditOrAddGroupScreen extends Screen {
     private static final MutableComponent BUTTON_NEARBY = Component.translatable("gui.recruits.groups.nearby");
     private static final MutableComponent TOOLTIP_PUT_NEARBY = Component.translatable("gui.recruits.groups.tooltip.nearby");
     private ImageSelectionDropdownMatrix imageDropdownMatrix;
-    private ResourceLocation image;
+    private Identifier image;
     private final Player player;
 
     public EditOrAddGroupScreen(RecruitsGroupListScreen parent) {
@@ -167,7 +168,7 @@ public class EditOrAddGroupScreen extends Screen {
         }));
     }
 
-    private void setGroupImage(ResourceLocation resourceLocation){
+    private void setGroupImage(Identifier resourceLocation){
         this.image = resourceLocation;
         if(groupToEdit != null){
             int index = RecruitsGroup.IMAGES.indexOf(resourceLocation);
@@ -201,7 +202,7 @@ public class EditOrAddGroupScreen extends Screen {
     @Override
     public void tick() {
         super.tick();
-        groupNameField.tick();
+        
     }
 
     @Override
@@ -211,25 +212,25 @@ public class EditOrAddGroupScreen extends Screen {
     }
 
     @Override
-    public boolean mouseClicked(double x, double y, int p_94697_) {
+    public boolean mouseClicked(MouseButtonEvent event, boolean doubleClick) {
+        double x = event.x();
+        double y = event.y();
+        int p_94697_ = event.button();
         if(imageDropdownMatrix != null) imageDropdownMatrix.onMouseClicked(x,y);
 
-        return super.mouseClicked(x, y, p_94697_);
+        return super.mouseClicked(event, doubleClick);
     }
 
     private void renderForeground(GuiGraphics guiGraphics, int mouseX, int mouseY, float delta) {
-        guiGraphics.drawString(font, groupToEdit == null? TEXT_ADD_TITLE : TEXT_EDIT_TITLE, leftPos + 7, topPos + 5, fontColor, false);
+        guiGraphics.drawString(font, groupToEdit == null? TEXT_ADD_TITLE : TEXT_EDIT_TITLE, leftPos + 7, topPos + 5, com.talhanation.recruits.client.gui.util.GuiCompat.opaque(fontColor), false);
     }
-    public void renderBackground(GuiGraphics guiGraphics, int mouseX, int mouseY, float delta) {
-        RenderSystem.setShader(GameRenderer::getPositionTexShader);
-        RenderSystem.setShaderColor(1F, 1F, 1F, 1F);
-        guiGraphics.blit(RESOURCE_LOCATION, leftPos, topPos, 0, 0, imageWidth, imageHeight);
+    public void renderPanelBackground(GuiGraphics guiGraphics, int mouseX, int mouseY, float delta) {
+        guiGraphics.blit(RenderPipelines.GUI_TEXTURED, RESOURCE_LOCATION, leftPos, topPos, (float) (0), (float) (0), imageWidth, imageHeight, 256, 256);
     }
 
     @Override
     public void render(GuiGraphics guiGraphics, int mouseX, int mouseY, float delta) {
-        this.renderBackground(guiGraphics);
-        this.renderBackground(guiGraphics, mouseX, mouseY, delta);
+        this.renderPanelBackground(guiGraphics, mouseX, mouseY, delta);
         super.render(guiGraphics, mouseX, mouseY, delta);
         this.renderForeground(guiGraphics, mouseX, mouseY, delta);
     }
@@ -239,7 +240,7 @@ public class EditOrAddGroupScreen extends Screen {
         return false;
     }
 
-    public ResourceLocation getSelectedImage() {
+    public Identifier getSelectedImage() {
         return this.image;
     }
 }

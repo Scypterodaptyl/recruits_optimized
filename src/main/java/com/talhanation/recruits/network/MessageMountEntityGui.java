@@ -6,17 +6,15 @@ import com.talhanation.recruits.config.RecruitsServerConfig;
 import com.talhanation.recruits.entities.AbstractRecruitEntity;
 import com.talhanation.recruits.entities.CaptainEntity;
 import com.talhanation.recruits.entities.SiegeEngineerEntity;
-import de.maxhenkel.corelib.net.Message;
+import com.talhanation.recruits.network.Message;
 import net.minecraft.network.FriendlyByteBuf;
 import net.minecraft.network.chat.Component;
 import net.minecraft.network.chat.MutableComponent;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.entity.Entity;
-import net.minecraft.world.entity.animal.horse.AbstractHorse;
-import net.minecraft.world.entity.vehicle.Boat;
 import net.minecraftforge.api.distmarker.Dist;
 import net.minecraftforge.common.extensions.IForgeEntity;
-import net.minecraftforge.network.NetworkEvent;
+import net.minecraftforge.event.network.CustomPayloadEvent;
 
 import java.util.*;
 import java.util.function.Function;
@@ -38,10 +36,10 @@ public class MessageMountEntityGui implements Message<MessageMountEntityGui> {
     }
 
     @SuppressWarnings({"all"})
-    public void executeServerSide(NetworkEvent.Context context) {
+    public void executeServerSide(CustomPayloadEvent.Context context) {
         ServerPlayer player = Objects.requireNonNull(context.getSender());
 
-        player.getCommandSenderWorld().getEntitiesOfClass(
+        player.level().getEntitiesOfClass(
                 AbstractRecruitEntity.class,
                 player.getBoundingBox().inflate(32.0D),
                 v -> v.getUUID().equals(this.recruit) && v.isAlive() && v.isOwnedBy(player)
@@ -53,7 +51,7 @@ public class MessageMountEntityGui implements Message<MessageMountEntityGui> {
         if (this.back && recruit.getMountUUID() != null) {
             recruit.shouldMount(true, recruit.getMountUUID());
         } else if (recruit.getVehicle() == null) {
-            List<Entity> list = recruit.getCommandSenderWorld().getEntitiesOfClass(
+            List<Entity> list = recruit.level().getEntitiesOfClass(
                     Entity.class,
                     recruit.getBoundingBox().inflate(8),
                     (mount) -> recruit.canMountEntity(mount)
@@ -71,7 +69,7 @@ public class MessageMountEntityGui implements Message<MessageMountEntityGui> {
             }
 
             if (horse == null) {
-                recruit.getOwner().sendSystemMessage(TEXT_NO_MOUNT(recruit.getName().getString()));
+                recruit.getOwner().displayClientMessage(TEXT_NO_MOUNT(recruit.getName().getString()), false);
                 return;
             }
 

@@ -1,5 +1,6 @@
 package com.talhanation.recruits.world;
 
+import net.minecraft.core.UUIDUtil;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.nbt.ListTag;
 import net.minecraft.nbt.Tag;
@@ -14,34 +15,34 @@ public class RecruitsGroupsSaveData extends SavedData {
     private Map<UUID, UUID> redirects = new HashMap<>();
     private Map<UUID, UUID> recruitRedirects = new HashMap<>();
     public static RecruitsGroupsSaveData get(ServerLevel level) {
-        return level.getDataStorage().computeIfAbsent(RecruitsGroupsSaveData::load, RecruitsGroupsSaveData::new, FILE_ID);
+        return level.getDataStorage().computeIfAbsent(TYPE);
     }
 
     public static RecruitsGroupsSaveData load(CompoundTag nbt) {
         RecruitsGroupsSaveData data = new RecruitsGroupsSaveData();
-        if (nbt.contains("groups", Tag.TAG_LIST)) {
-            ListTag list = nbt.getList("groups", Tag.TAG_COMPOUND);
+        if (nbt.contains("groups")) {
+            ListTag list = nbt.getListOrEmpty("groups");
             for (Tag t : list) {
                 data.groups.add(RecruitsGroup.fromNBT((CompoundTag) t));
             }
         }
 
-        if (nbt.contains("redirects", Tag.TAG_LIST)) {
-            ListTag redirectList = nbt.getList("redirects", Tag.TAG_COMPOUND);
+        if (nbt.contains("redirects")) {
+            ListTag redirectList = nbt.getListOrEmpty("redirects");
             for (Tag t : redirectList) {
                 CompoundTag tag = (CompoundTag) t;
-                UUID oldId = tag.getUUID("old");
-                UUID newId = tag.getUUID("new");
+                UUID oldId = tag.read("old", UUIDUtil.CODEC).orElse(null);
+                UUID newId = tag.read("new", UUIDUtil.CODEC).orElse(null);
                 data.redirects.put(oldId, newId);
             }
         }
 
-        if (nbt.contains("recruitRedirects", Tag.TAG_LIST)) {
-            ListTag recruitRedirectList = nbt.getList("recruitRedirects", Tag.TAG_COMPOUND);
+        if (nbt.contains("recruitRedirects")) {
+            ListTag recruitRedirectList = nbt.getListOrEmpty("recruitRedirects");
             for (Tag t : recruitRedirectList) {
                 CompoundTag tag = (CompoundTag) t;
-                UUID oldId = tag.getUUID("recruit");
-                UUID newId = tag.getUUID("group");
+                UUID oldId = tag.read("recruit", UUIDUtil.CODEC).orElse(null);
+                UUID newId = tag.read("group", UUIDUtil.CODEC).orElse(null);
                 data.recruitRedirects.put(oldId, newId);
             }
         }
@@ -49,8 +50,7 @@ public class RecruitsGroupsSaveData extends SavedData {
         return data;
     }
 
-    @Override
-    public CompoundTag save(CompoundTag nbt) {
+        public CompoundTag save(CompoundTag nbt) {
         ListTag list = new ListTag();
         for (RecruitsGroup group : this.groups) {
             list.add(group.toNBT());
@@ -60,8 +60,8 @@ public class RecruitsGroupsSaveData extends SavedData {
         ListTag redirectList = new ListTag();
         for (Map.Entry<UUID, UUID> e : redirects.entrySet()) {
             CompoundTag tag = new CompoundTag();
-            tag.putUUID("old", e.getKey());
-            tag.putUUID("new", e.getValue());
+            tag.store("old", UUIDUtil.CODEC, e.getKey());
+            tag.store("new", UUIDUtil.CODEC, e.getValue());
             redirectList.add(tag);
         }
         nbt.put("redirects", redirectList);
@@ -69,8 +69,8 @@ public class RecruitsGroupsSaveData extends SavedData {
         ListTag recruitRedirectList = new ListTag();
         for (Map.Entry<UUID, UUID> e : recruitRedirects.entrySet()) {
             CompoundTag tag = new CompoundTag();
-            tag.putUUID("recruit", e.getKey());
-            tag.putUUID("group", e.getValue());
+            tag.store("recruit", UUIDUtil.CODEC, e.getKey());
+            tag.store("group", UUIDUtil.CODEC, e.getValue());
             recruitRedirectList.add(tag);
         }
         nbt.put("recruitRedirects", recruitRedirectList);
@@ -101,6 +101,6 @@ public class RecruitsGroupsSaveData extends SavedData {
     public void setRecruitRedirects(Map<UUID, UUID> map){
         this.recruitRedirects = map;
     }
+
+    public static final net.minecraft.world.level.saveddata.SavedDataType<RecruitsGroupsSaveData> TYPE = com.talhanation.recruits.util.SavedDataUtil.type(FILE_ID, RecruitsGroupsSaveData::new, RecruitsGroupsSaveData::load, data -> data.save(new CompoundTag()));
 }
-
-

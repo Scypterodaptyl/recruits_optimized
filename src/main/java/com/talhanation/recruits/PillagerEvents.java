@@ -1,5 +1,11 @@
 package com.talhanation.recruits;
 
+import net.minecraft.world.entity.monster.illager.Vindicator;
+import net.minecraft.world.entity.monster.spider.Spider;
+import net.minecraft.world.entity.monster.skeleton.AbstractSkeleton;
+import net.minecraft.world.entity.monster.zombie.Zombie;
+import net.minecraft.world.entity.monster.illager.Pillager;
+import net.minecraft.world.entity.monster.illager.AbstractIllager;
 import com.talhanation.recruits.config.RecruitsServerConfig;
 import com.talhanation.recruits.entities.AbstractRecruitEntity;
 import com.talhanation.recruits.entities.ai.pillager.PillagerMeleeAttackGoal;
@@ -24,12 +30,11 @@ import net.minecraft.world.entity.raid.Raider;
 import net.minecraft.world.item.BannerItem;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.Items;
-import net.minecraft.world.level.Explosion;
-import net.minecraft.world.level.GameRules;
+import net.minecraft.world.level.gamerules.GameRules;
 import net.minecraft.world.level.Level;
 import net.minecraftforge.event.entity.EntityEvent;
 import net.minecraftforge.event.entity.EntityJoinLevelEvent;
-import net.minecraftforge.eventbus.api.SubscribeEvent;
+import net.minecraftforge.eventbus.api.listener.SubscribeEvent;
 
 import java.util.EnumSet;
 import java.util.Random;
@@ -118,7 +123,7 @@ public class PillagerEvents {
         if (entity instanceof VindicatorEntity) {
             VindicatorEntity vindicator = (VindicatorEntity) entity;
 
-            List<PillagerEntity> list1 = entity.getCommandSenderWorld().getEntitiesOfClass(PillagerEntity.class, vindicator.getBoundingBox().inflate(64));
+            List<PillagerEntity> list1 = entity.level().getEntitiesOfClass(PillagerEntity.class, vindicator.getBoundingBox().inflate(64));
             int max = 2 + random.nextInt(10);
             if (list1.size() > 1) {
                 vindicator.remove();
@@ -144,7 +149,18 @@ public class PillagerEvents {
 
     //Raider
 
+    // EntityEvent is no longer a concrete, postable event. The burning banner is detected when it
+    // changes section or gets removed (burned) instead.
     @SubscribeEvent
+    public void raidStartOnBurningOminousSection(EntityEvent.EnteringSection event) {
+        this.raidStartOnBurningOminous(event);
+    }
+
+    @SubscribeEvent
+    public void raidStartOnBurningOminousLeave(net.minecraftforge.event.entity.EntityLeaveLevelEvent event) {
+        this.raidStartOnBurningOminous(event);
+    }
+
     public void raidStartOnBurningOminous(EntityEvent event) {
         if(!RecruitsServerConfig.QuickStartPillagerRaid.get()) return;
         Entity entity = event.getEntity();
@@ -152,10 +168,10 @@ public class PillagerEvents {
         if (entity instanceof ItemEntity itemEntity) {
             ItemStack itemStack = itemEntity.getItem();
 
-            Level level = itemEntity.getCommandSenderWorld();
+            Level level = itemEntity.level();
             if (itemStack.getItem() instanceof BannerItem) {
 
-                if (itemEntity.isOnFire() && ItemStack.matches(itemStack, Raid.getLeaderBannerInstance())) {
+                if (itemEntity.isOnFire() && ItemStack.matches(itemStack, Raid.getOminousBannerInstance(itemEntity.level().registryAccess().lookupOrThrow(net.minecraft.core.registries.Registries.BANNER_PATTERN)))) {
                     Player player = level.getNearestPlayer(itemEntity, 16D);
                     if (player != null) {
                         MobEffectInstance effectinstance1 = player.getEffect(MobEffects.BAD_OMEN);
@@ -168,7 +184,7 @@ public class PillagerEvents {
                         }
                         i = Mth.clamp(i, 0, 4);
                         MobEffectInstance effectinstance = new MobEffectInstance(MobEffects.BAD_OMEN, 120000, i, false, false, true);
-                        if (!player.getCommandSenderWorld().getGameRules().getBoolean(GameRules.RULE_DISABLE_RAIDS)) {
+                        if (((net.minecraft.server.level.ServerLevel) player.level()).getGameRules().get(GameRules.RAIDS)) {
                             player.addEffect(effectinstance);
                             level.explode(itemEntity, itemEntity.getX(), itemEntity.getY(), itemEntity.getZ(), 0.5F, Level.ExplosionInteraction.BLOCK);
 
@@ -203,7 +219,7 @@ class FindTargetGoal extends Goal {
         super.start();
         this.mob.getNavigation().stop();
 
-        for(Raider abstractRaiderEntity : this.mob.getCommandSenderWorld().getNearbyEntities(Raider.class, this.shoutTargeting, this.mob, this.mob.getBoundingBox().inflate(8.0D, 8.0D, 8.0D))) {
+        for(Raider abstractRaiderEntity : ((net.minecraft.server.level.ServerLevel) this.mob.level()).getNearbyEntities(Raider.class, this.shoutTargeting, this.mob, this.mob.getBoundingBox().inflate(8.0D, 8.0D, 8.0D))) {
             abstractRaiderEntity.setTarget(this.mob.getTarget());
         }
 
@@ -213,7 +229,7 @@ class FindTargetGoal extends Goal {
         super.stop();
         LivingEntity livingentity = this.mob.getTarget();
         if (livingentity != null) {
-            for(Raider abstractRaiderEntity : this.mob.getCommandSenderWorld().getNearbyEntities(Raider.class, this.shoutTargeting, this.mob, this.mob.getBoundingBox().inflate(8.0D, 8.0D, 8.0D))) {
+            for(Raider abstractRaiderEntity : ((net.minecraft.server.level.ServerLevel) this.mob.level()).getNearbyEntities(Raider.class, this.shoutTargeting, this.mob, this.mob.getBoundingBox().inflate(8.0D, 8.0D, 8.0D))) {
                 abstractRaiderEntity.setTarget(livingentity);
                 abstractRaiderEntity.setAggressive(true);
             }

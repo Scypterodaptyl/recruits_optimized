@@ -1,6 +1,10 @@
 package com.talhanation.recruits.client.gui.group;
 
-import com.mojang.blaze3d.systems.RenderSystem;
+import net.minecraft.client.input.MouseButtonEvent;
+import net.minecraft.client.input.MouseButtonInfo;
+import net.minecraft.client.input.KeyEvent;
+import net.minecraft.client.renderer.RenderPipelines;
+
 import com.talhanation.recruits.Main;
 import com.talhanation.recruits.client.ClientManager;
 import com.talhanation.recruits.client.gui.widgets.ListScreenBase;
@@ -13,7 +17,7 @@ import net.minecraft.client.gui.components.Button;
 import net.minecraft.client.gui.components.EditBox;
 import net.minecraft.client.gui.screens.Screen;
 import net.minecraft.network.chat.Component;
-import net.minecraft.resources.ResourceLocation;
+import net.minecraft.resources.Identifier;
 import net.minecraft.util.Mth;
 import net.minecraft.world.entity.player.Player;
 import net.minecraftforge.api.distmarker.Dist;
@@ -25,7 +29,7 @@ import java.util.Locale;
 @OnlyIn(Dist.CLIENT)
 public class RecruitsGroupListScreen extends ListScreenBase implements IGroupSelection {
 
-    protected static final ResourceLocation TEXTURE = new ResourceLocation(Main.MOD_ID, "textures/gui/select_player.png");
+    protected static final Identifier TEXTURE = Identifier.fromNamespaceAndPath(Main.MOD_ID, "textures/gui/select_player.png");
     protected static final Component TITLE = Component.translatable("gui.recruits.groups.title");
     protected static final Component ADD_BUTTON = Component.translatable("gui.recruits.groups.add");
     protected static final Component EDIT_BUTTON = Component.translatable("gui.recruits.groups.edit");
@@ -102,7 +106,7 @@ public class RecruitsGroupListScreen extends ListScreenBase implements IGroupSel
         super.tick();
         ClientManager.updateGroups();
         if(searchBox != null){
-            searchBox.tick();
+            
         }
         if(groupList != null){
             groupList.tick();
@@ -144,8 +148,11 @@ public class RecruitsGroupListScreen extends ListScreenBase implements IGroupSel
     }
 
     @Override
-    public boolean keyPressed(int p_96552_, int p_96553_, int p_96554_) {
-        boolean flag = super.keyPressed(p_96552_, p_96553_, p_96554_);
+    public boolean keyPressed(KeyEvent event) {
+        int p_96552_ = event.key();
+        int p_96553_ = event.scancode();
+        int p_96554_ = event.modifiers();
+        boolean flag = super.keyPressed(event);
         this.selected = null;
         this.groupList.setFocused(null);
         this.checkButtons();
@@ -159,19 +166,18 @@ public class RecruitsGroupListScreen extends ListScreenBase implements IGroupSel
     }
 
     @Override
-    public void renderBackground(GuiGraphics guiGraphics, int mouseX, int mouseY, float delta) {
-        RenderSystem.setShaderTexture(0, TEXTURE);
-        guiGraphics.blit(TEXTURE, guiLeft, guiTop, 0, 0, xSize, HEADER_SIZE);
+    public void renderRecruitsBackground(GuiGraphics guiGraphics, int mouseX, int mouseY, float delta) {
+        guiGraphics.blit(RenderPipelines.GUI_TEXTURED, TEXTURE, guiLeft, guiTop, (float) (0), (float) (0), xSize, HEADER_SIZE, 256, 256);
         for (int i = 0; i < units; i++) {
-            guiGraphics.blit(TEXTURE, guiLeft, guiTop + HEADER_SIZE + UNIT_SIZE * i, 0, HEADER_SIZE, xSize, UNIT_SIZE);
+            guiGraphics.blit(RenderPipelines.GUI_TEXTURED, TEXTURE, guiLeft, guiTop + HEADER_SIZE + UNIT_SIZE * i, (float) (0), (float) (HEADER_SIZE), xSize, UNIT_SIZE, 256, 256);
         }
-        guiGraphics.blit(TEXTURE, guiLeft, guiTop + HEADER_SIZE + UNIT_SIZE * units, 0, HEADER_SIZE + UNIT_SIZE, xSize, FOOTER_SIZE);
-        guiGraphics.blit(TEXTURE, guiLeft + 10, guiTop + HEADER_SIZE + 6 - 2, xSize, 0, 12, 12);
+        guiGraphics.blit(RenderPipelines.GUI_TEXTURED, TEXTURE, guiLeft, guiTop + HEADER_SIZE + UNIT_SIZE * units, (float) (0), (float) (HEADER_SIZE + UNIT_SIZE), xSize, FOOTER_SIZE, 256, 256);
+        guiGraphics.blit(RenderPipelines.GUI_TEXTURED, TEXTURE, guiLeft + 10, guiTop + HEADER_SIZE + 6 - 2, (float) (xSize), (float) (0), 12, 12, 256, 256);
     }
 
     @Override
     public void renderForeground(GuiGraphics guiGraphics, int mouseX, int mouseY, float delta) {
-        guiGraphics.drawString(font, this.getTitle(), width / 2 - font.width(TITLE) / 2, guiTop + 5, 4210752, false);
+        guiGraphics.drawString(font, this.getTitle(), width / 2 - font.width(TITLE) / 2, guiTop + 5, 0xFF404040, false);
 
         if (!groupList.isEmpty()) {
             groupList.render(guiGraphics, mouseX, mouseY, delta);
@@ -193,9 +199,12 @@ public class RecruitsGroupListScreen extends ListScreenBase implements IGroupSel
     private long lastClickTime = 0;
     private static final long DOUBLE_CLICK_THRESHOLD = 200;
     @Override
-    public boolean mouseClicked(double x, double y, int button) {
+    public boolean mouseClicked(MouseButtonEvent event, boolean doubleClick) {
+        double x = event.x();
+        double y = event.y();
+        int button = event.button();
         if (groupList != null && groupList.isMouseOver(x,y)) {
-            groupList.mouseClicked(x, y, button);
+            groupList.mouseClicked(new MouseButtonEvent(x, y, new MouseButtonInfo(button, 0)), false);
 
             RecruitsGroupEntry entry = groupList.getGroupEntryAtPosition(x,y);
             if(entry != null){
@@ -219,7 +228,7 @@ public class RecruitsGroupListScreen extends ListScreenBase implements IGroupSel
         }
         this.checkButtons();
 
-        return super.mouseClicked(x, y, button);
+        return super.mouseClicked(event, doubleClick);
     }
 
     private void onDoubleClick(RecruitsGroup group) {

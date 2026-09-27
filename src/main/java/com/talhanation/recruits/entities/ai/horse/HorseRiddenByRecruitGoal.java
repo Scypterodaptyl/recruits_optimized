@@ -4,8 +4,7 @@ import com.talhanation.recruits.entities.AbstractLeaderEntity;
 import com.talhanation.recruits.entities.AbstractRecruitEntity;
 import net.minecraft.world.entity.ai.attributes.Attributes;
 import net.minecraft.world.entity.ai.goal.Goal;
-import net.minecraft.world.entity.animal.camel.Camel;
-import net.minecraft.world.entity.animal.horse.AbstractHorse;
+import net.minecraft.world.entity.animal.equine.AbstractHorse;
 
 public class HorseRiddenByRecruitGoal extends Goal {
 
@@ -29,7 +28,7 @@ public class HorseRiddenByRecruitGoal extends Goal {
     private void applyHorseSpeed() {
         double speed;
         if(this.horse.getPersistentData().contains("oldSpeed")){
-            speed = horse.getPersistentData().getDouble("oldSpeed");
+            speed = horse.getPersistentData().getDoubleOr("oldSpeed", 0.0D);
         }
         else{
             speed = this.horse.getAttribute(Attributes.MOVEMENT_SPEED).getValue();
@@ -62,7 +61,7 @@ public class HorseRiddenByRecruitGoal extends Goal {
     @Override
     public void stop() {
         super.stop();
-        double oldSpeed = horse.getPersistentData().getDouble("oldSpeed");
+        double oldSpeed = horse.getPersistentData().getDoubleOr("oldSpeed", 0.0D);
         this.horse.getAttribute(Attributes.MOVEMENT_SPEED).setBaseValue(oldSpeed);
     }
 }

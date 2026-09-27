@@ -7,8 +7,8 @@ import net.minecraft.server.level.ServerLevel;
 import net.minecraft.sounds.SoundEvent;
 import net.minecraft.util.Mth;
 import net.minecraft.world.entity.LivingEntity;
-import net.minecraft.world.entity.projectile.AbstractArrow;
-import net.minecraft.world.entity.projectile.AbstractHurtingProjectile;
+import net.minecraft.world.entity.projectile.arrow.AbstractArrow;
+import net.minecraft.world.entity.projectile.hurtingprojectile.AbstractHurtingProjectile;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.Level;
@@ -103,7 +103,7 @@ public class MusketWeapon implements IWeapon {
             Class<?> bulletClass = resolveClass("ewewukek.musketmod.BulletEntity");
             Class<?>[] constructorParamTypes = {Level.class};
             Constructor<?> bulletConstructor = bulletClass.getConstructor(constructorParamTypes);
-            Level level = shooter.getCommandSenderWorld();
+            Level level = shooter.level();
             Object bulletInstance = bulletConstructor.newInstance(level);
 
             if(bulletInstance instanceof AbstractHurtingProjectile bullet){
@@ -129,7 +129,7 @@ public class MusketWeapon implements IWeapon {
     @Override
     @Nullable
     public AbstractHurtingProjectile shoot(LivingEntity shooter, AbstractHurtingProjectile projectile, double x, double y, double z) {
-        if(!shooter.getCommandSenderWorld().isClientSide()){
+        if(!shooter.level().isClientSide()){
             double d3 = Mth.sqrt((float) (x * x + z * z));
             Vec3 vec3 = (new Vec3(x, y + d3 * (double) 0.065, z)).normalize().scale(10F);
             try {
@@ -169,7 +169,7 @@ public class MusketWeapon implements IWeapon {
             try{
                 Class<?> musketModClass = resolveClass("ewewukek.musketmod.MusketMod");
                 Method sendSmokeEffectMethod = musketModClass.getMethod("sendSmokeEffect", ServerLevel.class, Vec3.class, Vec3.class);
-                sendSmokeEffectMethod.invoke(musketModClass, (ServerLevel) shooter.getCommandSenderWorld(), origin, forward);
+                sendSmokeEffectMethod.invoke(musketModClass, (ServerLevel) shooter.level(), origin, forward);
 
             } catch (ClassNotFoundException e) {
                 Main.LOGGER.error("MusketMod.class was not found (ClassNotFoundException)");
@@ -257,7 +257,7 @@ public class MusketWeapon implements IWeapon {
         this.shoot(shooter, projectileEntity, d0, d1, d2);
 
         shooter.playSound(this.getShootSound(), 1.0F, 1.0F / (shooter.getRandom().nextFloat() * 0.4F + 0.8F));
-        shooter.getCommandSenderWorld().addFreshEntity(projectileEntity);
+        shooter.level().addFreshEntity(projectileEntity);
 
         shooter.damageMainHandItem();
     }

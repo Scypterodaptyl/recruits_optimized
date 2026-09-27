@@ -1,6 +1,7 @@
 package com.talhanation.recruits.client.gui;
 
-import com.mojang.blaze3d.systems.RenderSystem;
+import net.minecraft.client.input.MouseButtonEvent;
+
 import com.talhanation.recruits.Main;
 import com.talhanation.recruits.RecruitEvents;
 import com.talhanation.recruits.client.ClientManager;
@@ -11,16 +12,15 @@ import com.talhanation.recruits.entities.*;
 import com.talhanation.recruits.inventory.RecruitInventoryMenu;
 import com.talhanation.recruits.network.*;
 import com.talhanation.recruits.world.RecruitsGroup;
-import de.maxhenkel.corelib.inventory.ScreenBase;
+import com.talhanation.recruits.corelib.ScreenBase;
 import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.components.Button;
 import net.minecraft.client.gui.components.Tooltip;
-import net.minecraft.client.gui.screens.inventory.InventoryScreen;
 import net.minecraft.network.chat.Component;
 import net.minecraft.network.chat.MutableComponent;
-import net.minecraft.resources.ResourceLocation;
-import net.minecraft.util.FastColor;
+import net.minecraft.resources.Identifier;
+import net.minecraft.util.ARGB;
 import net.minecraft.util.Mth;
 import net.minecraft.world.entity.player.Inventory;
 import net.minecraft.world.item.ItemStack;
@@ -31,7 +31,7 @@ import net.minecraftforge.client.gui.widget.ExtendedButton;
 
 @OnlyIn(Dist.CLIENT)
 public class RecruitInventoryScreen extends ScreenBase<RecruitInventoryMenu> {
-    private static final ResourceLocation RESOURCE_LOCATION = new ResourceLocation(Main.MOD_ID,"textures/gui/recruit_gui.png" );
+    private static final Identifier RESOURCE_LOCATION = Identifier.fromNamespaceAndPath(Main.MOD_ID,"textures/gui/recruit_gui.png" );
 
     private static final MutableComponent TEXT_HEALTH = Component.translatable("gui.recruits.inv.health");
     private static final MutableComponent TEXT_LEVEL = Component.translatable("gui.recruits.inv.level");
@@ -365,7 +365,7 @@ public class RecruitInventoryScreen extends ScreenBase<RecruitInventoryMenu> {
                         Main.SIMPLE_CHANNEL.sendToServer(new MessageGroup(currentGroup.getUUID(), recruit.getUUID()));
                     }
             );
-            groupSelectionDropDownMenu.setBgFillSelected(FastColor.ARGB32.color(255, 139, 139, 139));
+            groupSelectionDropDownMenu.setBgFillSelected(ARGB.color(255, 139, 139, 139));
             groupSelectionDropDownMenu.visible = Minecraft.getInstance().player.getUUID().equals(recruit.getOwnerUUID());
             RecruitsGroup group = ClientManager.getGroup(recruit.getGroup());
             groupSelectionDropDownMenu.canSelect = group == null || recruit.getGroup() == null || !recruit.getUUID().equals(group.leaderUUID);
@@ -383,17 +383,20 @@ public class RecruitInventoryScreen extends ScreenBase<RecruitInventoryMenu> {
     }
 
     @Override
-    public boolean mouseClicked(double mouseX, double mouseY, int button) {
+    public boolean mouseClicked(MouseButtonEvent event, boolean doubleClick) {
+        double mouseX = event.x();
+        double mouseY = event.y();
+        int button = event.button();
         if (groupSelectionDropDownMenu != null && groupSelectionDropDownMenu.isMouseOver(mouseX, mouseY)) {
             groupSelectionDropDownMenu.onMouseClick(mouseX, mouseY);
             return true;
         }
-        return super.mouseClicked(mouseX, mouseY, button);
+        return super.mouseClicked(event, doubleClick);
     }
     @Override
-    public boolean mouseScrolled(double x, double y, double d) {
-        if(groupSelectionDropDownMenu != null) groupSelectionDropDownMenu.mouseScrolled(x,y,d);
-        return super.mouseScrolled(x, y, d);
+    public boolean mouseScrolled(double x, double y, double scrollX, double d) {
+        if(groupSelectionDropDownMenu != null) groupSelectionDropDownMenu.mouseScrolled(x, y, 0, d);
+        return super.mouseScrolled(x, y, scrollX, d);
     }
     @Override
     public void render(GuiGraphics guiGraphics, int mouseX, int mouseY, float partialTicks) {
@@ -416,11 +419,11 @@ public class RecruitInventoryScreen extends ScreenBase<RecruitInventoryMenu> {
 
         //Titles
 
-        guiGraphics.drawString(font, recruit.getDisplayName().getVisualOrderText(), 8, 5, fontColor, false);
-        guiGraphics.drawString(font, playerInventory.getDisplayName().getVisualOrderText(), 8, this.imageHeight - 96 + 2, fontColor, false);
+        guiGraphics.drawString(font, recruit.getDisplayName().getVisualOrderText(), 8, 5, com.talhanation.recruits.client.gui.util.GuiCompat.opaque(fontColor), false);
+        guiGraphics.drawString(font, playerInventory.getDisplayName().getVisualOrderText(), 8, this.imageHeight - 96 + 2, com.talhanation.recruits.client.gui.util.GuiCompat.opaque(fontColor), false);
 
-        guiGraphics.pose().pushPose();
-        guiGraphics.pose().scale(0.7F, 0.7F, 1F);
+        guiGraphics.pose().pushMatrix();
+        guiGraphics.pose().scale((float) (0.7F), (float) (0.7F));
 
 
         k = 112;//rechst links
@@ -429,19 +432,19 @@ public class RecruitInventoryScreen extends ScreenBase<RecruitInventoryMenu> {
         //Info
 
 
-        guiGraphics.drawString(font, "Health:", k, l, fontColor, false);
-        guiGraphics.drawString(font, "" + health, k + gap, l, fontColor, false);
-        guiGraphics.drawString(font, "Lvl.:", k, l + 10, fontColor, false);
-        guiGraphics.drawString(font, "" + recruit.getXpLevel(), k + gap, l + 10, fontColor, false);
-        guiGraphics.drawString(font, "Exp.:", k, l + 20, fontColor, false);
-        guiGraphics.drawString(font, "" + recruit.getXp(), k + gap, l + 20, fontColor, false);
-        guiGraphics.drawString(font, "Kills:", k, l + 30, fontColor, false);
-        guiGraphics.drawString(font, "" + recruit.getKills(), k + gap, l + 30, fontColor, false);
-        guiGraphics.drawString(font, "Morale:", k, l + 40, fontColor, false);
-        guiGraphics.drawString(font, "" + moral, k + gap, l + 40, fontColor, false);
-        guiGraphics.drawString(font, "Hunger:", k, l + 50, fontColor, false);
-        guiGraphics.drawString(font, "" + hunger, k + gap, l + 50, fontColor, false);
-        guiGraphics.pose().popPose();
+        guiGraphics.drawString(font, "Health:", k, l, com.talhanation.recruits.client.gui.util.GuiCompat.opaque(fontColor), false);
+        guiGraphics.drawString(font, "" + health, k + gap, l, com.talhanation.recruits.client.gui.util.GuiCompat.opaque(fontColor), false);
+        guiGraphics.drawString(font, "Lvl.:", k, l + 10, com.talhanation.recruits.client.gui.util.GuiCompat.opaque(fontColor), false);
+        guiGraphics.drawString(font, "" + recruit.getXpLevel(), k + gap, l + 10, com.talhanation.recruits.client.gui.util.GuiCompat.opaque(fontColor), false);
+        guiGraphics.drawString(font, "Exp.:", k, l + 20, com.talhanation.recruits.client.gui.util.GuiCompat.opaque(fontColor), false);
+        guiGraphics.drawString(font, "" + recruit.getXp(), k + gap, l + 20, com.talhanation.recruits.client.gui.util.GuiCompat.opaque(fontColor), false);
+        guiGraphics.drawString(font, "Kills:", k, l + 30, com.talhanation.recruits.client.gui.util.GuiCompat.opaque(fontColor), false);
+        guiGraphics.drawString(font, "" + recruit.getKills(), k + gap, l + 30, com.talhanation.recruits.client.gui.util.GuiCompat.opaque(fontColor), false);
+        guiGraphics.drawString(font, "Morale:", k, l + 40, com.talhanation.recruits.client.gui.util.GuiCompat.opaque(fontColor), false);
+        guiGraphics.drawString(font, "" + moral, k + gap, l + 40, com.talhanation.recruits.client.gui.util.GuiCompat.opaque(fontColor), false);
+        guiGraphics.drawString(font, "Hunger:", k, l + 50, com.talhanation.recruits.client.gui.util.GuiCompat.opaque(fontColor), false);
+        guiGraphics.drawString(font, "" + hunger, k + gap, l + 50, com.talhanation.recruits.client.gui.util.GuiCompat.opaque(fontColor), false);
+        guiGraphics.pose().popMatrix();
 
         /*
         font.draw(matrixStack, "Moral:", k, l + 30, fontColor);
@@ -458,7 +461,7 @@ public class RecruitInventoryScreen extends ScreenBase<RecruitInventoryMenu> {
             case 6 -> TEXT_INFO_WORKING.getString();
             default -> throw new IllegalStateException("Unexpected value: " + this.follow);
         };
-        guiGraphics.drawString(font, follow, k + 15, l + 58 + 0, fontColor, false);
+        guiGraphics.drawString(font, follow, k + 15, l + 58 + 0, com.talhanation.recruits.client.gui.util.GuiCompat.opaque(fontColor), false);
 
 
         String aggro = switch (this.aggro) {
@@ -470,14 +473,14 @@ public class RecruitInventoryScreen extends ScreenBase<RecruitInventoryMenu> {
         };
 
         int fnt = this.aggro == 3 ? 16733525 : fontColor;
-        guiGraphics.drawString(font, aggro, k + 15, l + 56 + 15, fnt, false);
+        guiGraphics.drawString(font, aggro, k + 15, l + 56 + 15, com.talhanation.recruits.client.gui.util.GuiCompat.opaque(fnt), false);
 
         String listen;
         if (recruit.getListen()) listen = TEXT_INFO_LISTEN.getString();
         else listen = TEXT_INFO_IGNORE.getString();
 
         int fnt2 = recruit.getListen() ? fontColor : 16733525;
-        guiGraphics.drawString(font, listen, k + 15, l + 56 + 28, fnt2, false);
+        guiGraphics.drawString(font, listen, k + 15, l + 56 + 28, com.talhanation.recruits.client.gui.util.GuiCompat.opaque(fnt2), false);
 
         ItemStack profItem1 = null;
         ItemStack profItem2 = null;
@@ -518,8 +521,8 @@ public class RecruitInventoryScreen extends ScreenBase<RecruitInventoryMenu> {
         else if(this.recruit instanceof RecruitEntity){
             profItem1 = Items.IRON_SWORD.getDefaultInstance();
         }
-        guiGraphics.pose().pushPose();
-        guiGraphics.pose().scale(0.8F, 0.8F, 1F);
+        guiGraphics.pose().pushMatrix();
+        guiGraphics.pose().scale((float) (0.8F), (float) (0.8F));
 
         if(profItem2 != null){
             guiGraphics.renderFakeItem(profItem2, 90, 4);
@@ -528,16 +531,15 @@ public class RecruitInventoryScreen extends ScreenBase<RecruitInventoryMenu> {
         if(profItem1 != null){
             guiGraphics.renderFakeItem(profItem1, 80, 4);
         }
-        guiGraphics.pose().popPose();
+        guiGraphics.pose().popMatrix();
     }
 
     protected void renderBg(GuiGraphics guiGraphics, float partialTicks, int mouseX, int mouseY) {
         super.renderBg(guiGraphics, partialTicks, mouseX, mouseY);
 
-        RenderSystem.clearColor(1.0F, 1.0F, 1.0F, 1.0F);
         int i = (this.width - this.imageWidth) / 2;
         int j = (this.height - this.imageHeight) / 2;
 
-        InventoryScreen.renderEntityInInventoryFollowsMouse(guiGraphics, i + 50, j + 82, 30, (float)(i + 50) - mouseX, (float)(j + 75 - 50) - mouseY, this.recruit);
+        com.talhanation.recruits.client.gui.util.GuiCompat.renderEntityFollowsMouse(guiGraphics, i + 50, j + 82, 30, mouseX, mouseY, this.recruit);
     }
 }

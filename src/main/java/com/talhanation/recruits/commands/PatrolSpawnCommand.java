@@ -6,13 +6,12 @@ import com.talhanation.recruits.world.PillagerPatrolSpawn;
 import com.talhanation.recruits.world.RecruitsPatrolSpawn;
 import net.minecraft.commands.CommandSourceStack;
 import net.minecraft.commands.Commands;
-import net.minecraft.world.entity.monster.Pillager;
 
 
 public class PatrolSpawnCommand {
 
     public static void register(CommandDispatcher<CommandSourceStack> dispatcher) {
-        LiteralArgumentBuilder<CommandSourceStack> literalBuilder = Commands.literal("recruits").requires((source) -> source.hasPermission(2));
+        LiteralArgumentBuilder<CommandSourceStack> literalBuilder = Commands.literal("recruits").requires(Commands.hasPermission(Commands.LEVEL_GAMEMASTERS));
 
         literalBuilder.then(Commands.literal("spawn")
                         .then(Commands.literal("pillagerPatrol")

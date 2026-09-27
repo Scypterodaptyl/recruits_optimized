@@ -1,5 +1,7 @@
 package com.talhanation.recruits.client.gui.widgets;
 
+import net.minecraft.client.input.MouseButtonEvent;
+
 
 import com.google.common.collect.Lists;
 import net.minecraft.client.gui.components.AbstractWidget;
@@ -28,7 +30,10 @@ public abstract class ListScreenEntryBase<T extends ContainerObjectSelectionList
     }
 
     @Override
-    public boolean mouseClicked(double mouseX, double mouseY, int button) {
+    public boolean mouseClicked(MouseButtonEvent event, boolean doubleClick) {
+        double mouseX = event.x();
+        double mouseY = event.y();
+        int button = event.button();
         if (button == 0) {
             getList().setFocused(this);
             return true;

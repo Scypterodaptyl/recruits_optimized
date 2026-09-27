@@ -8,7 +8,7 @@ import net.minecraft.server.level.ServerLevel;
 import net.minecraft.world.Container;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.ai.goal.Goal;
-import net.minecraft.world.entity.animal.horse.AbstractHorse;
+import net.minecraft.world.entity.animal.equine.AbstractHorse;
 import net.minecraft.world.entity.npc.InventoryCarrier;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.phys.Vec3;
@@ -35,7 +35,7 @@ public class RecruitUpkeepEntityGoal extends Goal {
 
     @Override
     public boolean canUse() {
-        long i = this.recruit.getCommandSenderWorld().getGameTime();
+        long i = this.recruit.level().getGameTime();
         if (i - this.lastCanUseCheck >= 20L) {
             this.lastCanUseCheck = i;
 
@@ -83,7 +83,7 @@ public class RecruitUpkeepEntityGoal extends Goal {
         }
         else {
             if (recruit.getOwner() != null && messageNotInRange) {
-                recruit.getOwner().sendSystemMessage(TEXT_NOT_IN_RANGE(recruit.getName().getString()));
+                recruit.getOwner().displayClientMessage(TEXT_NOT_IN_RANGE(recruit.getName().getString()), false);
                 messageNotInRange = false;
             }
             recruit.clearUpkeepEntity();
@@ -131,7 +131,7 @@ public class RecruitUpkeepEntityGoal extends Goal {
                             foodItem.shrink(1);
                         } else {
                             if (recruit.getOwner() != null && message) {
-                                recruit.getOwner().sendSystemMessage(TEXT_NO_PLACE(recruit.getName().getString()));
+                                recruit.getOwner().displayClientMessage(TEXT_NO_PLACE(recruit.getName().getString()), false);
                                 message = false;
                             }
                         }
@@ -140,7 +140,7 @@ public class RecruitUpkeepEntityGoal extends Goal {
                     return;
                 } else {
                     if (recruit.getOwner() != null && message) {
-                        recruit.getOwner().sendSystemMessage(TEXT_FOOD(recruit.getName().getString()));
+                        recruit.getOwner().displayClientMessage(TEXT_FOOD(recruit.getName().getString()), false);
                         message = false;
                     }
                     this.stop();
@@ -149,7 +149,7 @@ public class RecruitUpkeepEntityGoal extends Goal {
             }
         } else {
             if (recruit.getOwner() != null && messageNotInRange) {
-                recruit.getOwner().sendSystemMessage(TEXT_NOT_IN_RANGE(recruit.getName().getString()));
+                recruit.getOwner().displayClientMessage(TEXT_NOT_IN_RANGE(recruit.getName().getString()), false);
                 messageNotInRange = false;
 
                 recruit.clearUpkeepEntity();
@@ -184,7 +184,7 @@ public class RecruitUpkeepEntityGoal extends Goal {
     private Optional<Entity> findEntity() {
         if (this.recruit.getUpkeepUUID() == null) return Optional.empty();
 
-        if (!(recruit.getCommandSenderWorld() instanceof ServerLevel serverLevel)) return Optional.empty();
+        if (!(recruit.level() instanceof ServerLevel serverLevel)) return Optional.empty();
 
         Entity entity = serverLevel.getEntity(recruit.getUpkeepUUID());
         if (entity == null || entity.distanceToSqr(recruit) > 100.0D * 100.0D) return Optional.empty();

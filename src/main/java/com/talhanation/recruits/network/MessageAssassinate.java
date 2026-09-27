@@ -1,6 +1,6 @@
 package com.talhanation.recruits.network;
 
-import de.maxhenkel.corelib.net.Message;
+import com.talhanation.recruits.network.Message;
 import net.minecraft.network.FriendlyByteBuf;
 
 import net.minecraft.network.chat.Component;
@@ -9,7 +9,7 @@ import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.server.players.PlayerList;
 import net.minecraftforge.api.distmarker.Dist;
-import net.minecraftforge.network.NetworkEvent;
+import net.minecraftforge.event.network.CustomPayloadEvent;
 
 import java.util.Objects;
 
@@ -34,9 +34,9 @@ public class MessageAssassinate implements Message<MessageAssassinate> {
         return Dist.DEDICATED_SERVER;
     }
 
-    public void executeServerSide(NetworkEvent.Context context) {
+    public void executeServerSide(CustomPayloadEvent.Context context) {
         ServerPlayer player = Objects.requireNonNull(context.getSender());
-        ServerLevel world = player.serverLevel();
+        ServerLevel world = player.level();
         MinecraftServer server = world.getServer();
         PlayerList list = server.getPlayerList();
         ServerPlayer targetPlayer = list.getPlayerByName(name);

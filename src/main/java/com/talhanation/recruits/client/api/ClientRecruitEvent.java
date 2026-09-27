@@ -5,12 +5,15 @@ import com.talhanation.recruits.world.RecruitsFaction;
 import net.minecraft.world.entity.player.Player;
 import net.minecraftforge.api.distmarker.Dist;
 import net.minecraftforge.api.distmarker.OnlyIn;
-import net.minecraftforge.eventbus.api.Event;
+import net.minecraftforge.eventbus.api.bus.CancellableEventBus;
+import net.minecraftforge.eventbus.api.bus.EventBus;
+import net.minecraftforge.eventbus.api.event.MutableEvent;
+import net.minecraftforge.eventbus.api.event.characteristic.Cancellable;
 
 import javax.annotation.Nullable;
 
 @OnlyIn(Dist.CLIENT)
-public abstract class ClientRecruitEvent extends Event {
+public abstract class ClientRecruitEvent extends MutableEvent {
 
     private final AbstractRecruitEntity recruit;
 
@@ -21,6 +24,7 @@ public abstract class ClientRecruitEvent extends Event {
     public AbstractRecruitEntity getRecruit() { return recruit; }
 
     public static class LevelUp extends ClientRecruitEvent {
+        public static final EventBus<ClientRecruitEvent.LevelUp> BUS = EventBus.create(ClientRecruitEvent.LevelUp.class);
         private final int newLevel;
 
         public LevelUp(AbstractRecruitEntity recruit, int newLevel) {
@@ -32,6 +36,7 @@ public abstract class ClientRecruitEvent extends Event {
     }
 
     public static class Died extends ClientRecruitEvent {
+        public static final EventBus<ClientRecruitEvent.Died> BUS = EventBus.create(ClientRecruitEvent.Died.class);
         @Nullable
         private final Player owner;
 
@@ -46,6 +51,7 @@ public abstract class ClientRecruitEvent extends Event {
 
 
     public static class Spawned extends ClientRecruitEvent {
+        public static final EventBus<ClientRecruitEvent.Spawned> BUS = EventBus.create(ClientRecruitEvent.Spawned.class);
         public Spawned(AbstractRecruitEntity recruit) {
             super(recruit);
         }
@@ -53,6 +59,7 @@ public abstract class ClientRecruitEvent extends Event {
 
 
     public static class FactionChanged extends ClientRecruitEvent {
+        public static final EventBus<ClientRecruitEvent.FactionChanged> BUS = EventBus.create(ClientRecruitEvent.FactionChanged.class);
         @Nullable private final RecruitsFaction previousFaction;
         @Nullable private final RecruitsFaction newFaction;
 

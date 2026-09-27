@@ -156,8 +156,8 @@ public final class ChunkImageBuilder {
                 activeSampleChunk.getHeight(
                                 Heightmap.Types.WORLD_SURFACE, activeSampleWorldX & 15, activeSampleWorldZ & 15)
                         - 1;
-        activeSampleMinY = context.level().getMinBuildHeight();
-        activeSampleY = Math.min(context.level().getMaxBuildHeight() - 1, surfaceHeight + 3);
+        activeSampleMinY = context.level().getMinY();
+        activeSampleY = Math.min(context.level().getMaxY() - 1, surfaceHeight + 3);
         if (activeSampleY >= activeSampleMinY) return true;
 
         activeSampleChunk = null;
@@ -269,7 +269,7 @@ public final class ChunkImageBuilder {
     private WorldMapSourceChunk createSourceChunk() {
         // Keep enough source info to rebuild colors after a resource-pack reload.
         WorldMapSourceChunk.Builder builder = WorldMapSourceChunk.builder();
-        Registry<Biome> biomeRegistry = context.level().registryAccess().registryOrThrow(Registries.BIOME);
+        Registry<Biome> biomeRegistry = context.level().registryAccess().lookupOrThrow(Registries.BIOME);
         MapSample[] surfaces = scratch.surfaceSamples();
         MapSample[] underlays = scratch.underlaySamples();
 

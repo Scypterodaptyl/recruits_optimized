@@ -3,11 +3,11 @@ package com.talhanation.recruits.network;
 import com.talhanation.recruits.RecruitEvents;
 import com.talhanation.recruits.entities.AbstractLeaderEntity;
 import com.talhanation.recruits.world.RecruitsGroup;
-import de.maxhenkel.corelib.net.Message;
+import com.talhanation.recruits.network.Message;
 import net.minecraft.network.FriendlyByteBuf;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraftforge.api.distmarker.Dist;
-import net.minecraftforge.network.NetworkEvent;
+import net.minecraftforge.event.network.CustomPayloadEvent;
 
 import javax.annotation.Nullable;
 import java.util.Objects;
@@ -37,9 +37,9 @@ public class MessageSetLeaderGroup implements Message<MessageSetLeaderGroup> {
     }
 
     @Override
-    public void executeServerSide(NetworkEvent.Context context) {
+    public void executeServerSide(CustomPayloadEvent.Context context) {
         ServerPlayer player = Objects.requireNonNull(context.getSender());
-        player.serverLevel().getEntitiesOfClass(
+        player.level().getEntitiesOfClass(
                 AbstractLeaderEntity.class,
                 player.getBoundingBox().inflate(100D),
                 leader -> leader.getUUID().equals(this.leaderUUID) && leader.isAlive()

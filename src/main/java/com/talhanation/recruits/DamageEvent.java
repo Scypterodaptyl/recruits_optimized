@@ -8,22 +8,20 @@ import net.minecraft.world.entity.player.Player;
 import net.minecraftforge.event.entity.living.LivingHurtEvent;
 import net.minecraftforge.event.entity.living.LivingKnockBackEvent;
 import net.minecraftforge.event.entity.player.AttackEntityEvent;
-import net.minecraftforge.eventbus.api.SubscribeEvent;
+import net.minecraftforge.eventbus.api.listener.SubscribeEvent;
 
 public class DamageEvent {
 
 
-    @SubscribeEvent
-    public static void onPlayerAttack(AttackEntityEvent event) {
-        if (!event.isCanceled()) {
+    public static boolean onPlayerAttack(AttackEntityEvent event) {
+        if (true) {
             Player player = event.getEntity();
-            if (player.getCommandSenderWorld().isClientSide()) {
-                return;
+            if (player.level().isClientSide()) {
+                return false;
             }
             float str = player.getAttackStrengthScale(0);
             if (str <= 0.1) {
-                event.setCanceled(true);
-                return;
+                return true;
             }
             if (str <= 0.75) {
                 Entity target = event.getTarget();
@@ -32,27 +30,28 @@ public class DamageEvent {
                 }
             }
         }
+        return false;
     }
 
 
-    @SubscribeEvent
-    public static void onKnockback(LivingKnockBackEvent event) {
-        if (!event.isCanceled()) {
+    public static boolean onKnockback(LivingKnockBackEvent event) {
+        if (true) {
             LivingEntity entity = event.getEntity();
             if (entity.swinging) {
-                event.setCanceled(true);
                 entity.swinging = false;
+                return true;
             }
         }
+        return false;
     }
 
     @SubscribeEvent
     public void onEntityHurt(LivingHurtEvent event) {
-        if (!event.isCanceled()) {
+        if (true) {
 
             LivingEntity target = event.getEntity();
 
-            if (target.getCommandSenderWorld().isClientSide()) {
+            if (target.level().isClientSide()) {
                 return;
             }
 
@@ -61,7 +60,7 @@ public class DamageEvent {
 
             if(!RecruitsServerConfig.NoDamageImmunity.get()) return;
 
-            if (target.getCommandSenderWorld().isClientSide()) {
+            if (target.level().isClientSide()) {
                 return;
             }
 
@@ -82,16 +81,17 @@ public class DamageEvent {
     }
 
     @SubscribeEvent
-    public void onEntityHurtByPlayer(AttackEntityEvent event) {
-        if (!event.isCanceled()) {
+    public boolean onEntityHurtByPlayer(AttackEntityEvent event) {
+        if (true) {
             Player player = event.getEntity();
             Entity target = event.getTarget();
 
             if(target.getFirstPassenger() instanceof LivingEntity passenger){
                 if (!RecruitEvents.canHarmTeam(player, passenger)) {
-                    event.setCanceled(true);
+                    return true;
                 }
             }
         }
+        return false;
     }
 }

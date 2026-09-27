@@ -1,7 +1,6 @@
 package com.talhanation.recruits.entities.ai.navigation;
 
 import com.talhanation.recruits.entities.AbstractRecruitEntity;
-import net.minecraft.world.entity.Mob;
 
 public class RecruitsOpenDoorGoal extends RecruitsDoorInteractGoal{
     private final boolean closeDoor;

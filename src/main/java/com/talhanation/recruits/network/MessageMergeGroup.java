@@ -3,12 +3,11 @@ package com.talhanation.recruits.network;
 import com.talhanation.recruits.RecruitEvents;
 import com.talhanation.recruits.entities.AbstractRecruitEntity;
 import com.talhanation.recruits.world.RecruitsGroup;
-import de.maxhenkel.corelib.net.Message;
+import com.talhanation.recruits.network.Message;
 import net.minecraft.network.FriendlyByteBuf;
-import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraftforge.api.distmarker.Dist;
-import net.minecraftforge.network.NetworkEvent;
+import net.minecraftforge.event.network.CustomPayloadEvent;
 
 import java.util.Objects;
 import java.util.UUID;
@@ -30,14 +29,14 @@ public class MessageMergeGroup implements Message<MessageMergeGroup> {
         return Dist.DEDICATED_SERVER;
     }
 
-    public void executeServerSide(NetworkEvent.Context context) {
+    public void executeServerSide(CustomPayloadEvent.Context context) {
         ServerPlayer player = Objects.requireNonNull(context.getSender());
         RecruitsGroup groupToMerge = RecruitEvents.recruitsGroupsManager.getGroup(mergeUUID);
         RecruitsGroup baseGroup = RecruitEvents.recruitsGroupsManager.getGroup(groupUUID);
 
         if(groupToMerge == null || baseGroup == null) return;
 
-        RecruitEvents.recruitsGroupsManager.mergeGroups(groupToMerge, baseGroup, player.serverLevel());
+        RecruitEvents.recruitsGroupsManager.mergeGroups(groupToMerge, baseGroup, player.level());
     }
 
     public MessageMergeGroup fromBytes(FriendlyByteBuf buf) {

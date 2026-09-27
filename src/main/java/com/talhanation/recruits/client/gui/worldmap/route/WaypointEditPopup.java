@@ -1,5 +1,10 @@
 package com.talhanation.recruits.client.gui.worldmap.route;
 
+import net.minecraft.client.input.MouseButtonEvent;
+import net.minecraft.client.input.MouseButtonInfo;
+import net.minecraft.client.input.KeyEvent;
+import net.minecraft.client.input.CharacterEvent;
+
 import com.talhanation.recruits.client.ClientManager;
 import com.talhanation.recruits.client.gui.worldmap.WorldMapScreen;
 import com.talhanation.recruits.world.RecruitsRoute;
@@ -114,7 +119,7 @@ public class WaypointEditPopup {
     }
 
     public void tick() {
-        if (visible && waitField != null) waitField.tick();
+        
     }
 
     public void render(GuiGraphics guiGraphics, int mouseX, int mouseY) {
@@ -128,10 +133,10 @@ public class WaypointEditPopup {
         guiGraphics.renderOutline(px, py, WIDTH, HEIGHT, OUTLINE_COLOR);
 
         guiGraphics.drawCenteredString(
-                Minecraft.getInstance().font, waypoint.getName(), px + WIDTH / 2, py + 6, TEXT_COLOR);
+                Minecraft.getInstance().font, waypoint.getName(), px + WIDTH / 2, py + 6, com.talhanation.recruits.client.gui.util.GuiCompat.opaque(TEXT_COLOR));
 
         int rowY = py + 22;
-        guiGraphics.drawString(Minecraft.getInstance().font, ACTION, px + 8, rowY + 3, TEXT_MUTED, false);
+        guiGraphics.drawString(Minecraft.getInstance().font, ACTION, px + 8, rowY + 3, com.talhanation.recruits.client.gui.util.GuiCompat.opaque(TEXT_MUTED), false);
 
         renderActionButton(guiGraphics, mouseX, mouseY, ACTION_NONE, null, px + ACTION_BUTTON_X, rowY);
         renderActionButton(
@@ -143,7 +148,7 @@ public class WaypointEditPopup {
         if (actionType == RecruitsRoute.WaypointAction.Type.WAIT) {
             ensureWaitField();
             int fieldY = rowY + 20;
-            guiGraphics.drawString(Minecraft.getInstance().font, SECONDS, px + 8, fieldY + 2, TEXT_MUTED, false);
+            guiGraphics.drawString(Minecraft.getInstance().font, SECONDS, px + 8, fieldY + 2, com.talhanation.recruits.client.gui.util.GuiCompat.opaque(TEXT_MUTED), false);
             int fieldX = px + 66;
             int fieldW = 54;
             guiGraphics.fill(fieldX - 1, fieldY - 1, fieldX + fieldW + 1, fieldY + 13, 0x80303030);
@@ -170,7 +175,7 @@ public class WaypointEditPopup {
         guiGraphics.fill(x, y, x + BTN_W, y + BTN_H, bg);
         guiGraphics.renderOutline(x, y, BTN_W, BTN_H, selected ? TEXT_COLOR : OUTLINE_COLOR);
         guiGraphics.drawCenteredString(
-                Minecraft.getInstance().font, label, x + BTN_W / 2, y + (BTN_H - 8) / 2, TEXT_COLOR);
+                Minecraft.getInstance().font, label, x + BTN_W / 2, y + (BTN_H - 8) / 2, com.talhanation.recruits.client.gui.util.GuiCompat.opaque(TEXT_COLOR));
     }
 
     private void renderButton(
@@ -178,7 +183,7 @@ public class WaypointEditPopup {
         boolean hovered = mouseX >= x && mouseX <= x + w && mouseY >= y && mouseY <= y + h;
         guiGraphics.fill(x, y, x + w, y + h, hovered ? BTN_HOVERED_COLOR : BTN_COLOR);
         guiGraphics.renderOutline(x, y, w, h, OUTLINE_COLOR);
-        guiGraphics.drawCenteredString(Minecraft.getInstance().font, label, x + w / 2, y + (h - 8) / 2, TEXT_COLOR);
+        guiGraphics.drawCenteredString(Minecraft.getInstance().font, label, x + w / 2, y + (h - 8) / 2, com.talhanation.recruits.client.gui.util.GuiCompat.opaque(TEXT_COLOR));
     }
 
     public boolean mouseClicked(double mouseX, double mouseY) {
@@ -219,7 +224,7 @@ public class WaypointEditPopup {
         }
 
         // Forward click to EditBox
-        if (waitField != null) waitField.mouseClicked(mouseX, mouseY, 0);
+        if (waitField != null) waitField.mouseClicked(new MouseButtonEvent(mouseX, mouseY, new MouseButtonInfo(0, 0)), false);
 
         int btnY = py + HEIGHT - 18;
         if (mouseX >= px + 8 && mouseX <= px + 88 && mouseY >= btnY && mouseY <= btnY + BTN_H) {
@@ -250,7 +255,7 @@ public class WaypointEditPopup {
         }
 
         if (waitField != null && actionType == RecruitsRoute.WaypointAction.Type.WAIT) {
-            waitField.keyPressed(keyCode, 0, 0);
+            waitField.keyPressed(new KeyEvent(keyCode, 0, 0));
         }
         return true;
     }
@@ -258,7 +263,7 @@ public class WaypointEditPopup {
     public boolean charTyped(char chr) {
         if (!visible) return false;
         if (waitField != null && actionType == RecruitsRoute.WaypointAction.Type.WAIT) {
-            waitField.charTyped(chr, 0);
+            waitField.charTyped(new CharacterEvent(chr, 0));
         }
         return true;
     }

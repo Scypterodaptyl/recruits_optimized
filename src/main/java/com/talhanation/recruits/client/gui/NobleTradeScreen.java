@@ -1,6 +1,8 @@
 package com.talhanation.recruits.client.gui;
 
-import com.mojang.blaze3d.systems.RenderSystem;
+import net.minecraft.client.input.MouseButtonEvent;
+import net.minecraft.client.renderer.RenderPipelines;
+
 import com.talhanation.recruits.Main;
 import com.talhanation.recruits.client.ClientManager;
 import com.talhanation.recruits.client.gui.component.RecruitsMultiLineEditBox;
@@ -11,16 +13,14 @@ import com.talhanation.recruits.world.RecruitsGroup;
 import com.talhanation.recruits.world.RecruitsHireTrade;
 import com.talhanation.recruits.world.RecruitsHireTradesRegistry;
 import net.minecraft.client.gui.GuiGraphics;
-import net.minecraft.client.gui.components.AbstractButton;
 import net.minecraft.client.gui.components.Button;
 import net.minecraft.client.gui.components.Tooltip;
-import net.minecraft.client.renderer.GameRenderer;
 import net.minecraft.network.chat.Component;
 import net.minecraft.network.chat.MutableComponent;
-import net.minecraft.resources.ResourceLocation;
-import net.minecraft.util.FastColor;
-import net.minecraft.world.entity.npc.Villager;
-import net.minecraft.world.entity.npc.VillagerProfession;
+import net.minecraft.resources.Identifier;
+import net.minecraft.util.ARGB;
+import net.minecraft.world.entity.npc.villager.Villager;
+import net.minecraft.world.entity.npc.villager.VillagerProfession;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.ItemStack;
 import net.minecraftforge.client.gui.widget.ExtendedButton;
@@ -38,7 +38,7 @@ import java.util.stream.Collectors;
 import static com.talhanation.recruits.client.ClientManager.currency;
 
 public class NobleTradeScreen extends RecruitsScreenBase {
-    private static final ResourceLocation TEXTURE = new ResourceLocation(Main.MOD_ID, "textures/gui/noble_villager.png");
+    private static final Identifier TEXTURE = Identifier.fromNamespaceAndPath(Main.MOD_ID, "textures/gui/noble_villager.png");
     private static final Component TITLE = Component.translatable("gui.recruits.villager_noble");
     private static final Component HIRE_BUTTON = Component.translatable("gui.recruits.villager_noble.hire");
     private static final Component TEXT_VILLAGERS = Component.translatable("gui.recruits.villager_noble.villagers");
@@ -92,11 +92,8 @@ public class NobleTradeScreen extends RecruitsScreenBase {
         this.group = ClientManager.getSelectedGroup();
 
         this.tradeList = new TradeList(Minecraft.getInstance(), listWidth, listHeight, listTop, listBottom, itemHeight, itemWidth);
-        this.tradeList.setRenderBackground(false);
-        this.tradeList.setRenderTopAndBottom(false);
 
-        this.tradeList.setLeftPos(listLeft);
-        this.tradeList.setRenderSelection(false);
+        this.tradeList.setX(listLeft);
 
         this.addRenderableWidget(this.tradeList);
 
@@ -132,10 +129,10 @@ public class NobleTradeScreen extends RecruitsScreenBase {
                     ClientManager.groupSelection = ClientManager.groups.indexOf(group);
                 }
         );
-        groupSelectionDropDownMenu.setBgFillSelected(FastColor.ARGB32.color(255, 139, 139, 139));
+        groupSelectionDropDownMenu.setBgFillSelected(ARGB.color(255, 139, 139, 139));
         addRenderableWidget(groupSelectionDropDownMenu);
 
-        if(isPlayerFactionLeader() || isPlayerClaimLeader() || (player.hasPermissions(2) && player.isCreative())){
+        if(isPlayerFactionLeader() || isPlayerClaimLeader() || (player.permissions().hasPermission(net.minecraft.server.permissions.Permissions.COMMANDS_GAMEMASTER) && player.isCreative())){
             this.addRenderableWidget(new ExtendedButton(guiLeft + 256, guiTop + 172, 75, 20, INVENTORY_BUTTON,
                 btn -> {
                     this.villagerNoble.openGUI(player);
@@ -168,7 +165,7 @@ public class NobleTradeScreen extends RecruitsScreenBase {
         if(this.player.tickCount % 20 == 0){
             this.findVillagers();
         }
-        if(this.descriptionBox != null) descriptionBox.tick();
+        
         this.loadTrades();
         this.updateHireButtonState();
     }
@@ -205,10 +202,10 @@ public class NobleTradeScreen extends RecruitsScreenBase {
         return copy;
     }
     private void findVillagers() {
-        this.villagerList = this.player.getCommandSenderWorld()
+        this.villagerList = this.player.level()
                 .getEntitiesOfClass(Villager.class, this.player.getBoundingBox().inflate(32))
                 .stream()
-                .filter(v -> v.getVillagerData().getProfession().equals(VillagerProfession.NONE) && !v.isBaby())
+                .filter(v -> v.getVillagerData().profession().is(VillagerProfession.NONE) && !v.isBaby())
                 .sorted(Comparator.comparing(v -> v.distanceTo(this.player)))
                 .collect(Collectors.toList());
     }
@@ -222,22 +219,25 @@ public class NobleTradeScreen extends RecruitsScreenBase {
     }
 
     @Override
-    public boolean mouseClicked(double mouseX, double mouseY, int button) {
+    public boolean mouseClicked(MouseButtonEvent event, boolean doubleClick) {
+        double mouseX = event.x();
+        double mouseY = event.y();
+        int button = event.button();
         if (groupSelectionDropDownMenu != null && groupSelectionDropDownMenu.isMouseOver(mouseX, mouseY)) {
             groupSelectionDropDownMenu.onMouseClick(mouseX, mouseY);
             return true;
         }
-        return super.mouseClicked(mouseX, mouseY, button);
+        return super.mouseClicked(event, doubleClick);
     }
     @Override
-    public boolean mouseScrolled(double x, double y, double d) {
-        if(groupSelectionDropDownMenu != null) groupSelectionDropDownMenu.mouseScrolled(x,y,d);
-        return super.mouseScrolled(x, y, d);
+    public boolean mouseScrolled(double x, double y, double scrollX, double d) {
+        if(groupSelectionDropDownMenu != null) groupSelectionDropDownMenu.mouseScrolled(x, y, 0, d);
+        return super.mouseScrolled(x, y, scrollX, d);
     }
 
     @Override
     public void render(GuiGraphics guiGraphics, int mouseX, int mouseY, float partialTick) {
-        this.renderBackground(guiGraphics, mouseX, mouseY, partialTick);
+        renderRecruitsBackground(guiGraphics, mouseX, mouseY, partialTick);
         super.render(guiGraphics, mouseX, mouseY, partialTick);
 
         if (groupSelectionDropDownMenu != null) {
@@ -246,28 +246,25 @@ public class NobleTradeScreen extends RecruitsScreenBase {
     }
 
     @Override
-    public void renderBackground(GuiGraphics guiGraphics, int mouseX, int mouseY, float delta) {
-        RenderSystem.setShader(GameRenderer::getPositionTexShader);
-        RenderSystem.setShaderColor(1F, 1F, 1F, 1F);
-        RenderSystem.setShaderTexture(0, TEXTURE);
-        guiGraphics.blit(TEXTURE, guiLeft, guiTop, 0, 0, xSize, ySize);
+    public void renderRecruitsBackground(GuiGraphics guiGraphics, int mouseX, int mouseY, float delta) {
+        guiGraphics.blit(RenderPipelines.GUI_TEXTURED, TEXTURE, guiLeft, guiTop, (float) (0), (float) (0), xSize, ySize, 256, 256);
     }
     int v = 0;
     @Override
     public void renderForeground(GuiGraphics guiGraphics, int mouseX, int mouseY, float delta) {
-        guiGraphics.drawString(font, TITLE, guiLeft + 10, guiTop + 7, FONT_COLOR, false);
-        guiGraphics.drawString(font, Component.literal("Lvl: " + villagerNoble.getTraderLevel()), guiLeft + TRADE_TITLE_X, guiTop + 7, FONT_COLOR, false);
+        guiGraphics.drawString(font, TITLE, guiLeft + 10, guiTop + 7, com.talhanation.recruits.client.gui.util.GuiCompat.opaque(FONT_COLOR), false);
+        guiGraphics.drawString(font, Component.literal("Lvl: " + villagerNoble.getTraderLevel()), guiLeft + TRADE_TITLE_X, guiTop + 7, com.talhanation.recruits.client.gui.util.GuiCompat.opaque(FONT_COLOR), false);
 
         if(villagerList != null) v = villagerList.size();
         else v = 0;
 
         if(ClientManager.configValueNobleNeedsVillagers)
-            guiGraphics.drawString(font, Component.literal(TEXT_VILLAGERS.getString() + ": " + v), guiLeft + TRADE_TITLE_X, guiTop + 30, FONT_COLOR, false);
+            guiGraphics.drawString(font, Component.literal(TEXT_VILLAGERS.getString() + ": " + v), guiLeft + TRADE_TITLE_X, guiTop + 30, com.talhanation.recruits.client.gui.util.GuiCompat.opaque(FONT_COLOR), false);
 
         if (selection != null) {
             int x = guiLeft + TRADE_TITLE_X ;
             int y = guiTop + TRADE_TITLE_Y;
-            guiGraphics.drawString(font, tradeTitle, x, y, FONT_COLOR, false);
+            guiGraphics.drawString(font, tradeTitle, x, y, com.talhanation.recruits.client.gui.util.GuiCompat.opaque(FONT_COLOR), false);
         }
         int progress = (int) (villagerNoble.getTraderProgress() * 1.5);
         guiGraphics.fill(guiLeft + LEVEL_BAR_X, guiTop + LEVEL_BAR_Y, guiLeft + LEVEL_BAR_X + BAR_W,  guiTop + LEVEL_BAR_Y + BAR_H, 0xFF555555);
@@ -303,7 +300,7 @@ public class NobleTradeScreen extends RecruitsScreenBase {
 
     private int getPlayerCurrencyAmount(){
         int count = 0;
-        for (ItemStack stack : player.getInventory().items) {
+        for (ItemStack stack : player.getInventory().getNonEquipmentItems()) {
             if (!stack.isEmpty() && stack.is(currency.getItem())) {
                 count += stack.getCount();
             }
@@ -318,7 +315,7 @@ public class NobleTradeScreen extends RecruitsScreenBase {
     private class TradeList extends ObjectSelectionList<TradeList.TradeEntry> {
         public int itemWidth;
         public TradeList(Minecraft mc, int width, int height, int top, int bottom, int itemHeight, int itemWidth) {
-            super(mc, width, height, top, bottom, itemHeight);
+            super(mc, width, Math.max(0, bottom - top), top, itemHeight);
             this.itemWidth = itemWidth;
         }
 
@@ -333,7 +330,7 @@ public class NobleTradeScreen extends RecruitsScreenBase {
         }
 
         @Override
-        protected int getScrollbarPosition() {
+        protected int scrollBarX() {
             return this.getRowLeft() + this.getRowWidth() + 5;
         }
 
@@ -360,7 +357,12 @@ public class NobleTradeScreen extends RecruitsScreenBase {
             }
 
             @Override
-            public void render(GuiGraphics guiGraphics, int index, int top, int left, int entryWidth, int entryHeight, int mouseX, int mouseY, boolean hovered, float partialTicks) {
+            public void renderContent(GuiGraphics guiGraphics, int mouseX, int mouseY, boolean hovered, float partialTicks) {
+        int index = 0;
+        int top = this.getY();
+        int left = this.getX();
+        int entryWidth = this.getWidth();
+        int entryHeight = this.getHeight() - 4;
                 int rowLeft = TradeList.this.getRowLeft();
                 int rowWidth = TradeList.this.itemWidth;
                 int x = rowLeft + 4;
@@ -370,11 +372,7 @@ public class NobleTradeScreen extends RecruitsScreenBase {
                 boolean out = trade.uses <= 0;
                 int textureY = getButtonTextureY(hovered, selected, out);
 
-                guiGraphics.setColor(1.0F, 1.0F, 1.0F, 1.0F);
-                RenderSystem.enableBlend();
-                RenderSystem.enableDepthTest();
-                guiGraphics.blitNineSliced(AbstractButton.WIDGETS_LOCATION, rowLeft, top, rowWidth, entryHeight, 20, 4, 200, 20, 0, textureY);
-                guiGraphics.setColor(1.0F, 1.0F, 1.0F, 1.0F);
+                com.talhanation.recruits.client.gui.util.GuiCompat.blitButton(guiGraphics, rowLeft, top, rowWidth, entryHeight, textureY);
 
                 guiGraphics.drawString(font, trade.title, x, y, -2039584, false);
                 guiGraphics.drawString(font, Component.literal("" + trade.uses), x, y + yOffset + 5, -2039584, false);
@@ -387,7 +385,10 @@ public class NobleTradeScreen extends RecruitsScreenBase {
             }
 
             @Override
-            public boolean mouseClicked(double mouseX, double mouseY, int button) {
+            public boolean mouseClicked(MouseButtonEvent event, boolean doubleClick) {
+        double mouseX = event.x();
+        double mouseY = event.y();
+        int button = event.button();
                 TradeList.this.setSelected(this);
                 NobleTradeScreen.this.selection = this.trade;
                 NobleTradeScreen.this.updateHireButtonState();

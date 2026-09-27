@@ -26,7 +26,7 @@ public class PatrolLeaderAttackController implements IAttackController {
     }
 
     public void start(){
-        if(!this.leader.getCommandSenderWorld().isClientSide() && leader.enemyArmy != null && leader.army != null){
+        if(!this.leader.level().isClientSide() && leader.enemyArmy != null && leader.army != null){
             double distanceToTarget = this.leader.army.getPosition().distanceToSqr(leader.enemyArmy.getPosition());
 
             this.leader.army.updateArmy();
@@ -66,7 +66,7 @@ public class PatrolLeaderAttackController implements IAttackController {
                 commandArmy(this.leader.army, this.leader.enemyArmy);
             }
             else{
-                if(leader.getOwner() != null) this.leader.getOwner().sendSystemMessage(Component.literal(leader.getName().getString() + ": Enemy contact! Im advancing, their size is " + leader.enemyArmy.size()));
+                if(leader.getOwner() != null) this.leader.getOwner().displayClientMessage(Component.literal(leader.getName().getString() + ": Enemy contact! Im advancing, their size is " + leader.enemyArmy.size()), false);
                 forwarding();
                 leader.commandCooldown = 250;
             }
@@ -255,7 +255,7 @@ public class PatrolLeaderAttackController implements IAttackController {
 
     public BlockPos getBlockPosTowardsTarget(Vec3 target, double x){
         Vec3 pos = leader.position().lerp(target, x);
-        return FormationUtils.getPositionOrSurface(leader.getCommandSenderWorld(), new BlockPos((int) pos.x, (int) pos.y, (int) pos.z));
+        return FormationUtils.getPositionOrSurface(leader.level(), new BlockPos((int) pos.x, (int) pos.y, (int) pos.z));
     }
     public Vec3 getPosTowardsTarget(Vec3 target, double x){
         return leader.position().lerp(target, x);
@@ -300,7 +300,7 @@ public class PatrolLeaderAttackController implements IAttackController {
 
     public void sendToOwner(String string){
         if(leader.getOwner() != null)
-            this.leader.getOwner().sendSystemMessage(Component.literal(leader.getName().getString() + ": " + string));
+            this.leader.getOwner().displayClientMessage(Component.literal(leader.getName().getString() + ": " + string), false);
 
     }
 

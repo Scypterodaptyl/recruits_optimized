@@ -1,16 +1,19 @@
 package com.talhanation.recruits.client.gui;
 
+import net.minecraft.client.input.MouseButtonEvent;
+import net.minecraft.client.input.KeyEvent;
+
 import com.talhanation.recruits.Main;
 import com.talhanation.recruits.entities.AbstractRecruitEntity;
 import com.talhanation.recruits.inventory.PromoteContainer;
 import com.talhanation.recruits.network.*;
-import de.maxhenkel.corelib.inventory.ScreenBase;
+import com.talhanation.recruits.corelib.ScreenBase;
 import net.minecraft.client.gui.components.Button;
 import net.minecraft.client.gui.components.EditBox;
 import net.minecraft.client.gui.components.Tooltip;
 import net.minecraft.network.chat.Component;
 import net.minecraft.network.chat.MutableComponent;
-import net.minecraft.resources.ResourceLocation;
+import net.minecraft.resources.Identifier;
 import net.minecraft.world.entity.player.Inventory;
 import net.minecraft.world.entity.player.Player;
 
@@ -22,7 +25,7 @@ import org.lwjgl.glfw.GLFW;
 public class PromoteScreen extends ScreenBase<PromoteContainer> {
 
 
-    private static final ResourceLocation RESOURCE_LOCATION = new ResourceLocation(Main.MOD_ID, "textures/gui/professions/professions_main_gui.png");
+    private static final Identifier RESOURCE_LOCATION = Identifier.fromNamespaceAndPath(Main.MOD_ID, "textures/gui/professions/professions_main_gui.png");
     private final Player player;
     private final AbstractRecruitEntity recruit;
     private EditBox textField;
@@ -80,7 +83,7 @@ public class PromoteScreen extends ScreenBase<PromoteContainer> {
 
     protected void containerTick() {
         super.containerTick();
-        if(textField != null) textField.tick();
+        
     }
 
 
@@ -101,10 +104,13 @@ public class PromoteScreen extends ScreenBase<PromoteContainer> {
     }
 
     @Override
-    public boolean mouseClicked(double p_97748_, double p_97749_, int p_97750_) {
+    public boolean mouseClicked(MouseButtonEvent event, boolean doubleClick) {
+        double p_97748_ = event.x();
+        double p_97749_ = event.y();
+        int p_97750_ = event.button();
         textField.setFocused(true);
 
-        return super.mouseClicked(p_97748_, p_97749_, p_97750_);
+        return super.mouseClicked(event, doubleClick);
 
     }
 
@@ -143,13 +149,16 @@ public class PromoteScreen extends ScreenBase<PromoteContainer> {
     }
 
     @Override
-    public boolean keyPressed(int key, int a, int b) {
+    public boolean keyPressed(KeyEvent event) {
+        int key = event.key();
+        int a = event.scancode();
+        int b = event.modifiers();
         if (key == GLFW.GLFW_KEY_ESCAPE) {
             this.onClose();
             return true;
         }
         setFocused(textField);
 
-        return textField.keyPressed(key, a, b) || textField.canConsumeInput() || super.keyPressed(key, a, b);
+        return textField.keyPressed(new KeyEvent(key, a, b)) || textField.canConsumeInput() || super.keyPressed(event);
     }
 }

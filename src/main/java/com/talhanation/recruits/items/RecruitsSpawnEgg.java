@@ -1,5 +1,6 @@
 package com.talhanation.recruits.items;
 
+import net.minecraft.core.UUIDUtil;
 import com.talhanation.recruits.FactionEvents;
 import com.talhanation.recruits.Main;
 import com.talhanation.recruits.RecruitEvents;
@@ -15,13 +16,14 @@ import net.minecraft.world.InteractionResult;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.EntityType;
 import net.minecraft.world.entity.EquipmentSlot;
-import net.minecraft.world.entity.MobSpawnType;
+import net.minecraft.world.entity.EntitySpawnReason;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.world.item.context.UseOnContext;
 import net.minecraft.world.level.Level;
-import net.minecraftforge.common.ForgeSpawnEggItem;
+import net.minecraft.world.item.SpawnEggItem;
+import com.talhanation.recruits.util.NbtCompat;
 import net.minecraft.world.phys.Vec3;
 
 import net.minecraft.world.scores.PlayerTeam;
@@ -33,20 +35,22 @@ import java.util.UUID;
 import java.util.function.Supplier;
 
 
-public class RecruitsSpawnEgg extends ForgeSpawnEggItem {
+public class RecruitsSpawnEgg extends SpawnEggItem {
     private final Supplier<? extends EntityType<? extends AbstractRecruitEntity>> entityType;
 
-    public RecruitsSpawnEgg(Supplier<? extends EntityType<? extends AbstractRecruitEntity>> entityType, int primaryColor, int secondaryColor, Properties properties) {
-        super(entityType, primaryColor, secondaryColor, properties);
+    private static final EquipmentSlot[] ARMOR_SLOTS = {EquipmentSlot.FEET, EquipmentSlot.LEGS, EquipmentSlot.CHEST, EquipmentSlot.HEAD};
+
+    public RecruitsSpawnEgg(Supplier<? extends EntityType<? extends AbstractRecruitEntity>> entityType, Properties properties) {
+        super(properties.spawnEgg(entityType.get()));
         this.entityType = entityType;
     }
-    @Override
-    public @NotNull EntityType<?> getType(CompoundTag compound){
-        if(compound != null && compound.contains("EntityTag", 10)) {
-            CompoundTag entityTag = compound.getCompound("EntityTag");
 
-            if(entityTag.contains("id", 8)) {
-                return EntityType.byString(entityTag.getString("id")).orElse(this.entityType.get());
+    public @NotNull EntityType<?> getType(CompoundTag compound){
+        if(compound != null && compound.contains("EntityTag")) {
+            CompoundTag entityTag = compound.getCompoundOrEmpty("EntityTag");
+
+            if(entityTag.contains("id")) {
+                return EntityType.byString(entityTag.getStringOr("id", "")).orElse(this.entityType.get());
             }
         }
         return this.entityType.get();
@@ -60,8 +64,8 @@ public class RecruitsSpawnEgg extends ForgeSpawnEggItem {
         }
 
         ItemStack stack = context.getItemInHand();
-        CompoundTag itemTag = stack.getTag();
-        if (itemTag == null || itemTag.getCompound("EntityTag").isEmpty()) {
+        CompoundTag itemTag = NbtCompat.getCustomTag(stack);
+        if (itemTag == null || itemTag.getCompoundOrEmpty("EntityTag").isEmpty()) {
             return super.useOn(context);
         }
 
@@ -80,57 +84,57 @@ public class RecruitsSpawnEgg extends ForgeSpawnEggItem {
 
     @Nullable
     public static AbstractRecruitEntity spawnRecruitCopy(ServerLevel level, EntityType<?> entityType, CompoundTag itemTag, BlockPos spawnPos) {
-        Entity entity = entityType.create(level);
+        Entity entity = entityType.create(level, net.minecraft.world.entity.EntitySpawnReason.SPAWN_ITEM_USE);
         if (!(entity instanceof AbstractRecruitEntity recruit)) {
             return null;
         }
 
-        recruit.moveTo(spawnPos.getX() + 0.5D, spawnPos.getY(), spawnPos.getZ() + 0.5D, 0.0F, 0.0F);
-        recruit.finalizeSpawn(level, level.getCurrentDifficultyAt(spawnPos), MobSpawnType.SPAWN_EGG, null, null);
+        recruit.snapTo(spawnPos.getX() + 0.5D, spawnPos.getY(), spawnPos.getZ() + 0.5D, 0.0F, 0.0F);
+        recruit.finalizeSpawn(level, level.getCurrentDifficultyAt(spawnPos), EntitySpawnReason.SPAWN_ITEM_USE, null);
         fillRecruit(recruit, itemTag, spawnPos);
 
         if (!level.addFreshEntity(recruit)) {
             return null;
         }
 
-        registerSpawnedCopy(level, recruit, itemTag.getCompound("EntityTag"));
+        registerSpawnedCopy(level, recruit, itemTag.getCompoundOrEmpty("EntityTag"));
         return recruit;
     }
 
     public static void fillRecruit(AbstractRecruitEntity recruit, CompoundTag entityTag, BlockPos pos){
-        CompoundTag nbt = entityTag.getCompound("EntityTag");
+        CompoundTag nbt = entityTag.getCompoundOrEmpty("EntityTag");
 
         if(nbt.isEmpty()) return;
 
-        if (nbt.contains("CustomName", Tag.TAG_STRING)) {
+        if (nbt.contains("CustomName")) {
             try {
-                Component customName = Component.Serializer.fromJson(nbt.getString("CustomName"));
+                Component customName = NbtCompat.getComponent(nbt, "CustomName");
                 if (customName != null) recruit.setCustomName(customName);
             } catch (RuntimeException exception) {
                 Main.LOGGER.warn("Could not read copied recruit name", exception);
             }
-        } else if (nbt.contains("Name", Tag.TAG_STRING)) {
-            recruit.setCustomName(Component.literal(nbt.getString("Name")));
+        } else if (nbt.contains("Name")) {
+            recruit.setCustomName(Component.literal(nbt.getStringOr("Name", "")));
         }
 
-        recruit.setXpLevel(nbt.getInt("Level"));
-        recruit.setAggroState(nbt.getInt("AggroState"));
-        recruit.setShouldFollow(nbt.getBoolean("ShouldFollow"));
-        recruit.setShouldBlock(nbt.getBoolean("ShouldBlock"));
-        recruit.setShouldRest(nbt.getBoolean("ShouldRest"));
-        recruit.setShouldRanged(nbt.getBoolean("ShouldRanged"));
-        recruit.setListen(nbt.getBoolean("Listen"));
-        recruit.setXp(nbt.getInt("Xp"));
-        recruit.setKills(nbt.getInt("Kills"));
-        recruit.setVariant(nbt.getInt("Variant"));
-        recruit.setHunger(nbt.getFloat("Hunger"));
-        recruit.setMoral(nbt.getFloat("Moral"));
-        recruit.setCost(nbt.getInt("Cost"));
-        recruit.setColor(nbt.getByte("Color"));
-        recruit.setBiome(nbt.getByte("Biome"));
+        recruit.setXpLevel(nbt.getIntOr("Level", 0));
+        recruit.setAggroState(nbt.getIntOr("AggroState", 0));
+        recruit.setShouldFollow(nbt.getBooleanOr("ShouldFollow", false));
+        recruit.setShouldBlock(nbt.getBooleanOr("ShouldBlock", false));
+        recruit.setShouldRest(nbt.getBooleanOr("ShouldRest", false));
+        recruit.setShouldRanged(nbt.getBooleanOr("ShouldRanged", false));
+        recruit.setListen(nbt.getBooleanOr("Listen", false));
+        recruit.setXp(nbt.getIntOr("Xp", 0));
+        recruit.setKills(nbt.getIntOr("Kills", 0));
+        recruit.setVariant(nbt.getIntOr("Variant", 0));
+        recruit.setHunger(nbt.getFloatOr("Hunger", 0.0F));
+        recruit.setMoral(nbt.getFloatOr("Moral", 0.0F));
+        recruit.setCost(nbt.getIntOr("Cost", 0));
+        recruit.setColor(nbt.getByteOr("Color", (byte) 0));
+        recruit.setBiome(nbt.getByteOr("Biome", (byte) 0));
 
-        if (nbt.contains("Attributes", Tag.TAG_LIST)) {
-            recruit.getAttributes().load(nbt.getList("Attributes", Tag.TAG_COMPOUND));
+        if (nbt.contains("Attributes")) {
+            NbtCompat.loadAttributes(recruit.getAttributes(), nbt.get("Attributes"));
         }
 
         recruit.setShouldMount(false);
@@ -141,14 +145,14 @@ public class RecruitsSpawnEgg extends ForgeSpawnEggItem {
         recruit.setIsFollowing(false);
         recruit.setTarget(null);
 
-        if (nbt.hasUUID("OwnerUUID")) {
-            recruit.setOwnerUUID(Optional.of(nbt.getUUID("OwnerUUID")));
+        if (nbt.read("OwnerUUID", UUIDUtil.CODEC).isPresent()) {
+            recruit.setOwnerUUID(Optional.of(nbt.read("OwnerUUID", UUIDUtil.CODEC).orElse(null)));
         } else {
             recruit.setOwnerUUID(Optional.empty());
         }
-        recruit.setIsOwned(nbt.getBoolean("isOwned") && recruit.getOwnerUUID() != null);
+        recruit.setIsOwned(nbt.getBooleanOr("isOwned", false) && recruit.getOwnerUUID() != null);
 
-        int followState = nbt.getInt("FollowState");
+        int followState = nbt.getIntOr("FollowState", 0);
         if (followState == 4) followState = 3;
         if (followState == 5) followState = 2;
         recruit.setFollowState(followState);
@@ -157,28 +161,28 @@ public class RecruitsSpawnEgg extends ForgeSpawnEggItem {
             Tag tag = nbt.get("Group");
             if (tag != null && tag.getId() == Tag.TAG_INT) {
                 if(recruit.getOwner() != null){
-                    RecruitEvents.handleGroupBackwardCompatibility(recruit, nbt.getInt("Group"));
+                    RecruitEvents.handleGroupBackwardCompatibility(recruit, nbt.getIntOr("Group", 0));
                 }
                 else recruit.setGroupUUID(null);
             }
-            else if (nbt.hasUUID("Group")){
-                recruit.setGroupUUID(nbt.getUUID("Group"));
+            else if (nbt.read("Group", UUIDUtil.CODEC).isPresent()){
+                recruit.setGroupUUID(nbt.read("Group", UUIDUtil.CODEC).orElse(null));
             }
         } else {
             recruit.setGroupUUID(null);
         }
 
-        if (nbt.hasUUID("UpkeepUUID")){
-            recruit.setUpkeepUUID(Optional.of(nbt.getUUID("UpkeepUUID")));
+        if (nbt.read("UpkeepUUID", UUIDUtil.CODEC).isPresent()){
+            recruit.setUpkeepUUID(Optional.of(nbt.read("UpkeepUUID", UUIDUtil.CODEC).orElse(null)));
         } else {
             recruit.setUpkeepUUID(Optional.empty());
         }
 
         if (nbt.contains("UpkeepPosX") && nbt.contains("UpkeepPosY") && nbt.contains("UpkeepPosZ")) {
             recruit.setUpkeepPos(new BlockPos (
-                    nbt.getInt("UpkeepPosX"),
-                    nbt.getInt("UpkeepPosY"),
-                    nbt.getInt("UpkeepPosZ")));
+                    nbt.getIntOr("UpkeepPosX", 0),
+                    nbt.getIntOr("UpkeepPosY", 0),
+                    nbt.getIntOr("UpkeepPosZ", 0)));
         }
 
         if (recruit.getShouldHoldPos()) {
@@ -186,11 +190,11 @@ public class RecruitsSpawnEgg extends ForgeSpawnEggItem {
         }
 
         if (recruit instanceof ICompanion companion && nbt.contains("CompanionOwnerName")) {
-            companion.setOwnerName(nbt.getString("CompanionOwnerName"));
+            companion.setOwnerName(nbt.getStringOr("CompanionOwnerName", ""));
         }
         if (recruit instanceof IHasTargetPriority priorityRecruit && nbt.contains("TargetPriority")) {
             try {
-                priorityRecruit.setTargetPriority(IHasTargetPriority.TargetPriority.fromIndex(nbt.getInt("TargetPriority")));
+                priorityRecruit.setTargetPriority(IHasTargetPriority.TargetPriority.fromIndex(nbt.getIntOr("TargetPriority", 0)));
             } catch (IllegalArgumentException ignored) {
                 priorityRecruit.setTargetPriority(IHasTargetPriority.TargetPriority.CLOSEST);
             }
@@ -202,26 +206,26 @@ public class RecruitsSpawnEgg extends ForgeSpawnEggItem {
         }
         recruit.setPersistenceRequired();
 
-        ListTag listnbt = nbt.getList("Items", 10);//muss 10 sein amk sonst nix save
+        ListTag listnbt = nbt.getListOrEmpty("Items");//muss 10 sein amk sonst nix save
         for (int i = 0; i < listnbt.size(); ++i) {
-            CompoundTag compoundnbt = listnbt.getCompound(i);
-            int j = compoundnbt.getByte("Slot") & 255;
+            CompoundTag compoundnbt = listnbt.getCompoundOrEmpty(i);
+            int j = compoundnbt.getByteOr("Slot", (byte) 0) & 255;
             if (j < recruit.inventory.getContainerSize()) {
-                recruit.inventory.setItem(j, ItemStack.of(compoundnbt));
+                recruit.inventory.setItem(j, com.talhanation.recruits.util.NbtCompat.loadItem(compoundnbt));
             }
         }
 
-        ListTag armorItems = nbt.getList("ArmorItems", 10);
-        for (int i = 0; i < armorItems.size() && i < recruit.armorItems.size(); i++) {
-            ItemStack item = ItemStack.of(armorItems.getCompound(i));
+        ListTag armorItems = nbt.getListOrEmpty("ArmorItems");
+        for (int i = 0; i < armorItems.size() && i < ARMOR_SLOTS.length; i++) {
+            ItemStack item = com.talhanation.recruits.util.NbtCompat.loadItem(armorItems.getCompoundOrEmpty(i));
             if (!item.isEmpty()) {
-                recruit.setItemSlot(EquipmentSlot.byTypeAndIndex(EquipmentSlot.Type.ARMOR, i), item);
+                recruit.setItemSlot(ARMOR_SLOTS[i], item);
             }
         }
 
-        ListTag handItems = nbt.getList("HandItems", 10);
-        for (int i = 0; i < handItems.size() && i < recruit.handItems.size(); i++) {
-            ItemStack item = ItemStack.of(handItems.getCompound(i));
+        ListTag handItems = nbt.getListOrEmpty("HandItems");
+        for (int i = 0; i < handItems.size() && i < 2; i++) {
+            ItemStack item = com.talhanation.recruits.util.NbtCompat.loadItem(handItems.getCompoundOrEmpty(i));
             if (!item.isEmpty()) {
                 recruit.setItemSlot(i == 0 ? EquipmentSlot.MAINHAND : EquipmentSlot.OFFHAND, item);
             }
@@ -231,8 +235,8 @@ public class RecruitsSpawnEgg extends ForgeSpawnEggItem {
     }
 
     private static void registerSpawnedCopy(ServerLevel level, AbstractRecruitEntity recruit, CompoundTag nbt) {
-        if (nbt.contains("Team", Tag.TAG_STRING)) {
-            String teamName = nbt.getString("Team");
+        if (nbt.contains("Team")) {
+            String teamName = nbt.getStringOr("Team", "");
             PlayerTeam team = level.getScoreboard().getPlayerTeam(teamName);
             if (team != null) {
                 FactionEvents.addRecruitToTeam(recruit, team, level);

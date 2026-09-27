@@ -2,11 +2,11 @@ package com.talhanation.recruits.network;
 
 import com.talhanation.recruits.client.gui.MessengerScreen;
 import com.talhanation.recruits.world.RecruitsPlayerInfo;
-import de.maxhenkel.corelib.net.Message;
+import com.talhanation.recruits.network.Message;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.network.FriendlyByteBuf;
 import net.minecraftforge.api.distmarker.Dist;
-import net.minecraftforge.network.NetworkEvent;
+import net.minecraftforge.event.network.CustomPayloadEvent;
 
 
 public class MessageToClientUpdateMessengerScreen implements Message<MessageToClientUpdateMessengerScreen> {
@@ -29,7 +29,7 @@ public class MessageToClientUpdateMessengerScreen implements Message<MessageToCl
     }
 
     @Override
-    public void executeClientSide(NetworkEvent.Context context) {
+    public void executeClientSide(CustomPayloadEvent.Context context) {
         //MessengerScreen.message = this.message;
 
         if(nbt != null){

@@ -2,11 +2,11 @@ package com.talhanation.recruits.network;
 
 import com.talhanation.recruits.entities.AbstractRecruitEntity;
 import com.talhanation.recruits.entities.IHasTargetPriority;
-import de.maxhenkel.corelib.net.Message;
+import com.talhanation.recruits.network.Message;
 import net.minecraft.network.FriendlyByteBuf;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraftforge.api.distmarker.Dist;
-import net.minecraftforge.network.NetworkEvent;
+import net.minecraftforge.event.network.CustomPayloadEvent;
 
 import java.util.List;
 import java.util.Objects;
@@ -28,9 +28,9 @@ public class MessageSetTargetPrio implements Message<MessageSetTargetPrio> {
         return Dist.DEDICATED_SERVER;
     }
 
-    public void executeServerSide(NetworkEvent.Context context){
+    public void executeServerSide(CustomPayloadEvent.Context context){
         ServerPlayer player = Objects.requireNonNull(context.getSender());
-        List<AbstractRecruitEntity> list = player.getCommandSenderWorld().getEntitiesOfClass(AbstractRecruitEntity.class, player.getBoundingBox().inflate(16D));
+        List<AbstractRecruitEntity> list = player.level().getEntitiesOfClass(AbstractRecruitEntity.class, player.getBoundingBox().inflate(16D));
         for (AbstractRecruitEntity recruitEntity : list){
 
             if (recruitEntity.getUUID().equals(this.recruit) && recruitEntity.isOwnedBy(player) && recruitEntity instanceof IHasTargetPriority specialRecruit){

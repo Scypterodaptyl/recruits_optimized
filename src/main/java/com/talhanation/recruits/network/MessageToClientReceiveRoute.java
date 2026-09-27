@@ -2,11 +2,11 @@ package com.talhanation.recruits.network;
 
 import com.talhanation.recruits.client.ClientManager;
 import com.talhanation.recruits.world.RecruitsRoute;
-import de.maxhenkel.corelib.net.Message;
+import com.talhanation.recruits.network.Message;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.network.FriendlyByteBuf;
 import net.minecraftforge.api.distmarker.Dist;
-import net.minecraftforge.network.NetworkEvent;
+import net.minecraftforge.event.network.CustomPayloadEvent;
 
 /**
  * Server → Client: delivers a transferred route to the receiving player.
@@ -28,7 +28,7 @@ public class MessageToClientReceiveRoute implements Message<MessageToClientRecei
     }
 
     @Override
-    public void executeClientSide(NetworkEvent.Context context) {
+    public void executeClientSide(CustomPayloadEvent.Context context) {
         RecruitsRoute route = RecruitsRoute.fromNBT(routeNBT);
         if (route == null) return;
         ClientManager.saveRoute(route);

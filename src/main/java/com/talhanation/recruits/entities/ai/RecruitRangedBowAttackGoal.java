@@ -78,7 +78,7 @@ public class RecruitRangedBowAttackGoal<T extends BowmanEntity> extends Goal {
     }
 
     public static boolean isBow(ItemStack stack){
-        String name = stack.getDescriptionId();
+        String name = stack.getItem().getDescriptionId();
         return stack.is(Items.BOW) || stack.getItem() instanceof BowItem || stack.getItem() instanceof ProjectileWeaponItem || name.contains("bow");
     }
 

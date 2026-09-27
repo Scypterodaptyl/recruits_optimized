@@ -1,6 +1,10 @@
 package com.talhanation.recruits.client.gui.worldmap;
 
-import com.mojang.blaze3d.vertex.PoseStack;
+import net.minecraft.client.input.MouseButtonEvent;
+import net.minecraft.client.input.MouseButtonInfo;
+import net.minecraft.client.input.KeyEvent;
+import net.minecraft.client.input.CharacterEvent;
+
 import com.talhanation.recruits.client.ClientManager;
 import com.talhanation.recruits.client.gui.worldmap.claim.ClaimInfoMenu;
 import com.talhanation.recruits.client.gui.worldmap.claim.ClaimRenderer;
@@ -110,7 +114,7 @@ public class WorldMapScreen extends Screen {
         ChunkPos chunk = new ChunkPos(worldX >> 4, worldZ >> 4);
         if (level.getChunkSource().getChunk(chunk.x, chunk.z, false) == null) return 64;
         int y = level.getHeight(net.minecraft.world.level.levelgen.Heightmap.Types.WORLD_SURFACE, worldX, worldZ) - 1;
-        return Math.max(y, level.getMinBuildHeight());
+        return Math.max(y, level.getMinY());
     }
 
     public Player getPlayer() {
@@ -118,7 +122,7 @@ public class WorldMapScreen extends Screen {
     }
 
     public boolean isPlayerAdminAndCreative() {
-        return player.hasPermissions(2) && player.isCreative();
+        return player.permissions().hasPermission(net.minecraft.server.permissions.Permissions.COMMANDS_GAMEMASTER) && player.isCreative();
     }
 
     public boolean isPanningMap() {
@@ -174,9 +178,9 @@ public class WorldMapScreen extends Screen {
     }
 
     @Override
-    public void resize(Minecraft minecraft, int width, int height) {
+    public void resize(int width, int height) {
         camera.rememberCurrentView();
-        super.resize(minecraft, width, height);
+        super.resize(width, height);
     }
 
     private void initRouteUI() {
@@ -215,7 +219,6 @@ public class WorldMapScreen extends Screen {
     public void render(GuiGraphics guiGraphics, int mouseX, int mouseY, float partialTicks) {
         camera.animate();
         refreshSelectedClaim();
-        renderBackground(guiGraphics);
 
         guiGraphics.enableScissor(0, 0, width, height);
 
@@ -237,10 +240,10 @@ public class WorldMapScreen extends Screen {
 
         super.render(guiGraphics, mouseX, mouseY, partialTicks);
 
-        PoseStack overlayPose = guiGraphics.pose();
-        overlayPose.pushPose();
+        org.joml.Matrix3x2fStack overlayPose = guiGraphics.pose();
+        overlayPose.pushMatrix();
         try {
-            overlayPose.translate(0.0F, 0.0F, 400.0F);
+            overlayPose.translate((float) (0.0F), (float) (0.0F));
             if (selectedClaim != null && claimInfoMenu.isVisible()) {
                 Point p = getClaimInfoMenuPosition(selectedClaim, claimInfoMenu.width, claimInfoMenu.height);
                 claimInfoMenu.setPosition(p.x, p.y);
@@ -248,7 +251,7 @@ public class WorldMapScreen extends Screen {
             }
             contextMenu.render(guiGraphics, this, mouseX, mouseY);
         } finally {
-            overlayPose.popPose();
+            overlayPose.popMatrix();
         }
 
         if (routeNamePopup.isVisible()) routeNamePopup.render(guiGraphics, mouseX, mouseY);
@@ -258,11 +261,11 @@ public class WorldMapScreen extends Screen {
 
     private void renderMapOverlays(
             GuiGraphics guiGraphics, int mouseX, int mouseY, MapFramebufferPass.Frame frame) {
-        PoseStack pose = guiGraphics.pose();
-        pose.pushPose();
+        org.joml.Matrix3x2fStack pose = guiGraphics.pose();
+        pose.pushMatrix();
         double inverseSecondaryScale = 1.0 / frame.secondaryScale();
-        pose.translate(frame.secondaryOffsetX(), frame.secondaryOffsetZ(), 0.0);
-        pose.scale((float) inverseSecondaryScale, (float) inverseSecondaryScale, 1.0F);
+        pose.translate((float) (frame.secondaryOffsetX()), (float) (frame.secondaryOffsetZ()));
+        pose.scale((float) ((float) inverseSecondaryScale), (float) ((float) inverseSecondaryScale));
         try {
             if (RecruitsClientConfig.WorldMapClaimFill.get()) {
                 ClaimRenderer.renderClaimsOverlay(
@@ -304,12 +307,12 @@ public class WorldMapScreen extends Screen {
                 }
             }
         } finally {
-            pose.popPose();
+            pose.popMatrix();
         }
     }
 
     @Override
-    public void renderBackground(GuiGraphics guiGraphics) {
+    public void renderBackground(GuiGraphics guiGraphics, int mouseX, int mouseY, float partialTick) {
         guiGraphics.fill(0, 0, width, height, DARK_GRAY_BG);
     }
 
@@ -403,7 +406,7 @@ public class WorldMapScreen extends Screen {
                 cachedReadoutBgY + 20,
                 0x80000000);
         guiGraphics.renderOutline(cachedReadoutBgX, cachedReadoutBgY, cachedReadoutBgWidth, 20, 0x40FFFFFF);
-        guiGraphics.drawString(font, cachedReadoutText, cachedReadoutBgX + 8, height - 25, 0xFFFFFF);
+        guiGraphics.drawString(font, cachedReadoutText, cachedReadoutBgX + 8, height - 25, 0xFFFFFFFF);
     }
 
     private void rebuildCoordinatesReadout(int scaleTenths) {
@@ -457,7 +460,10 @@ public class WorldMapScreen extends Screen {
     // -------------------------------------------------------------------------
 
     @Override
-    public boolean mouseClicked(double mouseX, double mouseY, int button) {
+    public boolean mouseClicked(MouseButtonEvent event, boolean doubleClick) {
+        double mouseX = event.x();
+        double mouseY = event.y();
+        int button = event.button();
         // Popups get exclusive input
         if (routeNamePopup.isVisible()) return routeNamePopup.mouseClicked(mouseX, mouseY);
         if (routeEditPopup.isVisible()) return routeEditPopup.mouseClicked(mouseX, mouseY);
@@ -496,7 +502,7 @@ public class WorldMapScreen extends Screen {
             return true;
         }
 
-        if (claimInfoMenu.isVisible() && claimInfoMenu.mouseClicked(mouseX, mouseY, button))
+        if (claimInfoMenu.isVisible() && claimInfoMenu.mouseClicked(new MouseButtonEvent(mouseX, mouseY, new MouseButtonInfo(button, 0)), false))
             return true;
 
         if (contextMenu.isVisible()) {
@@ -558,11 +564,14 @@ public class WorldMapScreen extends Screen {
             camera.beginPanDrag(mouseX, mouseY);
         }
 
-        return super.mouseClicked(mouseX, mouseY, button);
+        return super.mouseClicked(event, doubleClick);
     }
 
     @Override
-    public boolean mouseReleased(double mouseX, double mouseY, int button) {
+    public boolean mouseReleased(MouseButtonEvent event) {
+        double mouseX = event.x();
+        double mouseY = event.y();
+        int button = event.button();
         if (contextMenu.isVisible()) return false;
         if (button == 0) {
             if (isDraggingWaypoint && draggingWaypoint != null) {
@@ -580,13 +589,15 @@ public class WorldMapScreen extends Screen {
             isDragging = false;
             camera.finishPanDrag(mouseX, mouseY);
         }
-        if (claimInfoMenu.isVisible()) claimInfoMenu.mouseReleased(mouseX, mouseY, button);
+        if (claimInfoMenu.isVisible()) claimInfoMenu.mouseReleased(new MouseButtonEvent(mouseX, mouseY, new MouseButtonInfo(button, 0)));
         return true;
     }
 
     @Override
-    public boolean mouseDragged(
-            double mouseX, double mouseY, int button, double dragX, double dragY) {
+    public boolean mouseDragged(MouseButtonEvent event, double dragX, double dragY) {
+        double mouseX = event.x();
+        double mouseY = event.y();
+        int button = event.button();
         if (routeNamePopup.isVisible() || routeEditPopup.isVisible() || waypointEditPopup.isVisible())
             return true;
         if (isDraggingWaypoint && draggingWaypoint != null) {
@@ -606,12 +617,12 @@ public class WorldMapScreen extends Screen {
             if (claimInfoMenu.isVisible()) claimInfoMenu.close();
             return true;
         }
-        if (claimInfoMenu.isVisible()) claimInfoMenu.mouseDragged(mouseX, mouseY, button, dragX, dragY);
-        return super.mouseDragged(mouseX, mouseY, button, dragX, dragY);
+        if (claimInfoMenu.isVisible()) claimInfoMenu.mouseDragged(new MouseButtonEvent(mouseX, mouseY, new MouseButtonInfo(button, 0)), dragX, dragY);
+        return super.mouseDragged(event, dragX, dragY);
     }
 
     @Override
-    public boolean mouseScrolled(double mouseX, double mouseY, double delta) {
+    public boolean mouseScrolled(double mouseX, double mouseY, double scrollX, double delta) {
         if (routeNamePopup.isVisible() || routeEditPopup.isVisible() || waypointEditPopup.isVisible())
             return true;
         if (settingsPanel.isMouseBlocking(mouseX, mouseY, width, height)) return true;
@@ -644,7 +655,10 @@ public class WorldMapScreen extends Screen {
     }
 
     @Override
-    public boolean keyPressed(int keyCode, int scanCode, int modifiers) {
+    public boolean keyPressed(KeyEvent event) {
+        int keyCode = event.key();
+        int scanCode = event.scancode();
+        int modifiers = event.modifiers();
         if (waypointEditPopup.isVisible()) return waypointEditPopup.keyPressed(keyCode);
         if (routeEditPopup.isVisible()) return routeEditPopup.keyPressed(keyCode);
         if (routeNamePopup.isVisible()) return routeNamePopup.keyPressed(keyCode);
@@ -673,8 +687,8 @@ public class WorldMapScreen extends Screen {
                 case GLFW.GLFW_KEY_DOWN, GLFW.GLFW_KEY_S -> camera.panByScreenDelta(0.0, -moveSpeed);
                 case GLFW.GLFW_KEY_LEFT, GLFW.GLFW_KEY_A -> camera.panByScreenDelta(moveSpeed, 0.0);
                 case GLFW.GLFW_KEY_RIGHT, GLFW.GLFW_KEY_D -> camera.panByScreenDelta(-moveSpeed, 0.0);
-                case GLFW.GLFW_KEY_EQUAL -> mouseScrolled(width / 2.0, height / 2.0, 1);
-                case GLFW.GLFW_KEY_MINUS -> mouseScrolled(width / 2.0, height / 2.0, -1);
+                case GLFW.GLFW_KEY_EQUAL -> mouseScrolled(width / 2.0, height / 2.0, 0, 1);
+                case GLFW.GLFW_KEY_MINUS -> mouseScrolled(width / 2.0, height / 2.0, 0, -1);
                 case GLFW.GLFW_KEY_C -> centerOnPlayer();
                 case GLFW.GLFW_KEY_R -> resetZoom();
             }
@@ -683,11 +697,13 @@ public class WorldMapScreen extends Screen {
     }
 
     @Override
-    public boolean charTyped(char chr, int modifiers) {
+    public boolean charTyped(CharacterEvent event) {
+        char chr = (char) event.codepoint();
+        int modifiers = event.modifiers();
         if (waypointEditPopup.isVisible()) return waypointEditPopup.charTyped(chr);
-        if (routeEditPopup.isVisible()) return routeEditPopup.charTyped(chr, modifiers);
-        if (routeNamePopup.isVisible()) return routeNamePopup.charTyped(chr, modifiers);
-        return super.charTyped(chr, modifiers);
+        if (routeEditPopup.isVisible()) return routeEditPopup.charTyped(new CharacterEvent(chr, modifiers));
+        if (routeNamePopup.isVisible()) return routeNamePopup.charTyped(new CharacterEvent(chr, modifiers));
+        return super.charTyped(event);
     }
 
     @Override

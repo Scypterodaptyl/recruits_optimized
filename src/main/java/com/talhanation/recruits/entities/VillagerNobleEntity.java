@@ -19,13 +19,13 @@ import net.minecraft.network.chat.Component;
 import net.minecraft.network.syncher.EntityDataAccessor;
 import net.minecraft.network.syncher.EntityDataSerializers;
 import net.minecraft.network.syncher.SynchedEntityData;
-import net.minecraft.resources.ResourceLocation;
+import net.minecraft.resources.Identifier;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.util.RandomSource;
 import net.minecraft.world.DifficultyInstance;
 import net.minecraft.world.entity.EntityType;
 import net.minecraft.world.entity.Mob;
-import net.minecraft.world.entity.MobSpawnType;
+import net.minecraft.world.entity.EntitySpawnReason;
 import net.minecraft.world.entity.SpawnGroupData;
 import net.minecraft.world.entity.ai.attributes.AttributeSupplier;
 import net.minecraft.world.entity.ai.attributes.Attributes;
@@ -42,7 +42,7 @@ import java.util.*;
 import java.util.function.Predicate;
 
 public class VillagerNobleEntity extends AbstractRecruitEntity implements ICanTradeEmbargo {
-    private static final EntityDataAccessor<CompoundTag> TRADES = SynchedEntityData.defineId(VillagerNobleEntity.class, EntityDataSerializers.COMPOUND_TAG);
+    private static final EntityDataAccessor<CompoundTag> TRADES = SynchedEntityData.defineId(VillagerNobleEntity.class, com.talhanation.recruits.init.ModDataSerializers.COMPOUND_TAG);
     private static final EntityDataAccessor<Integer> TRADER_PROGRESS = SynchedEntityData.defineId(VillagerNobleEntity.class, EntityDataSerializers.INT);
     private static final EntityDataAccessor<Integer> TRADER_LEVEL = SynchedEntityData.defineId(VillagerNobleEntity.class, EntityDataSerializers.INT);
     private static final EntityDataAccessor<String> TYPE = SynchedEntityData.defineId(VillagerNobleEntity.class, EntityDataSerializers.STRING);
@@ -58,12 +58,12 @@ public class VillagerNobleEntity extends AbstractRecruitEntity implements ICanTr
     }
 
     @Override
-    protected void defineSynchedData() {
-        super.defineSynchedData();
-        this.entityData.define(TRADES, new CompoundTag());
-        this.entityData.define(TRADER_PROGRESS, 0);
-        this.entityData.define(TRADER_LEVEL, 1);
-        this.entityData.define(TYPE, "");
+    protected void defineSynchedData(SynchedEntityData.Builder builder) {
+        super.defineSynchedData(builder);
+        builder.define(TRADES, new CompoundTag());
+        builder.define(TRADER_PROGRESS, 0);
+        builder.define(TRADER_LEVEL, 1);
+        builder.define(TYPE, "");
     }
 
     @Override
@@ -105,8 +105,8 @@ public class VillagerNobleEntity extends AbstractRecruitEntity implements ICanTr
     }
 
     @Override
-    public void addAdditionalSaveData(CompoundTag nbt) {
-        super.addAdditionalSaveData(nbt);
+    public void saveRecruitData(CompoundTag nbt) {
+        super.saveRecruitData(nbt);
         nbt.put("Trades", RecruitsHireTrade.listToNbt(getTrades()));
         nbt.putInt("TraderProgress", this.getTraderProgress());
         nbt.putInt("TraderLevel", this.getTraderLevel());
@@ -114,12 +114,12 @@ public class VillagerNobleEntity extends AbstractRecruitEntity implements ICanTr
     }
 
     @Override
-    public void readAdditionalSaveData(CompoundTag nbt) {
-        super.readAdditionalSaveData(nbt);
-        this.setTrades(RecruitsHireTrade.listFromNbt(nbt.getCompound("Trades")));
-        this.setTraderProgress(nbt.getInt("TraderProgress"));
-        this.setTraderLevel(nbt.getInt("TraderLevel"));
-        this.setTraderType(nbt.getString("Type"));
+    public void loadRecruitData(CompoundTag nbt) {
+        super.loadRecruitData(nbt);
+        this.setTrades(RecruitsHireTrade.listFromNbt(nbt.getCompoundOrEmpty("Trades")));
+        this.setTraderProgress(nbt.getIntOr("TraderProgress", 0));
+        this.setTraderLevel(nbt.getIntOr("TraderLevel", 0));
+        this.setTraderType(nbt.getStringOr("Type", ""));
     }
 
         //ATTRIBUTES
@@ -127,20 +127,20 @@ public class VillagerNobleEntity extends AbstractRecruitEntity implements ICanTr
         return Mob.createMobAttributes()
                 .add(Attributes.MAX_HEALTH, 50.0D)
                 .add(Attributes.MOVEMENT_SPEED, 0.3D)
-                .add(ForgeMod.SWIM_SPEED.get(), 0.3D)
+                .add(ForgeMod.SWIM_SPEED.getHolder().get(), 0.3D)
                 .add(Attributes.KNOCKBACK_RESISTANCE, 0.1D)
                 .add(Attributes.ATTACK_DAMAGE, 0.5D)
                 .add(Attributes.FOLLOW_RANGE, 32.0D)
-                .add(ForgeMod.ENTITY_REACH.get(), 0D)
+                .add(Attributes.ENTITY_INTERACTION_RANGE, 0D)
                 .add(Attributes.ATTACK_SPEED);
 
     }
     @Nullable
-    public SpawnGroupData finalizeSpawn(ServerLevelAccessor world, DifficultyInstance difficultyInstance, MobSpawnType reason, @Nullable SpawnGroupData data, @Nullable CompoundTag nbt) {
+    public SpawnGroupData finalizeSpawn(ServerLevelAccessor world, DifficultyInstance difficultyInstance, EntitySpawnReason reason, @Nullable SpawnGroupData data) {
         RandomSource randomsource = world.getRandom();
-        SpawnGroupData ilivingentitydata = super.finalizeSpawn(world, difficultyInstance, reason, data, nbt);
+        SpawnGroupData ilivingentitydata = super.finalizeSpawn(world, difficultyInstance, reason, data);
         ((AsyncGroundPathNavigation)this.getNavigation()).setCanOpenDoors(true);
-        this.populateDefaultEquipmentEnchantments(randomsource, difficultyInstance);
+        this.populateDefaultEquipmentEnchantments(world, randomsource, difficultyInstance);
 
         this.initSpawn();
 
@@ -171,7 +171,7 @@ public class VillagerNobleEntity extends AbstractRecruitEntity implements ICanTr
 
     @Override
     public boolean wantsToPickUp(ItemStack itemStack) {
-        if((itemStack.getItem() instanceof SwordItem && this.getMainHandItem().isEmpty()) ||
+        if((com.talhanation.recruits.util.ItemCompat.isSword(itemStack) && this.getMainHandItem().isEmpty()) ||
           (itemStack.getItem() instanceof ShieldItem) && this.getOffhandItem().isEmpty())
             return !hasSameTypeOfItem(itemStack);
 
@@ -196,8 +196,8 @@ public class VillagerNobleEntity extends AbstractRecruitEntity implements ICanTr
         String stringID = player.getTeam() != null ? player.getTeam().getName() : "";
 
         boolean canHire = RecruitEvents.recruitsPlayerUnitManager.canPlayerRecruit(stringID, player.getUUID());
-        Main.SIMPLE_CHANNEL.send(PacketDistributor.PLAYER.with(()-> (ServerPlayer) player), new MessageToClientUpdateHireState(canHire));
-        Main.SIMPLE_CHANNEL.send(PacketDistributor.PLAYER.with(() -> (ServerPlayer) player), new MessageToClientOpenNobleTradeScreen(this.getUUID()));
+        Main.SIMPLE_CHANNEL.send(PacketDistributor.PLAYER.with((ServerPlayer) player), new MessageToClientUpdateHireState(canHire));
+        Main.SIMPLE_CHANNEL.send(PacketDistributor.PLAYER.with((ServerPlayer) player), new MessageToClientOpenNobleTradeScreen(this.getUUID()));
     }
     public void addXpLevel(int level){
         super.addXpLevel(level);
@@ -205,7 +205,7 @@ public class VillagerNobleEntity extends AbstractRecruitEntity implements ICanTr
         this.addTraderProgress(20);
     }
     public void setupTrades() {
-        if(this.getCommandSenderWorld().isClientSide()) return;
+        if(this.level().isClientSide()) return;
         List<RecruitsHireTrade> possibleTrades = RecruitsHireTradesRegistry.getTrades(this.getTraderType(), this.getTraderLevel());
         if (possibleTrades == null || possibleTrades.isEmpty()) return;
 
@@ -321,7 +321,7 @@ public class VillagerNobleEntity extends AbstractRecruitEntity implements ICanTr
         this.entityData.set(TRADES, RecruitsHireTrade.listToNbt(list));
     }
 
-    public void doTrade(ResourceLocation resourceLocation){
+    public void doTrade(Identifier resourceLocation){
         RecruitsHireTrade trade = null;
         List<RecruitsHireTrade> list = this.getTrades();
         for(RecruitsHireTrade canditade : list){
@@ -349,13 +349,13 @@ public class VillagerNobleEntity extends AbstractRecruitEntity implements ICanTr
         setTrades(current);
     }
 
-    public void removeTrade(ResourceLocation recruitType) {
+    public void removeTrade(Identifier recruitType) {
         if (recruitType == null) return;
         List<RecruitsHireTrade> current = getTrades();
         boolean removed = current.removeIf(t -> Objects.equals(t.resourceLocation, recruitType));
         if (removed) setTrades(current);
     }
-    public boolean hasTrade(ResourceLocation recruitType) {
+    public boolean hasTrade(Identifier recruitType) {
         if (recruitType == null) return false;
 
         List<RecruitsHireTrade> trades = this.getTrades();

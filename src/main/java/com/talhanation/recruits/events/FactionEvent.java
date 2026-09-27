@@ -3,8 +3,10 @@ package com.talhanation.recruits;
 import com.talhanation.recruits.world.RecruitsFaction;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
-import net.minecraftforge.eventbus.api.Cancelable;
-import net.minecraftforge.eventbus.api.Event;
+import net.minecraftforge.eventbus.api.bus.CancellableEventBus;
+import net.minecraftforge.eventbus.api.bus.EventBus;
+import net.minecraftforge.eventbus.api.event.MutableEvent;
+import net.minecraftforge.eventbus.api.event.characteristic.Cancellable;
 
 import javax.annotation.Nullable;
 
@@ -20,7 +22,7 @@ import javax.annotation.Nullable;
  *   }
  * </pre>
  */
-public abstract class FactionEvent extends Event {
+public abstract class FactionEvent extends MutableEvent {
 
     private final RecruitsFaction faction;
     private final ServerLevel level;
@@ -46,8 +48,8 @@ public abstract class FactionEvent extends Event {
      * Wird gefeuert, kurz nachdem eine Fraktion erfolgreich erstellt wurde.
      * <p>Cancelable: {@code setCanceled(true)} rollt die Erstellung zurück.</p>
      */
-    @Cancelable
-    public static class Created extends FactionEvent {
+        public static class Created extends FactionEvent implements Cancellable {
+        public static final CancellableEventBus<FactionEvent.Created> BUS = CancellableEventBus.create(FactionEvent.Created.class);
         @Nullable
         private final ServerPlayer creator;
 
@@ -71,6 +73,7 @@ public abstract class FactionEvent extends Event {
      * Zu diesem Zeitpunkt existiert die Fraktion noch.
      */
     public static class Disbanded extends FactionEvent {
+        public static final EventBus<FactionEvent.Disbanded> BUS = EventBus.create(FactionEvent.Disbanded.class);
         public Disbanded(RecruitsFaction faction, ServerLevel level) {
             super(faction, level);
         }
@@ -80,8 +83,8 @@ public abstract class FactionEvent extends Event {
      * Wird gefeuert, kurz bevor ein Spieler einer Fraktion beitritt.
      * <p>Cancelable: {@code setCanceled(true)} verhindert den Beitritt.</p>
      */
-    @Cancelable
-    public static class PlayerJoined extends FactionEvent {
+        public static class PlayerJoined extends FactionEvent implements Cancellable {
+        public static final CancellableEventBus<FactionEvent.PlayerJoined> BUS = CancellableEventBus.create(FactionEvent.PlayerJoined.class);
         private final ServerPlayer player;
 
         public PlayerJoined(RecruitsFaction faction, ServerLevel level, ServerPlayer player) {
@@ -100,6 +103,7 @@ public abstract class FactionEvent extends Event {
      * Zu diesem Zeitpunkt ist der Spieler noch Mitglied.
      */
     public static class PlayerLeft extends FactionEvent {
+        public static final EventBus<FactionEvent.PlayerLeft> BUS = EventBus.create(FactionEvent.PlayerLeft.class);
         private final ServerPlayer player;
         private final boolean wasLeader;
 

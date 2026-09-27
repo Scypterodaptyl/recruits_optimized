@@ -10,7 +10,6 @@ import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.block.state.properties.BedPart;
 import net.minecraft.world.level.block.state.properties.BlockStateProperties;
 import net.minecraft.world.level.block.state.properties.IntegerProperty;
-import net.minecraft.world.phys.Vec3;
 
 import java.util.Comparator;
 import java.util.Stack;
@@ -36,14 +35,14 @@ public class RestGoal extends Goal {
             return false;
         }
         else if(recruit instanceof VillagerNobleEntity){
-            return this.recruit.getCommandSenderWorld().isNight();
+            return this.recruit.level().isDarkOutside();
         }
-        return (recruit.getShouldRest() || this.recruit.getCommandSenderWorld().isNight()) && recruit.getFollowState() == 0 && recruit.getTarget() == null && (isMorale() || isHealth());
+        return (recruit.getShouldRest() || this.recruit.level().isDarkOutside()) && recruit.getFollowState() == 0 && recruit.getTarget() == null && (isMorale() || isHealth());
     }
 
     @Override
     public boolean canUse() {
-        long i = this.recruit.getCommandSenderWorld().getGameTime();
+        long i = this.recruit.level().getGameTime();
         if (i - this.lastCanUseCheck >= 20L) {
             this.lastCanUseCheck = i;
             return this.canRest();
@@ -86,8 +85,8 @@ public class RestGoal extends Goal {
 
         if(!stackOfBeds.isEmpty()){
             if(this.sleepPos != null){
-                BlockState state = recruit.getCommandSenderWorld().getBlockState(sleepPos);
-                if (state.isBed(recruit.getCommandSenderWorld(), sleepPos, recruit) && !state.getValue(BlockStateProperties.OCCUPIED)) {
+                BlockState state = recruit.level().getBlockState(sleepPos);
+                if (state.isBed(recruit.level(), sleepPos, recruit) && !state.getValue(BlockStateProperties.OCCUPIED)) {
                     this.goToBed(sleepPos);
                 }
 
@@ -135,9 +134,9 @@ public class RestGoal extends Goal {
             for (int y = -3; y < 10; y++) {
                 for (int z = -range; z < range; z++) {
                     BlockPos pos = recruit.getOnPos().offset(x, y, z);
-                    BlockState state = recruit.getCommandSenderWorld().getBlockState(pos);
+                    BlockState state = recruit.level().getBlockState(pos);
 
-                    if (state.isBed(recruit.getCommandSenderWorld(), pos, this.recruit) && !state.getValue(BlockStateProperties.OCCUPIED)){
+                    if (state.isBed(recruit.level(), pos, this.recruit) && !state.getValue(BlockStateProperties.OCCUPIED)){
                         try{
                             if (state.getValue(MULTI_BLOCK_INDEX) == 1){
                                 stack.push(pos);

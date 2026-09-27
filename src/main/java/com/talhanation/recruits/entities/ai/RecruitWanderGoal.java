@@ -9,7 +9,7 @@ import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.ai.goal.Goal;
 import net.minecraft.world.entity.ai.util.DefaultRandomPos;
 import net.minecraft.world.entity.ai.util.LandRandomPos;
-import net.minecraft.world.entity.vehicle.Boat;
+import net.minecraft.world.entity.vehicle.boat.Boat;
 import net.minecraft.world.phys.Vec3;
 
 import javax.annotation.Nullable;
@@ -42,7 +42,7 @@ public class RecruitWanderGoal extends Goal {
         return state && target && rest && move && protect && follow && fleeing && needFood && mount;
     }
     public boolean canUse() {
-        long i = this.recruit.getCommandSenderWorld().getGameTime();
+        long i = this.recruit.level().getGameTime();
         if (i - this.lastCanUseCheck >= 20L) {
             this.lastCanUseCheck = i;
             
@@ -72,7 +72,7 @@ public class RecruitWanderGoal extends Goal {
 
         if (--this.timeToRecalcPath <= 0) {
             if(this.recruit instanceof CaptainEntity captain && captain.getVehicle() instanceof Boat boat && SmallShips.isSmallShip(boat)){
-                Vec3 vec3 = Kalkuel.SailPointCalculator.getRandomSailPoint(captain.getCommandSenderWorld(), initialPosition.getCenter(), 100);
+                Vec3 vec3 = Kalkuel.SailPointCalculator.getRandomSailPoint(captain.level(), initialPosition.getCenter(), 100);
 
                 captain.setSailPos(new BlockPos((int) vec3.x, (int) captain.getY(), (int) vec3.z));
                 captain.smallShipsController.calculatePath();
@@ -99,13 +99,13 @@ public class RecruitWanderGoal extends Goal {
 
     @Nullable
     protected Vec3 getPosition() {
-        if (this.recruit.isInWaterOrBubble()) {
-            this.recruit.restrictTo(initialPosition, 150);
+        if (this.recruit.isInWater()) {
+            this.recruit.setHomeTo(initialPosition, 150);
             Vec3 vec3 = LandRandomPos.getPos(this.recruit, 32, 16);
             return vec3 == null ? DefaultRandomPos.getPos(this.recruit, 32, 16) : vec3;
         }
         else {
-            this.recruit.restrictTo(initialPosition, 20);
+            this.recruit.setHomeTo(initialPosition, 20);
             return LandRandomPos.getPos(this.recruit, 10, 0);
         }
     }

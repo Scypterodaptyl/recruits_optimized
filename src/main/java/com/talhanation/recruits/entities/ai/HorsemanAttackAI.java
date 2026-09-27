@@ -6,19 +6,11 @@ import com.talhanation.recruits.util.AttackUtil;
 import net.minecraft.core.BlockPos;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.util.Mth;
-import net.minecraft.world.InteractionHand;
-import net.minecraft.world.damagesource.DamageSource;
-import net.minecraft.world.damagesource.DamageSources;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.ai.goal.Goal;
-import net.minecraft.world.entity.animal.horse.AbstractHorse;
-import net.minecraft.world.item.AxeItem;
-import net.minecraft.world.item.Item;
-import net.minecraft.world.item.TieredItem;
+import net.minecraft.world.entity.animal.equine.AbstractHorse;
 import net.minecraft.world.level.block.LeavesBlock;
 import net.minecraft.world.level.block.state.BlockState;
-import net.minecraft.world.level.pathfinder.Node;
-import net.minecraft.world.level.pathfinder.Path;
 import net.minecraft.world.phys.AABB;
 import net.minecraft.world.phys.Vec3;
 
@@ -127,9 +119,9 @@ public class HorsemanAttackAI extends Goal {
     }
 
     private void removeLeaves() {
-        BlockState state = this.horseman.getCommandSenderWorld().getBlockState(horseman.getOnPos().above(1));
+        BlockState state = this.horseman.level().getBlockState(horseman.getOnPos().above(1));
         if (state.getBlock() instanceof LeavesBlock)
-            this.horseman.getCommandSenderWorld().destroyBlock(horseman.getOnPos().above(1), true);
+            this.horseman.level().destroyBlock(horseman.getOnPos().above(1), true);
     }
 
     private boolean isStuck() {
@@ -137,12 +129,12 @@ public class HorsemanAttackAI extends Goal {
     }
 
     private boolean isFreeSpotAbove(BlockPos pos) {
-        BlockState state = this.horseman.getCommandSenderWorld().getBlockState(pos.above(1));
+        BlockState state = this.horseman.level().getBlockState(pos.above(1));
         return state.isAir();
     }
 
     private void knockback() {
-        if (!(horseman.getCommandSenderWorld() instanceof ServerLevel serverLevel)) return;
+        if (!(horseman.level() instanceof ServerLevel serverLevel)) return;
 
         AABB aabb = horseman.getBoundingBox().inflate(8D);
         for (LivingEntity entity : NearbyEntityCache.livingEntities(serverLevel)) {

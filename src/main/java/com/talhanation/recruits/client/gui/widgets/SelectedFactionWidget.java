@@ -1,5 +1,8 @@
 package com.talhanation.recruits.client.gui.widgets;
 
+import net.minecraft.client.input.MouseButtonEvent;
+import net.minecraft.client.input.MouseButtonInfo;
+
 import com.talhanation.recruits.client.gui.component.BannerRenderer;
 import com.talhanation.recruits.world.RecruitsFaction;
 import net.minecraft.client.gui.Font;
@@ -8,15 +11,15 @@ import net.minecraft.client.gui.components.AbstractWidget;
 import net.minecraft.client.gui.components.Button;
 import net.minecraft.client.gui.narration.NarrationElementOutput;
 import net.minecraft.network.chat.Component;
-import net.minecraft.util.FastColor;
+import net.minecraft.util.ARGB;
 import net.minecraftforge.client.gui.widget.ExtendedButton;
 import org.jetbrains.annotations.Nullable;
 
 public class SelectedFactionWidget extends AbstractWidget {
 
-    private static final int NAME_COLOR = FastColor.ARGB32.color(255, 255, 255, 255);
-    private static final int LEADER_COLOR = FastColor.ARGB32.color(255, 180, 180, 180);
-    private static final int BACKGROUND_COLOR = FastColor.ARGB32.color(255, 0, 0, 0);
+    private static final int NAME_COLOR = ARGB.color(255, 255, 255, 255);
+    private static final int LEADER_COLOR = ARGB.color(255, 180, 180, 180);
+    private static final int BACKGROUND_COLOR = ARGB.color(255, 0, 0, 0);
 
     private final Font font;
     private final Button actionButton;
@@ -64,28 +67,33 @@ public class SelectedFactionWidget extends AbstractWidget {
         // Faction display name
         int textX = x + 22;
         int nameY = h > 20 ? y + (h / 2) - font.lineHeight : y + (h - font.lineHeight) / 2;
-        guiGraphics.drawString(font, faction.getTeamDisplayName(), textX, nameY, NAME_COLOR, false);
+        guiGraphics.drawString(font, faction.getTeamDisplayName(), textX, nameY, com.talhanation.recruits.client.gui.util.GuiCompat.opaque(NAME_COLOR), false);
 
         // Leader name in smaller/lighter text if there's enough space
         if (h > 20 && faction.getTeamLeaderName() != null && !faction.getTeamLeaderName().isEmpty()) {
-            guiGraphics.drawString(font, "Leader: " + faction.getTeamLeaderName(), textX, nameY + font.lineHeight + 1, LEADER_COLOR, false);
+            guiGraphics.drawString(font, "Leader: " + faction.getTeamLeaderName(), textX, nameY + font.lineHeight + 1, com.talhanation.recruits.client.gui.util.GuiCompat.opaque(LEADER_COLOR), false);
         }
 
         actionButton.render(guiGraphics, mouseX, mouseY, partialTick);
     }
 
     @Override
-    public boolean mouseClicked(double mx, double my, int button) {
+    public boolean mouseClicked(MouseButtonEvent event, boolean doubleClick) {
+        double mx = event.x();
+        double my = event.y();
+        int button = event.button();
         if (actionButton.isMouseOver(mx, my) && actionButton.active && actionButton.visible) {
-            actionButton.onClick(mx, my);
+            actionButton.onClick(new MouseButtonEvent(mx, my, new MouseButtonInfo(0, 0)), false);
         }
-        return super.mouseClicked(mx, my, button);
+        return super.mouseClicked(event, doubleClick);
     }
 
     @Override
-    public void onClick(double mx, double my) {
+    public void onClick(MouseButtonEvent event, boolean doubleClick) {
+        double mx = event.x();
+        double my = event.y();
         if (actionButton.isMouseOver(mx, my) && actionButton.active && actionButton.visible) {
-            actionButton.onClick(mx, my);
+            actionButton.onClick(new MouseButtonEvent(mx, my, new MouseButtonInfo(0, 0)), false);
         }
     }
 

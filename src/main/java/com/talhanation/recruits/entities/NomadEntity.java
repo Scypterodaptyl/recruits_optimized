@@ -3,7 +3,7 @@ package com.talhanation.recruits.entities;
 import com.talhanation.recruits.config.RecruitsServerConfig;
 import com.talhanation.recruits.entities.ai.NomadAttackAI;
 import com.talhanation.recruits.pathfinding.AsyncGroundPathNavigation;
-import net.minecraft.Util;
+import net.minecraft.util.Util;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.network.chat.Component;
 import net.minecraft.network.syncher.EntityDataAccessor;
@@ -13,14 +13,14 @@ import net.minecraft.util.RandomSource;
 import net.minecraft.world.DifficultyInstance;
 import net.minecraft.world.entity.EntityType;
 import net.minecraft.world.entity.Mob;
-import net.minecraft.world.entity.MobSpawnType;
+import net.minecraft.world.entity.EntitySpawnReason;
 import net.minecraft.world.entity.SpawnGroupData;
 import net.minecraft.world.entity.ai.attributes.AttributeSupplier;
 import net.minecraft.world.entity.ai.attributes.Attributes;
-import net.minecraft.world.entity.animal.horse.AbstractHorse;
-import net.minecraft.world.entity.animal.horse.Horse;
-import net.minecraft.world.entity.animal.horse.Markings;
-import net.minecraft.world.entity.animal.horse.Variant;
+import net.minecraft.world.entity.animal.equine.AbstractHorse;
+import net.minecraft.world.entity.animal.equine.Horse;
+import net.minecraft.world.entity.animal.equine.Markings;
+import net.minecraft.world.entity.animal.equine.Variant;
 import net.minecraft.world.entity.animal.camel.Camel;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.ServerLevelAccessor;
@@ -38,21 +38,21 @@ public class NomadEntity extends BowmanEntity {
         super(entityType, world);
     }
 
-    protected void defineSynchedData() {
-        super.defineSynchedData();
-        this.entityData.define(HAD_HORSE, false);
+    protected void defineSynchedData(SynchedEntityData.Builder builder) {
+        super.defineSynchedData(builder);
+        builder.define(HAD_HORSE, false);
     }
 
     @Override
-    public void addAdditionalSaveData(CompoundTag nbt) {
-        super.addAdditionalSaveData(nbt);
+    public void saveRecruitData(CompoundTag nbt) {
+        super.saveRecruitData(nbt);
         nbt.putBoolean("hadHorse", this.getHadHorse());
     }
 
     @Override
-    public void readAdditionalSaveData(CompoundTag nbt) {
-        super.readAdditionalSaveData(nbt);
-        this.setHadHorse(nbt.getBoolean("hadHorse"));
+    public void loadRecruitData(CompoundTag nbt) {
+        super.loadRecruitData(nbt);
+        this.setHadHorse(nbt.getBooleanOr("hadHorse", false));
         //this.reassessWeaponGoal();
     }
 
@@ -75,21 +75,21 @@ public class NomadEntity extends BowmanEntity {
         return Mob.createMobAttributes()
                 .add(Attributes.MAX_HEALTH, 20.0D)
                 .add(Attributes.MOVEMENT_SPEED, 0.32D)
-                .add(ForgeMod.SWIM_SPEED.get(), 0.3D)
+                .add(ForgeMod.SWIM_SPEED.getHolder().get(), 0.3D)
                 .add(Attributes.KNOCKBACK_RESISTANCE, 0.05D)
                 .add(Attributes.ATTACK_DAMAGE, 0.5D)
                 .add(Attributes.FOLLOW_RANGE, 64.0D)
-                .add(ForgeMod.ENTITY_REACH.get(), 0D)
+                .add(Attributes.ENTITY_INTERACTION_RANGE, 0D)
                 .add(Attributes.ATTACK_SPEED);
 
     }
 
     @Nullable
-    public SpawnGroupData finalizeSpawn(ServerLevelAccessor world, DifficultyInstance difficultyInstance, MobSpawnType reason, @Nullable SpawnGroupData data, @Nullable CompoundTag nbt) {
+    public SpawnGroupData finalizeSpawn(ServerLevelAccessor world, DifficultyInstance difficultyInstance, EntitySpawnReason reason, @Nullable SpawnGroupData data) {
         RandomSource randomsource = world.getRandom();
-        SpawnGroupData ilivingentitydata = super.finalizeSpawn(world, difficultyInstance, reason, data, nbt);
+        SpawnGroupData ilivingentitydata = super.finalizeSpawn(world, difficultyInstance, reason, data);
         ((AsyncGroundPathNavigation)this.getNavigation()).setCanOpenDoors(true);
-        this.populateDefaultEquipmentEnchantments(randomsource, difficultyInstance);
+        this.populateDefaultEquipmentEnchantments(world, randomsource, difficultyInstance);
 
         this.initSpawn();
 
@@ -121,26 +121,26 @@ public class NomadEntity extends BowmanEntity {
                 boolean spawnCamel = isDesert && this.getRandom().nextInt(3) == 0;
 
                 if (spawnCamel) {
-                    Camel camel = new Camel(EntityType.CAMEL, this.getCommandSenderWorld());
+                    Camel camel = new Camel(EntityType.CAMEL, this.level());
                     camel.setPos(this.getX(), this.getY(), this.getZ());
                     camel.setTamed(true);
-                    camel.equipSaddle(null);
+                    camel.setItemSlot(net.minecraft.world.entity.EquipmentSlot.SADDLE, new net.minecraft.world.item.ItemStack(net.minecraft.world.item.Items.SADDLE));
                     this.startRiding(camel);
-                    this.getCommandSenderWorld().addFreshEntity(camel);
+                    this.level().addFreshEntity(camel);
                     this.setHadHorse(true);
                     this.setMountUUID(Optional.of(camel.getUUID()));
                 } else {
-                    Horse horse = new Horse(EntityType.HORSE, this.getCommandSenderWorld());
+                    Horse horse = new Horse(EntityType.HORSE, this.level());
                     horse.setPos(this.getX(), this.getY(), this.getZ());
                     horse.setTamed(true);
-                    horse.equipSaddle(null);
+                    horse.setItemSlot(net.minecraft.world.entity.EquipmentSlot.SADDLE, new net.minecraft.world.item.ItemStack(net.minecraft.world.item.Items.SADDLE));
 
                     Variant variant = Util.getRandom(Variant.values(), this.getRandom());
                     Markings markings = Util.getRandom(Markings.values(), this.getRandom());
                     horse.setVariantAndMarkings(variant, markings);
 
                     this.startRiding(horse);
-                    this.getCommandSenderWorld().addFreshEntity(horse);
+                    this.level().addFreshEntity(horse);
                     this.setHadHorse(true);
                     this.setMountUUID(Optional.of(horse.getUUID()));
                 }

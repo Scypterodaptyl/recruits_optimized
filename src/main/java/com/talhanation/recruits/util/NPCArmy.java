@@ -1,15 +1,15 @@
 package com.talhanation.recruits.util;
 
+import net.minecraft.core.UUIDUtil;
 import com.talhanation.recruits.compat.smallships.SmallShips;
 import com.talhanation.recruits.entities.*;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.nbt.ListTag;
-import net.minecraft.nbt.Tag;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.LivingEntity;
-import net.minecraft.world.entity.animal.horse.AbstractHorse;
-import net.minecraft.world.entity.vehicle.Boat;
+import net.minecraft.world.entity.animal.equine.AbstractHorse;
+import net.minecraft.world.entity.vehicle.boat.Boat;
 import net.minecraft.world.item.BowItem;
 import net.minecraft.world.item.CrossbowItem;
 import net.minecraft.world.item.ShieldItem;
@@ -232,7 +232,7 @@ public class NPCArmy {
             ListTag recruitsTag = new ListTag();
             for (UUID recruitId : uuids) {
                 CompoundTag recruitTag = new CompoundTag();
-                recruitTag.putUUID("Recruit", recruitId);
+                recruitTag.store("Recruit", UUIDUtil.CODEC, recruitId);
                 recruitsTag.add(recruitTag);
             }
             nbt.put("Recruits", recruitsTag);
@@ -242,11 +242,11 @@ public class NPCArmy {
 
     public static NPCArmy load(ServerLevel serverLevel, CompoundTag nbt) {
         // Load recruit UUIDs
-        ListTag recruitsTag = nbt.getList("Recruits", Tag.TAG_COMPOUND);
+        ListTag recruitsTag = nbt.getListOrEmpty("Recruits");
         List<UUID> uuids = new ArrayList<>();
         for (int i = 0; i < recruitsTag.size(); i++) {
-            CompoundTag recruitTag = recruitsTag.getCompound(i);
-            uuids.add(recruitTag.getUUID("Recruit"));
+            CompoundTag recruitTag = recruitsTag.getCompoundOrEmpty(i);
+            uuids.add(recruitTag.read("Recruit", UUIDUtil.CODEC).orElse(null));
         }
 
         return new NPCArmy(serverLevel, null, uuids);

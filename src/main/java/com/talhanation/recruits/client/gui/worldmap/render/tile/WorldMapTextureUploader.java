@@ -1,37 +1,32 @@
 package com.talhanation.recruits.client.gui.worldmap.render.tile;
 
-import com.mojang.blaze3d.platform.GlStateManager;
+import com.mojang.blaze3d.platform.NativeImage;
 import com.mojang.blaze3d.systems.RenderSystem;
+import com.mojang.blaze3d.textures.GpuTexture;
 import org.lwjgl.BufferUtils;
-import org.lwjgl.opengl.GL11;
-import org.lwjgl.opengl.GL15;
-import org.lwjgl.opengl.GL21;
 
+import java.nio.ByteBuffer;
+import java.nio.ByteOrder;
 import java.nio.IntBuffer;
 
 /**
- * Streams tile pixels through orphaned PBOs so texture updates do not wait for the GPU to finish
- * using an older upload buffer.
+ * Uploads tile pixels into the atlas textures. The pixels are packed as RGBA bytes
+ * (0xAABBGGRR as little endian int), which is what the RGBA8 texture expects.
  */
 final class WorldMapTextureUploader implements AutoCloseable {
-    private static final int BUFFER_COUNT = 3;
     private static final int PIXEL_COUNT =
             WorldMapRenderTileKey.PIXEL_SIZE * WorldMapRenderTileKey.PIXEL_SIZE;
-    private static final long BUFFER_BYTES = PIXEL_COUNT * Integer.BYTES;
 
-    private final int[] pixelBuffers = new int[BUFFER_COUNT];
-    private final IntBuffer stagingBuffer = BufferUtils.createIntBuffer(PIXEL_COUNT);
-    private int nextBuffer;
-    private boolean initialized;
+    private final ByteBuffer stagingBytes = BufferUtils.createByteBuffer(PIXEL_COUNT * Integer.BYTES).order(ByteOrder.nativeOrder());
+    private final IntBuffer stagingBuffer = stagingBytes.asIntBuffer();
 
     void prepare() {
         RenderSystem.assertOnRenderThread();
-        ensureInitialized();
     }
 
-    void upload(int textureId, int xOffset, int yOffset, int[] pixels) {
+    void upload(GpuTexture texture, int xOffset, int yOffset, int[] pixels) {
         uploadRegion(
-                textureId,
+                texture,
                 xOffset,
                 yOffset,
                 pixels,
@@ -43,7 +38,7 @@ final class WorldMapTextureUploader implements AutoCloseable {
     }
 
     void uploadRegion(
-            int textureId,
+            GpuTexture texture,
             int xOffset,
             int yOffset,
             int[] pixels,
@@ -66,66 +61,19 @@ final class WorldMapTextureUploader implements AutoCloseable {
         }
 
         RenderSystem.assertOnRenderThread();
-        ensureInitialized();
 
         stagingBuffer.clear();
         for (int row = 0; row < height; row++) {
             stagingBuffer.put(pixels, (sourceY + row) * sourceWidth + sourceX, width);
         }
-        stagingBuffer.flip();
+        stagingBytes.clear();
+        stagingBytes.limit(width * height * Integer.BYTES);
 
-        int pixelBuffer = pixelBuffers[nextBuffer];
-        nextBuffer = (nextBuffer + 1) % pixelBuffers.length;
-        GL15.glBindBuffer(GL21.GL_PIXEL_UNPACK_BUFFER, pixelBuffer);
-        try {
-            GL15.glBufferData(GL21.GL_PIXEL_UNPACK_BUFFER, BUFFER_BYTES, GL15.GL_STREAM_DRAW);
-            GL15.glBufferSubData(GL21.GL_PIXEL_UNPACK_BUFFER, 0L, stagingBuffer);
-
-            RenderSystem.bindTexture(textureId);
-            GlStateManager._pixelStore(GL11.GL_UNPACK_ALIGNMENT, 4);
-            GlStateManager._pixelStore(GL11.GL_UNPACK_ROW_LENGTH, 0);
-            GlStateManager._pixelStore(GL11.GL_UNPACK_SKIP_PIXELS, 0);
-            GlStateManager._pixelStore(GL11.GL_UNPACK_SKIP_ROWS, 0);
-            GL11.glTexSubImage2D(
-                    GL11.GL_TEXTURE_2D,
-                    0,
-                    xOffset,
-                    yOffset,
-                    width,
-                    height,
-                    GL11.GL_RGBA,
-                    GL11.GL_UNSIGNED_BYTE,
-                    0L);
-        } finally {
-            GL15.glBindBuffer(GL21.GL_PIXEL_UNPACK_BUFFER, 0);
-        }
+        RenderSystem.getDevice().createCommandEncoder().writeToTexture(
+                texture, stagingBytes, NativeImage.Format.RGBA, 0, 0, xOffset, yOffset, width, height);
     }
 
     @Override
     public void close() {
-        if (!initialized) return;
-
-        RenderSystem.assertOnRenderThread();
-        GL15.glBindBuffer(GL21.GL_PIXEL_UNPACK_BUFFER, 0);
-        for (int pixelBuffer : pixelBuffers) {
-            if (pixelBuffer != 0) {
-                GL15.glDeleteBuffers(pixelBuffer);
-            }
-        }
-        initialized = false;
-        nextBuffer = 0;
-    }
-
-    private void ensureInitialized() {
-        if (initialized) return;
-
-        for (int index = 0; index < pixelBuffers.length; index++) {
-            int pixelBuffer = GL15.glGenBuffers();
-            pixelBuffers[index] = pixelBuffer;
-            GL15.glBindBuffer(GL21.GL_PIXEL_UNPACK_BUFFER, pixelBuffer);
-            GL15.glBufferData(GL21.GL_PIXEL_UNPACK_BUFFER, BUFFER_BYTES, GL15.GL_STREAM_DRAW);
-        }
-        GL15.glBindBuffer(GL21.GL_PIXEL_UNPACK_BUFFER, 0);
-        initialized = true;
     }
 }

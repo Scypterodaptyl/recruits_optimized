@@ -2,12 +2,12 @@ package com.talhanation.recruits.network;
 
 import com.talhanation.recruits.client.events.RecruitsToastManager;
 import com.talhanation.recruits.world.RecruitsFaction;
-import de.maxhenkel.corelib.net.Message;
+import com.talhanation.recruits.network.Message;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.network.FriendlyByteBuf;
 import net.minecraftforge.api.distmarker.Dist;
 import net.minecraftforge.api.distmarker.OnlyIn;
-import net.minecraftforge.network.NetworkEvent;
+import net.minecraftforge.event.network.CustomPayloadEvent;
 
 import static com.talhanation.recruits.client.events.RecruitsToastManager.*;
 
@@ -36,7 +36,7 @@ public class MessageToClientSetDiplomaticToast implements Message<MessageToClien
 
     @Override
     @OnlyIn(Dist.CLIENT)
-    public void executeClientSide(NetworkEvent.Context context) {
+    public void executeClientSide(CustomPayloadEvent.Context context) {
         RecruitsFaction team = RecruitsFaction.fromNBT(nbt);
         switch (x){
             case 0 -> RecruitsToastManager.setTeamToastForPlayer(Images.NEUTRAL, TOAST_NEUTRAL_TITLE, TOAST_NEUTRAL_SET(s), team);

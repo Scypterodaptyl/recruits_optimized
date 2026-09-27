@@ -7,7 +7,6 @@ import net.minecraftforge.fml.common.Mod;
 
 import java.nio.file.Path;
 
-@Mod.EventBusSubscriber
 public class RecruitsClientConfig {
     public enum MapPlayerIconStyle {
         VANILLA,

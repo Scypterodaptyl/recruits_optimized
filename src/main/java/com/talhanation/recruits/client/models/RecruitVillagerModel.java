@@ -1,24 +1,21 @@
 package com.talhanation.recruits.client.models;
 
-import com.google.common.collect.ImmutableList;
-import com.talhanation.recruits.entities.AbstractInventoryEntity;
-import com.talhanation.recruits.entities.AbstractRecruitEntity;
+import com.talhanation.recruits.client.render.RecruitRenderState;
 import net.minecraft.client.model.HumanoidModel;
 import net.minecraft.client.model.geom.ModelPart;
 import net.minecraft.client.model.geom.PartPose;
-import net.minecraft.client.model.geom.builders.*;
+import net.minecraft.client.model.geom.builders.CubeDeformation;
+import net.minecraft.client.model.geom.builders.CubeListBuilder;
+import net.minecraft.client.model.geom.builders.LayerDefinition;
+import net.minecraft.client.model.geom.builders.MeshDefinition;
+import net.minecraft.client.model.geom.builders.PartDefinition;
 
-import java.util.List;
-import java.util.Random;
+public class RecruitVillagerModel extends HumanoidModel<RecruitRenderState> {
 
-public class RecruitVillagerModel extends HumanoidModel<AbstractRecruitEntity> {
-    private final List<ModelPart> parts;
     public RecruitVillagerModel(ModelPart part) {
         super(part);
-        this.parts = part.getAllParts().filter((parts) -> {
-            return !parts.isEmpty();
-        }).collect(ImmutableList.toImmutableList());
     }
+
     //VillagerModel
     //PlayerModel
     public static LayerDefinition createLayerDefinition() {
@@ -35,18 +32,9 @@ public class RecruitVillagerModel extends HumanoidModel<AbstractRecruitEntity> {
         return LayerDefinition.create(meshdefinition, 64, 64);
     }
 
-    public void setRotateAngle(ModelPart ModelRenderer, float x, float y, float z) {
-        ModelRenderer.xRot = x;
-        ModelRenderer.yRot = y;
-        ModelRenderer.zRot = z;
-    }
-
-    @Override
-    public void setupAnim(AbstractRecruitEntity p_102866_, float p_102867_, float p_102868_, float p_102869_, float p_102870_, float p_102871_) {
-        super.setupAnim(p_102866_, p_102867_, p_102868_, p_102869_, p_102870_, p_102871_);
-    }
-
-    public ModelPart getRandomModelPart(Random p_103407_) {
-        return this.parts.get(p_103407_.nextInt(this.parts.size()));
+    public void setRotateAngle(ModelPart modelPart, float x, float y, float z) {
+        modelPart.xRot = x;
+        modelPart.yRot = y;
+        modelPart.zRot = z;
     }
 }

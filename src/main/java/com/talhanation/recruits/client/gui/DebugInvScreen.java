@@ -1,17 +1,20 @@
 package com.talhanation.recruits.client.gui;
 
+import net.minecraft.client.input.MouseButtonEvent;
+import net.minecraft.client.input.MouseButtonInfo;
+import net.minecraft.client.input.KeyEvent;
+
 import com.talhanation.recruits.Main;
 import com.talhanation.recruits.client.ClientManager;
 import com.talhanation.recruits.entities.AbstractRecruitEntity;
 import com.talhanation.recruits.inventory.DebugInvMenu;
 import com.talhanation.recruits.network.MessageDebugGui;
 import com.talhanation.recruits.world.RecruitsGroup;
-import de.maxhenkel.corelib.inventory.ScreenBase;
+import com.talhanation.recruits.corelib.ScreenBase;
 import net.minecraft.client.gui.GuiGraphics;
-import net.minecraft.client.gui.components.Button;
 import net.minecraft.client.gui.components.EditBox;
 import net.minecraft.network.chat.Component;
-import net.minecraft.resources.ResourceLocation;
+import net.minecraft.resources.Identifier;
 import net.minecraft.util.Mth;
 import net.minecraft.world.InteractionHand;
 import net.minecraft.world.entity.ai.attributes.Attributes;
@@ -32,7 +35,7 @@ import java.text.DecimalFormat;
 @OnlyIn(Dist.CLIENT)
 public class DebugInvScreen extends ScreenBase<DebugInvMenu> {
 
-    private static final ResourceLocation RESOURCE_LOCATION = new ResourceLocation(Main.MOD_ID,"textures/gui/debug_gui.png" );
+    private static final Identifier RESOURCE_LOCATION = Identifier.fromNamespaceAndPath(Main.MOD_ID,"textures/gui/debug_gui.png" );
 
     private static final int fontColor = 4210752;
     private EditBox textField;
@@ -91,26 +94,32 @@ public class DebugInvScreen extends ScreenBase<DebugInvMenu> {
 
     protected void containerTick() {
         super.containerTick();
-        if(textField != null) textField.tick();
+        
     }
 
 
-    public boolean mouseClicked(double p_100753_, double p_100754_, int p_100755_) {
+    public boolean mouseClicked(MouseButtonEvent event, boolean doubleClick) {
+        double p_100753_ = event.x();
+        double p_100754_ = event.y();
+        int p_100755_ = event.button();
         if (this.textField.isFocused()) {
-            this.textField.mouseClicked(p_100753_, p_100754_, p_100755_);
+            this.textField.mouseClicked(new MouseButtonEvent(p_100753_, p_100754_, new MouseButtonInfo(p_100755_, 0)), false);
         }
-        return super.mouseClicked(p_100753_, p_100754_, p_100755_);
+        return super.mouseClicked(event, doubleClick);
     }
 
     @Override
-    public boolean keyPressed(int key, int a, int b) {
+    public boolean keyPressed(KeyEvent event) {
+        int key = event.key();
+        int a = event.scancode();
+        int b = event.modifiers();
         if (key == GLFW.GLFW_KEY_ESCAPE) {
             this.onClose();
             return true;
         }
         setFocused(textField);
 
-        return textField.keyPressed(key, a, b) || textField.canConsumeInput() || super.keyPressed(key, a, b);
+        return textField.keyPressed(new KeyEvent(key, a, b)) || textField.canConsumeInput() || super.keyPressed(event);
     }
     @Override
     public void onClose() {
@@ -270,7 +279,7 @@ public class DebugInvScreen extends ScreenBase<DebugInvMenu> {
         int maxHealth = Mth.ceil(recruit.getMaxHealth());
         int moral = Mth.ceil(recruit.getMorale());
 
-        double attackReach = recruit.getAttributeValue(ForgeMod.ENTITY_REACH.get());
+        double attackReach = recruit.getAttributeValue(Attributes.ENTITY_INTERACTION_RANGE);
         double attackSpeed = recruit.getAttributeValue(Attributes.ATTACK_SPEED);
         double attackDamage = recruit.getAttackDamage();
         DecimalFormat decimalformat = new DecimalFormat("##.#");
@@ -342,92 +351,92 @@ public class DebugInvScreen extends ScreenBase<DebugInvMenu> {
         };
 
         guiGraphics.pose();
-        guiGraphics.pose().scale(0.7F, 0.7F, 1F);
+        guiGraphics.pose().scale((float) (0.7F), (float) (0.7F));
 
         //Titles
-        guiGraphics.drawString(font, recruit.getDisplayName().getVisualOrderText(), 8, 5, fontColor, false);
+        guiGraphics.drawString(font, recruit.getDisplayName().getVisualOrderText(), 8, 5, com.talhanation.recruits.client.gui.util.GuiCompat.opaque(fontColor), false);
 
         //Info
-        guiGraphics.drawString(font, "Hp:", k, l, fontColor, false);
-        guiGraphics.drawString(font, "" + health + "/" + maxHealth, k + 25, l, fontColor, false);
+        guiGraphics.drawString(font, "Hp:", k, l, com.talhanation.recruits.client.gui.util.GuiCompat.opaque(fontColor), false);
+        guiGraphics.drawString(font, "" + health + "/" + maxHealth, k + 25, l, com.talhanation.recruits.client.gui.util.GuiCompat.opaque(fontColor), false);
 
-        guiGraphics.drawString(font, "Lvl:", k, l + 10, fontColor, false);
-        guiGraphics.drawString(font, "" + recruit.getXpLevel(), k + 25, l + 10, fontColor, false);
+        guiGraphics.drawString(font, "Lvl:", k, l + 10, com.talhanation.recruits.client.gui.util.GuiCompat.opaque(fontColor), false);
+        guiGraphics.drawString(font, "" + recruit.getXpLevel(), k + 25, l + 10, com.talhanation.recruits.client.gui.util.GuiCompat.opaque(fontColor), false);
 
-        guiGraphics.drawString(font, "Exp:", k, l + 20, fontColor, false);
-        guiGraphics.drawString(font, "" + recruit.getXp(), k + 25, l + 20, fontColor, false);
+        guiGraphics.drawString(font, "Exp:", k, l + 20, com.talhanation.recruits.client.gui.util.GuiCompat.opaque(fontColor), false);
+        guiGraphics.drawString(font, "" + recruit.getXp(), k + 25, l + 20, com.talhanation.recruits.client.gui.util.GuiCompat.opaque(fontColor), false);
 
-        guiGraphics.drawString(font, "Kills:", k, l + 30, fontColor, false);
-        guiGraphics.drawString(font, "" + recruit.getKills(), k + 25, l + 30, fontColor, false);
+        guiGraphics.drawString(font, "Kills:", k, l + 30, com.talhanation.recruits.client.gui.util.GuiCompat.opaque(fontColor), false);
+        guiGraphics.drawString(font, "" + recruit.getKills(), k + 25, l + 30, com.talhanation.recruits.client.gui.util.GuiCompat.opaque(fontColor), false);
 
-        guiGraphics.drawString(font, "Morale:", k, l + 40, fontColor, false);
-        guiGraphics.drawString(font, "" + moral, k + 40, l + 40, fontColor, false);
+        guiGraphics.drawString(font, "Morale:", k, l + 40, com.talhanation.recruits.client.gui.util.GuiCompat.opaque(fontColor), false);
+        guiGraphics.drawString(font, "" + moral, k + 40, l + 40, com.talhanation.recruits.client.gui.util.GuiCompat.opaque(fontColor), false);
 
-        guiGraphics.drawString(font, "Hunger:", k, l + 50, fontColor, false);
-        guiGraphics.drawString(font, "" + decimalformat.format(hunger), k + 40, l + 50, fontColor, false);
+        guiGraphics.drawString(font, "Hunger:", k, l + 50, com.talhanation.recruits.client.gui.util.GuiCompat.opaque(fontColor), false);
+        guiGraphics.drawString(font, "" + decimalformat.format(hunger), k + 40, l + 50, com.talhanation.recruits.client.gui.util.GuiCompat.opaque(fontColor), false);
 
-        guiGraphics.drawString(font, "Upkeep Pos:", k, l + 60, fontColor, false);
-        guiGraphics.drawString(font, "" + recruit.getUpkeepPos(), k + 43 + 20, l + 60, fontColor, false);
+        guiGraphics.drawString(font, "Upkeep Pos:", k, l + 60, com.talhanation.recruits.client.gui.util.GuiCompat.opaque(fontColor), false);
+        guiGraphics.drawString(font, "" + recruit.getUpkeepPos(), k + 43 + 20, l + 60, com.talhanation.recruits.client.gui.util.GuiCompat.opaque(fontColor), false);
 
-        guiGraphics.drawString(font, "MaxHp:", k + 43 + 20, l, fontColor, false);
-        guiGraphics.drawString(font, "" + maxHealth, k + 77 + 20, l, fontColor, false);
+        guiGraphics.drawString(font, "MaxHp:", k + 43 + 20, l, com.talhanation.recruits.client.gui.util.GuiCompat.opaque(fontColor), false);
+        guiGraphics.drawString(font, "" + maxHealth, k + 77 + 20, l, com.talhanation.recruits.client.gui.util.GuiCompat.opaque(fontColor), false);
 /*
-        guiGraphics.drawString(font, "Attack:", k + 43 + 20, l + 10, fontColor, false);
-        guiGraphics.drawString(font, "" + A_damage, k + 77 + 20, l + 10, fontColor, false);
+        guiGraphics.drawString(font, "Attack:", k + 43 + 20, l + 10, com.talhanation.recruits.client.gui.util.GuiCompat.opaque(fontColor), false);
+        guiGraphics.drawString(font, "" + A_damage, k + 77 + 20, l + 10, com.talhanation.recruits.client.gui.util.GuiCompat.opaque(fontColor), false);
 
-        guiGraphics.drawString(font, "Speed:", k + 43 + 20, l + 20, fontColor, false);
-        guiGraphics.drawString(font, "" + decimalformat.format(speed), k + 77 + 20, l + 20, fontColor, false);
+        guiGraphics.drawString(font, "Speed:", k + 43 + 20, l + 20, com.talhanation.recruits.client.gui.util.GuiCompat.opaque(fontColor), false);
+        guiGraphics.drawString(font, "" + decimalformat.format(speed), k + 77 + 20, l + 20, com.talhanation.recruits.client.gui.util.GuiCompat.opaque(fontColor), false);
 */
-        guiGraphics.drawString(font, "Armor:", k + 43 + 20, l + 30, fontColor, false);
-        guiGraphics.drawString(font, "" + armor, k + 77 + 20, l + 30, fontColor, false);
+        guiGraphics.drawString(font, "Armor:", k + 43 + 20, l + 30, com.talhanation.recruits.client.gui.util.GuiCompat.opaque(fontColor), false);
+        guiGraphics.drawString(font, "" + armor, k + 77 + 20, l + 30, com.talhanation.recruits.client.gui.util.GuiCompat.opaque(fontColor), false);
 
-        guiGraphics.drawString(font, "Cost:", k + 43 + 20, l + 40, fontColor, false);
-        guiGraphics.drawString(font, "" + costs, k + 77 + 20, l + 40, fontColor, false);
+        guiGraphics.drawString(font, "Cost:", k + 43 + 20, l + 40, com.talhanation.recruits.client.gui.util.GuiCompat.opaque(fontColor), false);
+        guiGraphics.drawString(font, "" + costs, k + 77 + 20, l + 40, com.talhanation.recruits.client.gui.util.GuiCompat.opaque(fontColor), false);
 
-        guiGraphics.drawString(font, "Team:", k, l + 70, fontColor, false);
-        guiGraphics.drawString(font, ""+ team, k + 40, l + 70, fontColor, false);
+        guiGraphics.drawString(font, "Team:", k, l + 70, com.talhanation.recruits.client.gui.util.GuiCompat.opaque(fontColor), false);
+        guiGraphics.drawString(font, ""+ team, k + 40, l + 70, com.talhanation.recruits.client.gui.util.GuiCompat.opaque(fontColor), false);
 
 
-        guiGraphics.drawString(font, "A Dmg:", k + 43 + 80, l, fontColor, false);
-        guiGraphics.drawString(font, ""+ decimalformat.format(attackDamage), k + 90 + 80, l, fontColor, false);
+        guiGraphics.drawString(font, "A Dmg:", k + 43 + 80, l, com.talhanation.recruits.client.gui.util.GuiCompat.opaque(fontColor), false);
+        guiGraphics.drawString(font, ""+ decimalformat.format(attackDamage), k + 90 + 80, l, com.talhanation.recruits.client.gui.util.GuiCompat.opaque(fontColor), false);
 
-        guiGraphics.drawString(font, "A reach:", k + 43 + 80, l + 10, fontColor, false);
-        guiGraphics.drawString(font, ""+ decimalformat.format(attackReach), k + 90 + 80, l + 10, fontColor, false);
+        guiGraphics.drawString(font, "A reach:", k + 43 + 80, l + 10, com.talhanation.recruits.client.gui.util.GuiCompat.opaque(fontColor), false);
+        guiGraphics.drawString(font, ""+ decimalformat.format(attackReach), k + 90 + 80, l + 10, com.talhanation.recruits.client.gui.util.GuiCompat.opaque(fontColor), false);
 
-        guiGraphics.drawString(font, "A speed:", k + 43 + 80, l + 20, fontColor, false);
-        guiGraphics.drawString(font, ""+ decimalformat.format(attackSpeed), k + 90 + 80, l + 20, fontColor, false);
+        guiGraphics.drawString(font, "A speed:", k + 43 + 80, l + 20, com.talhanation.recruits.client.gui.util.GuiCompat.opaque(fontColor), false);
+        guiGraphics.drawString(font, ""+ decimalformat.format(attackSpeed), k + 90 + 80, l + 20, com.talhanation.recruits.client.gui.util.GuiCompat.opaque(fontColor), false);
 
-        guiGraphics.drawString(font, "Armor:", k + 43 + 80, l + 30, fontColor, false);
-        guiGraphics.drawString(font, ""+ armor, k + 90 + 80, l + 30, fontColor, false);
+        guiGraphics.drawString(font, "Armor:", k + 43 + 80, l + 30, com.talhanation.recruits.client.gui.util.GuiCompat.opaque(fontColor), false);
+        guiGraphics.drawString(font, ""+ armor, k + 90 + 80, l + 30, com.talhanation.recruits.client.gui.util.GuiCompat.opaque(fontColor), false);
 
-        guiGraphics.drawString(font, "Cost:", k + 43 + 80, l + 40, fontColor, false);
-        guiGraphics.drawString(font, ""+ costs, k + 90 + 80, l + 40, fontColor, false);
+        guiGraphics.drawString(font, "Cost:", k + 43 + 80, l + 40, com.talhanation.recruits.client.gui.util.GuiCompat.opaque(fontColor), false);
+        guiGraphics.drawString(font, ""+ costs, k + 90 + 80, l + 40, com.talhanation.recruits.client.gui.util.GuiCompat.opaque(fontColor), false);
 
-        guiGraphics.drawString(font, "Group:", k + 43 + 80, l + 50, fontColor, false);
-        guiGraphics.drawString(font, groupName, k + 90 + 80, l + 50, fontColor, false);
+        guiGraphics.drawString(font, "Group:", k + 43 + 80, l + 50, com.talhanation.recruits.client.gui.util.GuiCompat.opaque(fontColor), false);
+        guiGraphics.drawString(font, groupName, k + 90 + 80, l + 50, com.talhanation.recruits.client.gui.util.GuiCompat.opaque(fontColor), false);
 
-        guiGraphics.drawString(font, "Follow:", k + 43 + 80, l + 60, fontColor, false);
-        guiGraphics.drawString(font, ""+ follow, k + 90 + 80, l + 60, fontColor, false);
+        guiGraphics.drawString(font, "Follow:", k + 43 + 80, l + 60, com.talhanation.recruits.client.gui.util.GuiCompat.opaque(fontColor), false);
+        guiGraphics.drawString(font, ""+ follow, k + 90 + 80, l + 60, com.talhanation.recruits.client.gui.util.GuiCompat.opaque(fontColor), false);
 
-        guiGraphics.drawString(font, "Aggro:", k + 43 + 80, l + 70, fontColor, false);
-        guiGraphics.drawString(font, ""+ aggro, k + 90 + 80, l + 70, fontColor, false);
+        guiGraphics.drawString(font, "Aggro:", k + 43 + 80, l + 70, com.talhanation.recruits.client.gui.util.GuiCompat.opaque(fontColor), false);
+        guiGraphics.drawString(font, ""+ aggro, k + 90 + 80, l + 70, com.talhanation.recruits.client.gui.util.GuiCompat.opaque(fontColor), false);
 
-        guiGraphics.drawString(font, "Variant:", k + 43 + 80, l + 80, fontColor, false);
-        guiGraphics.drawString(font, ""+ recruit.getVariant(), k + 90 + 80, l + 80, fontColor, false);
+        guiGraphics.drawString(font, "Variant:", k + 43 + 80, l + 80, com.talhanation.recruits.client.gui.util.GuiCompat.opaque(fontColor), false);
+        guiGraphics.drawString(font, ""+ recruit.getVariant(), k + 90 + 80, l + 80, com.talhanation.recruits.client.gui.util.GuiCompat.opaque(fontColor), false);
 
-        guiGraphics.drawString(font, "Biome:", k + 43 + 80, l + 90, fontColor, false);
-        guiGraphics.drawString(font, ""+ biome, k + 90 + 80, l + 90, fontColor, false);
+        guiGraphics.drawString(font, "Biome:", k + 43 + 80, l + 90, com.talhanation.recruits.client.gui.util.GuiCompat.opaque(fontColor), false);
+        guiGraphics.drawString(font, ""+ biome, k + 90 + 80, l + 90, com.talhanation.recruits.client.gui.util.GuiCompat.opaque(fontColor), false);
 
-        guiGraphics.drawString(font, "tColor:", k + 43 + 80, l + 100, fontColor, false);
-        guiGraphics.drawString(font, ""+ tcolor, k + 90 + 80, l + 100, fontColor, false);
-        guiGraphics.pose().popPose();
+        guiGraphics.drawString(font, "tColor:", k + 43 + 80, l + 100, com.talhanation.recruits.client.gui.util.GuiCompat.opaque(fontColor), false);
+        guiGraphics.drawString(font, ""+ tcolor, k + 90 + 80, l + 100, com.talhanation.recruits.client.gui.util.GuiCompat.opaque(fontColor), false);
+        guiGraphics.pose().popMatrix();
     }
 
     private int calculateADamage() {
         int damage = Math.round(recruit.getAttackDamage());
         Main.LOGGER.debug("damage: " + damage);
         ItemStack handItem = recruit.getItemInHand(InteractionHand.MAIN_HAND);
-        if (handItem.getItem() instanceof SwordItem || handItem.getItem() instanceof AxeItem){
+        if (com.talhanation.recruits.util.ItemCompat.isSword(handItem) || handItem.getItem() instanceof AxeItem){
 
             damage += handItem.getDamageValue();
             Main.LOGGER.debug("Sword damage: " + handItem.getDamageValue());

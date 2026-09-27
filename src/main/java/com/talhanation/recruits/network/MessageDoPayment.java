@@ -1,11 +1,11 @@
 package com.talhanation.recruits.network;
 
 import com.talhanation.recruits.FactionEvents;
-import de.maxhenkel.corelib.net.Message;
+import com.talhanation.recruits.network.Message;
 import net.minecraft.network.FriendlyByteBuf;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraftforge.api.distmarker.Dist;
-import net.minecraftforge.network.NetworkEvent;
+import net.minecraftforge.event.network.CustomPayloadEvent;
 
 import java.util.UUID;
 
@@ -27,14 +27,14 @@ public class MessageDoPayment implements Message<MessageDoPayment> {
         return Dist.DEDICATED_SERVER;
     }
 
-    public void executeServerSide(NetworkEvent.Context context){
+    public void executeServerSide(CustomPayloadEvent.Context context){
         ServerPlayer serverPlayer = context.getSender();
         if(serverPlayer == null) return;
 
         if(!serverPlayer.getUUID().equals(uuid)) return;
         if(this.amount <= 0) return;
 
-        if(serverPlayer.isCreative() && serverPlayer.hasPermissions(2)){
+        if(serverPlayer.isCreative() && serverPlayer.permissions().hasPermission(net.minecraft.server.permissions.Permissions.COMMANDS_GAMEMASTER)){
             return;
         }
         if(!FactionEvents.playerHasEnoughEmeralds(serverPlayer, this.amount)) return;

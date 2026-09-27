@@ -217,7 +217,7 @@ public class Ballista extends SiegeWeapon {
 
         for(int i = 0; i < inventory.getContainerSize(); i++){
             ItemStack stack = inventory.getItem(i);
-            String name = stack.getDescriptionId();
+            String name = stack.getItem().getDescriptionId();
 
             if(name.contains("ballista_projectile")){
                 return stack;

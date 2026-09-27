@@ -1,6 +1,5 @@
 package com.talhanation.recruits.client.gui.worldmap.claim;
 
-import com.mojang.blaze3d.vertex.PoseStack;
 import com.talhanation.recruits.client.ClientManager;
 import com.talhanation.recruits.client.gui.faction.FactionEditScreen;
 import com.talhanation.recruits.client.gui.worldmap.claim.WorldMapClaimController.ClaimPreviewChunk;
@@ -76,7 +75,7 @@ public class ClaimRenderer {
 
     private static boolean isAdminCreative() {
         net.minecraft.client.player.LocalPlayer player = Minecraft.getInstance().player;
-        return player != null && player.hasPermissions(2) && player.isCreative();
+        return player != null && player.permissions().hasPermission(net.minecraft.server.permissions.Permissions.COMMANDS_GAMEMASTER) && player.isCreative();
     }
 
     public static boolean isClaimExplored(RecruitsClaim claim) {
@@ -470,17 +469,16 @@ public class ClaimRenderer {
         int textWidth = font.width(name);
         int textHeight = font.lineHeight;
 
-        PoseStack pose = guiGraphics.pose();
-        pose.pushPose();
+        org.joml.Matrix3x2fStack pose = guiGraphics.pose();
+        pose.pushMatrix();
 
-        pose.translate(
-                pixelX - (textWidth * textScale) / 2.0, pixelZ - (textHeight * textScale) / 2.0, 0);
+        pose.translate((float) (pixelX - (textWidth * textScale) / 2.0), (float) (pixelZ - (textHeight * textScale) / 2.0));
 
-        pose.scale(textScale, textScale, 1.0f);
+        pose.scale((float) (textScale), (float) (textScale));
 
-        guiGraphics.drawString(font, name, 0, 0, nameColor, false);
+        guiGraphics.drawString(font, name, 0, 0, com.talhanation.recruits.client.gui.util.GuiCompat.opaque(nameColor), false);
 
-        pose.popPose();
+        pose.popMatrix();
     }
 
     public static int getClaimColor(RecruitsClaim claim) {

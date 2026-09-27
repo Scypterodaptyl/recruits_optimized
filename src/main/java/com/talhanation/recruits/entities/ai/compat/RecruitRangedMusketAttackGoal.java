@@ -74,23 +74,23 @@ public class RecruitRangedMusketAttackGoal extends Goal {
     protected boolean isWeaponInHand() {
         ItemStack itemStack = crossBowman.getMainHandItem();
 
-        if(itemStack.getDescriptionId().equals("item.musketmod.musket")) {
+        if(itemStack.getItem().getDescriptionId().equals("item.musketmod.musket")) {
             this.weapon = new MusketWeapon();
             return true;
         }
-        else if(itemStack.getDescriptionId().equals("item.musketmod.musket_with_bayonet")){
+        else if(itemStack.getItem().getDescriptionId().equals("item.musketmod.musket_with_bayonet")){
             this.weapon = new MusketBayonetWeapon();
             return true;
         }
-        else if(itemStack.getDescriptionId().equals("item.musketmod.musket_with_scope")){
+        else if(itemStack.getItem().getDescriptionId().equals("item.musketmod.musket_with_scope")){
             this.weapon = new MusketScopeWeapon();
             return true;
         }
-        else if(itemStack.getDescriptionId().equals("item.musketmod.blunderbuss")){
+        else if(itemStack.getItem().getDescriptionId().equals("item.musketmod.blunderbuss")){
             this.weapon = new BlunderbussWeapon();
             return true;
         }
-        else if(itemStack.getDescriptionId().equals("item.musketmod.pistol")){
+        else if(itemStack.getItem().getDescriptionId().equals("item.musketmod.pistol")){
             this.weapon = new PistolWeapon();
             return true;
         }
@@ -99,7 +99,7 @@ public class RecruitRangedMusketAttackGoal extends Goal {
     }
 
     public static boolean isMusket(ItemStack itemStack){
-       String disc = itemStack.getDescriptionId();
+       String disc = itemStack.getItem().getDescriptionId();
 
        return disc.equals("item.musketmod.musket")
                || disc.equals("item.musketmod.musket_with_bayonet")
@@ -279,7 +279,7 @@ public class RecruitRangedMusketAttackGoal extends Goal {
         List<ItemStack> items = this.crossBowman.getInventory().items;
 
         for (ItemStack stack : items) {
-            if (stack.getDescriptionId().equals("item.musketmod.cartridge")) {
+            if (stack.getItem().getDescriptionId().equals("item.musketmod.cartridge")) {
                 stack.shrink(1);
                 break;
             }
@@ -288,7 +288,7 @@ public class RecruitRangedMusketAttackGoal extends Goal {
 
     private boolean canLoad(){
         if(RecruitsServerConfig.RangedRecruitsNeedArrowsToShoot.get())
-            return this.crossBowman.getInventory().items.stream().anyMatch(itemStack -> itemStack.getDescriptionId().equals("item.musketmod.cartridge"));
+            return this.crossBowman.getInventory().items.stream().anyMatch(itemStack -> itemStack.getItem().getDescriptionId().equals("item.musketmod.cartridge"));
         else
             return true;
     }

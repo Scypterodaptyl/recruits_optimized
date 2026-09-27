@@ -52,7 +52,7 @@ public class DebugEvents {
             }
 
             case 14 -> {recruits.heal(1000);}
-            case 15 -> {recruits.kill();}
+            case 15 -> {if (recruits.level() instanceof net.minecraft.server.level.ServerLevel serverLevel) recruits.kill(serverLevel);}
 
             case 16 -> {recruits.clearUpkeepEntity(); recruits.clearUpkeepPos();}
             case 17 -> {recruits.clearHoldPos();}
@@ -71,7 +71,7 @@ public class DebugEvents {
                 }
             }
             case 23 -> {
-                FactionEvents.removeRecruitFromTeam(recruits, recruits.getTeam(), (ServerLevel) recruits.getCommandSenderWorld());}
+                FactionEvents.removeRecruitFromTeam(recruits, recruits.getTeam(), (ServerLevel) recruits.level());}
 
             case 24 -> {
                 int current =  recruits.getColor();

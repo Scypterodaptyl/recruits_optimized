@@ -1,15 +1,15 @@
 package com.talhanation.recruits.client.gui.group;
 
+import net.minecraft.client.renderer.RenderPipelines;
 
-import com.mojang.blaze3d.systems.RenderSystem;
+
 import com.talhanation.recruits.client.gui.widgets.ListScreenEntryBase;
 import com.talhanation.recruits.client.gui.widgets.ListScreenListBase;
 import com.talhanation.recruits.world.RecruitsGroup;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.GuiGraphics;
-import net.minecraft.client.renderer.GameRenderer;
-import net.minecraft.resources.ResourceLocation;
-import net.minecraft.util.FastColor;
+import net.minecraft.resources.Identifier;
+import net.minecraft.util.ARGB;
 import net.minecraftforge.api.distmarker.Dist;
 import net.minecraftforge.api.distmarker.OnlyIn;
 import org.jetbrains.annotations.NotNull;
@@ -18,15 +18,15 @@ import org.jetbrains.annotations.NotNull;
 public class RecruitsGroupEntry extends ListScreenEntryBase<RecruitsGroupEntry> {
     protected static final int SKIN_SIZE = 24;
     protected static final int PADDING = 4;
-    protected static final int BG_FILL = FastColor.ARGB32.color(255, 80, 80, 80);
-    protected static final int BG_FILL_HOVERED = FastColor.ARGB32.color(255, 100, 100, 100);
-    protected static final int BG_FILL_SELECTED = FastColor.ARGB32.color(255, 10, 10, 10);
-    protected static final int PLAYER_NAME_COLOR = FastColor.ARGB32.color(255, 255, 255, 255);
+    protected static final int BG_FILL = ARGB.color(255, 80, 80, 80);
+    protected static final int BG_FILL_HOVERED = ARGB.color(255, 100, 100, 100);
+    protected static final int BG_FILL_SELECTED = ARGB.color(255, 10, 10, 10);
+    protected static final int PLAYER_NAME_COLOR = ARGB.color(255, 255, 255, 255);
 
     protected final Minecraft minecraft;
     protected final IGroupSelection screen;
     protected final @NotNull RecruitsGroup group;
-    protected ResourceLocation image;
+    protected Identifier image;
     public RecruitsGroupEntry(IGroupSelection screen, @NotNull RecruitsGroup group) {
         this.minecraft = Minecraft.getInstance();
         this.screen = screen;
@@ -35,7 +35,12 @@ public class RecruitsGroupEntry extends ListScreenEntryBase<RecruitsGroupEntry> 
     }
 
     @Override
-    public void render(GuiGraphics guiGraphics, int index, int top, int left, int width, int height, int mouseX, int mouseY, boolean hovered, float delta) {
+    public void renderContent(GuiGraphics guiGraphics, int mouseX, int mouseY, boolean hovered, float delta) {
+        int index = 0;
+        int top = this.getY();
+        int left = this.getX();
+        int width = this.getWidth();
+        int height = this.getHeight() - 4;
         int skinX = left + PADDING;
         int skinY = top + (height - SKIN_SIZE) / 2;
         int textX = skinX + SKIN_SIZE + PADDING;
@@ -57,14 +62,11 @@ public class RecruitsGroupEntry extends ListScreenEntryBase<RecruitsGroupEntry> 
         }
 
         if(this.image != null){
-            RenderSystem.setShader(GameRenderer::getPositionTexShader);
-            RenderSystem.setShaderColor(1F, 1F, 1F, 1F);
-            RenderSystem.setShaderTexture(0, this.image);
-            guiGraphics.blit(this.image,  left + 5,  top + 5, 0, 0, 21, 21, 21, 21);
+            guiGraphics.blit(RenderPipelines.GUI_TEXTURED, this.image, left + 5, top + 5, (float) (0), (float) (0), 21, 21, 21, 21);
         }
 
-        guiGraphics.drawString(minecraft.font, group.getName(), (float) textX, (float) textY,  PLAYER_NAME_COLOR, false);
-        guiGraphics.drawString(minecraft.font, "[" + group.getCount() + "/" + group.getSize() + "]", (float) textX + 130, (float) textY,  PLAYER_NAME_COLOR, false);
+        guiGraphics.drawString(minecraft.font, group.getName(), (int) ((float) textX), (int) ((float) textY), com.talhanation.recruits.client.gui.util.GuiCompat.opaque(PLAYER_NAME_COLOR), false);
+        guiGraphics.drawString(minecraft.font, "[" + group.getCount() + "/" + group.getSize() + "]", (int) ((float) textX + 130), (int) ((float) textY), com.talhanation.recruits.client.gui.util.GuiCompat.opaque(PLAYER_NAME_COLOR), false);
 
     }
     public RecruitsGroup getGroup() {

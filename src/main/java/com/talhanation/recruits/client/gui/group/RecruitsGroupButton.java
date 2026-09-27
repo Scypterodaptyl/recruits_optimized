@@ -1,15 +1,17 @@
 package com.talhanation.recruits.client.gui.group;
 
-import com.mojang.blaze3d.systems.RenderSystem;
+import net.minecraft.client.input.MouseButtonEvent;
+import net.minecraft.client.input.MouseButtonInfo;
+import net.minecraft.client.renderer.RenderPipelines;
+
 import com.talhanation.recruits.client.ClientManager;
 import com.talhanation.recruits.world.RecruitsGroup;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.GuiGraphics;
-import net.minecraft.client.renderer.GameRenderer;
 import net.minecraft.locale.Language;
 import net.minecraft.network.chat.Component;
 import net.minecraft.network.chat.FormattedText;
-import net.minecraft.resources.ResourceLocation;
+import net.minecraft.resources.Identifier;
 import net.minecraftforge.api.distmarker.Dist;
 import net.minecraftforge.api.distmarker.OnlyIn;
 import net.minecraftforge.client.gui.widget.ExtendedButton;
@@ -17,7 +19,7 @@ import net.minecraftforge.client.gui.widget.ExtendedButton;
 public class RecruitsGroupButton extends ExtendedButton {
 
     private RecruitsGroup group;
-    private ResourceLocation image;
+    private Identifier image;
 
     public RecruitsGroupButton(RecruitsGroup group, int xPos, int yPos, int width, int height, Component displayString, OnPress handler) {
         super(xPos, yPos, width, height, displayString, handler);
@@ -30,13 +32,16 @@ public class RecruitsGroupButton extends ExtendedButton {
     }
 
     @Override
-    public boolean mouseClicked(double p_93641_, double p_93642_, int p_93643_) {
+    public boolean mouseClicked(MouseButtonEvent event, boolean doubleClick) {
+        double p_93641_ = event.x();
+        double p_93642_ = event.y();
+        int p_93643_ = event.button();
         if (this.visible) {
-            if (this.isValidClickButton(p_93643_)) {
+            if (this.isValidClickButton(event.buttonInfo())) {
                 boolean flag = this.clicked(p_93641_, p_93642_);
                 if (flag) {
                     this.playDownSound(Minecraft.getInstance().getSoundManager());
-                    this.onClick(p_93641_, p_93642_);
+                    this.onClick(new MouseButtonEvent(p_93641_, p_93642_, new MouseButtonInfo(0, 0)), false);
                     return true;
                 }
             }
@@ -56,16 +61,13 @@ public class RecruitsGroupButton extends ExtendedButton {
     }
 
     @Override
-    public void renderWidget(GuiGraphics guiGraphics, int mouseX, int mouseY, float partialTick) {
+    public void renderContents(GuiGraphics guiGraphics, int mouseX, int mouseY, float partialTick) {
         Minecraft mc = Minecraft.getInstance();
         int k = !this.active ? 0 : (this.isHoveredOrFocused() ? 2 : 1);
-        guiGraphics.blitWithBorder(WIDGETS_LOCATION, this.getX(), this.getY(), 0, 46 + k * 20, this.width, this.height, 200, 20, 2, 3, 2, 2);
+        com.talhanation.recruits.client.gui.util.GuiCompat.blitButton(guiGraphics, this.getX(), this.getY(), this.width, this.height, 46 + k * 20);
 
         if(this.image != null){
-            RenderSystem.setShader(GameRenderer::getPositionTexShader);
-            RenderSystem.setShaderColor(1F, 1F, 1F, 1F);
-            RenderSystem.setShaderTexture(0, this.image);
-            guiGraphics.blit(this.image, this.getX() + 10, this.getY() + 8, 0, 0, 21, 21, 21, 21);
+            guiGraphics.blit(RenderPipelines.GUI_TEXTURED, this.image, this.getX() + 10, this.getY() + 8, (float) (0), (float) (0), 21, 21, 21, 21);
         }
 
         // Get the group name and count
@@ -94,17 +96,17 @@ public class RecruitsGroupButton extends ExtendedButton {
         int countY = this.getY() + (int)(mc.font.lineHeight * scale) + 24; // Below the group name with some padding
 
         // Draw the texts with scaling
-        guiGraphics.pose().pushPose();
-        guiGraphics.pose().translate(nameX, nameY, 0);
-        guiGraphics.pose().scale(scale, scale, 1.0f);
-        guiGraphics.drawString(mc.font, Language.getInstance().getVisualOrder(FormattedText.of(groupName)), 0, 0, getFGColor(), false);
-        guiGraphics.pose().popPose();
+        guiGraphics.pose().pushMatrix();
+        guiGraphics.pose().translate((float) (nameX), (float) (nameY));
+        guiGraphics.pose().scale((float) (scale), (float) (scale));
+        guiGraphics.drawString(mc.font, Language.getInstance().getVisualOrder(FormattedText.of(groupName)), 0, 0, com.talhanation.recruits.client.gui.util.GuiCompat.opaque(getFGColor()), false);
+        guiGraphics.pose().popMatrix();
 
-        guiGraphics.pose().pushPose();
-        guiGraphics.pose().translate(countX, countY, 0);
-        guiGraphics.pose().scale(scale, scale, 1.0f);
-        guiGraphics.drawString(mc.font, Language.getInstance().getVisualOrder(FormattedText.of(groupCount)), 0, 0, getFGColor(), false);
-        guiGraphics.pose().popPose();
+        guiGraphics.pose().pushMatrix();
+        guiGraphics.pose().translate((float) (countX), (float) (countY));
+        guiGraphics.pose().scale((float) (scale), (float) (scale));
+        guiGraphics.drawString(mc.font, Language.getInstance().getVisualOrder(FormattedText.of(groupCount)), 0, 0, com.talhanation.recruits.client.gui.util.GuiCompat.opaque(getFGColor()), false);
+        guiGraphics.pose().popMatrix();
 
         Component aggroState = ClientManager.getGroupAggroState(group.getUUID());
         Component moveState = ClientManager.getGroupMoveState(group.getUUID());
@@ -140,11 +142,11 @@ public class RecruitsGroupButton extends ExtendedButton {
         int textWidth = (int)(mc.font.width(text) * scale);
         int textX = this.getX() + (this.width - textWidth) / 2;
 
-        guiGraphics.pose().pushPose();
-        guiGraphics.pose().translate(textX, y, 0);
-        guiGraphics.pose().scale(scale, scale, 1.0f);
-        guiGraphics.drawString(mc.font, text.getVisualOrderText(), 0, 0, color, false);
-        guiGraphics.pose().popPose();
+        guiGraphics.pose().pushMatrix();
+        guiGraphics.pose().translate((float) (textX), (float) (y));
+        guiGraphics.pose().scale((float) (scale), (float) (scale));
+        guiGraphics.drawString(mc.font, text.getVisualOrderText(), 0, 0, com.talhanation.recruits.client.gui.util.GuiCompat.opaque(color), false);
+        guiGraphics.pose().popMatrix();
 
         return y + (int)(mc.font.lineHeight * scale) + 1;
     }

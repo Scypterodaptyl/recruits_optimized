@@ -32,7 +32,7 @@ public abstract class AbstractChunkLoaderEntity extends BowmanEntity {
     }
 
     public void updateChunkLoading(){
-        if (!this.getCommandSenderWorld().isClientSide() && RecruitsServerConfig.RecruitsChunkLoading.get()) {
+        if (!this.level().isClientSide() && RecruitsServerConfig.RecruitsChunkLoading.get()) {
             RecruitsChunk currentChunk = new RecruitsChunk(this.chunkPosition().x, this.chunkPosition().z);
             if (loadedChunk.isEmpty()) {
                 this.setForceChunk(currentChunk, true);
@@ -58,19 +58,19 @@ public abstract class AbstractChunkLoaderEntity extends BowmanEntity {
 
     ////////////////////////////////////DATA////////////////////////////////////
 
-    public void addAdditionalSaveData(CompoundTag nbt) {
-        super.addAdditionalSaveData(nbt);
+    public void saveRecruitData(CompoundTag nbt) {
+        super.saveRecruitData(nbt);
         if(loadedChunk.isPresent()) {
             nbt.putInt("chunkX", loadedChunk.get().x);
             nbt.putInt("chunkZ", loadedChunk.get().z);
         }
     }
 
-    public void readAdditionalSaveData(CompoundTag nbt) {
-        super.readAdditionalSaveData(nbt);
+    public void loadRecruitData(CompoundTag nbt) {
+        super.loadRecruitData(nbt);
         if (nbt.contains("chunkX")) {
-            int x = nbt.getInt("chunkX");
-            int z = nbt.getInt("chunkZ");
+            int x = nbt.getIntOr("chunkX", 0);
+            int z = nbt.getIntOr("chunkZ", 0);
             loadedChunk = Optional.of(new RecruitsChunk(x, z));
         }
     }
@@ -91,12 +91,12 @@ public abstract class AbstractChunkLoaderEntity extends BowmanEntity {
     ////////////////////////////////////SET////////////////////////////////////
 
     private void setForceChunk(RecruitsChunk chunk, boolean add) {
-        ForgeChunkManager.forceChunk((ServerLevel) this.getCommandSenderWorld(), Main.MOD_ID, this, chunk.x, chunk.z, add, false);
+        ForgeChunkManager.forceChunk((ServerLevel) this.level(), Main.MOD_ID, this, chunk.x, chunk.z, add, false);
     }
 
     public void die(DamageSource dmg) {
         super.die(dmg);
-        if(!this.getCommandSenderWorld().isClientSide) loadedChunk.ifPresent(chunk -> this.getSetOfChunks(chunk).forEach(chunk1 -> this.setForceChunk(chunk1, false)));
+        if(!this.level().isClientSide()) loadedChunk.ifPresent(chunk -> this.getSetOfChunks(chunk).forEach(chunk1 -> this.setForceChunk(chunk1, false)));
     }
 
     public static class RecruitsChunk {

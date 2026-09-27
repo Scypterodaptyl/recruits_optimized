@@ -4,7 +4,6 @@ import com.google.common.collect.ImmutableSet;
 import com.talhanation.recruits.config.RecruitsServerConfig;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Vec3i;
-import net.minecraft.network.protocol.game.DebugPackets;
 import net.minecraft.tags.BlockTags;
 import net.minecraft.util.Mth;
 import net.minecraft.world.entity.Entity;
@@ -91,7 +90,7 @@ public abstract class AsyncPathNavigation extends PathNavigation {
         if(Thread.currentThread().getThreadGroup() != SidedThreadGroups.SERVER) return null;
         if (p_148223_.isEmpty()) {
             return null;
-        } else if (this.mob.getY() < (double) this.level.getMinBuildHeight()) {
+        } else if (this.mob.getY() < (double) this.level.getMinY()) {
             return null;
         } else if (!this.canUpdatePath()) {
             return null;
@@ -228,7 +227,6 @@ public abstract class AsyncPathNavigation extends PathNavigation {
                 }
             }
 
-            DebugPackets.sendPathFindingPacket(this.level, this.mob, this.path, this.maxDistanceToWaypoint);
             if (!this.isDone()) {
                 Vec3 vec32 = this.path.getNextEntityPos(this.mob);
                 this.mob.getMoveControl().setWantedPosition(vec32.x, this.getGroundY(vec32), vec32.z, this.speedModifier);

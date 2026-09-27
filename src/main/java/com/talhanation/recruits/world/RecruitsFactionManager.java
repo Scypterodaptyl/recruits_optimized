@@ -11,11 +11,9 @@ import net.minecraft.nbt.CompoundTag;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.entity.player.Player;
-import net.minecraft.world.item.BlockItem;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.scores.PlayerTeam;
 import net.minecraft.world.scores.Scoreboard;
-import net.minecraft.world.scores.Team;
 import net.minecraftforge.network.PacketDistributor;
 
 import javax.annotation.Nullable;
@@ -129,8 +127,7 @@ public class RecruitsFactionManager {
     }
 
     public static boolean isBannerBlank(ItemStack itemStack){
-        CompoundTag compoundtag = BlockItem.getBlockEntityData(itemStack);
-        return compoundtag == null || !compoundtag.contains("Patterns");
+        return itemStack.getOrDefault(net.minecraft.core.component.DataComponents.BANNER_PATTERNS, net.minecraft.world.level.block.entity.BannerPatternLayers.EMPTY).layers().isEmpty();
     }
 
     public boolean isDisplayNameInUse(String displayName){
@@ -164,7 +161,7 @@ public class RecruitsFactionManager {
             }
         }
 
-        Main.SIMPLE_CHANNEL.send(PacketDistributor.PLAYER.with(()-> serverPlayer),
+        Main.SIMPLE_CHANNEL.send(PacketDistributor.PLAYER.with(serverPlayer),
                 new MessageToClientUpdateOnlinePlayers(playerInfoList));
     }
 
@@ -208,12 +205,12 @@ public class RecruitsFactionManager {
 
         if (faction != null) {
             // Update online status for all members
-            Set<String> onlineNames = serverPlayer.getServer().getPlayerList().getPlayers()
+            Set<String> onlineNames = serverPlayer.level().getServer().getPlayerList().getPlayers()
                     .stream().map(p -> p.getName().getString()).collect(Collectors.toSet());
             faction.getMembers().forEach(member -> member.setOnline(onlineNames.contains(member.getName())));
         }
 
-        Main.SIMPLE_CHANNEL.send(PacketDistributor.PLAYER.with(()-> serverPlayer),
+        Main.SIMPLE_CHANNEL.send(PacketDistributor.PLAYER.with(serverPlayer),
                 new MessageToClientUpdateOwnFaction(faction));
     }
 
@@ -225,7 +222,7 @@ public class RecruitsFactionManager {
             factionID = player.getTeam().getName();
         }
 
-        Main.SIMPLE_CHANNEL.send(PacketDistributor.PLAYER.with(()-> (ServerPlayer) player),
+        Main.SIMPLE_CHANNEL.send(PacketDistributor.PLAYER.with((ServerPlayer) player),
                 new MessageToClientUpdateFactions(this.getFactions().stream().toList(),
                         factionID,
                         RecruitsServerConfig.ShouldFactionEditingBeAllowed.get(),
@@ -258,7 +255,7 @@ public class RecruitsFactionManager {
         }
 
         for(ServerPlayer serverPlayer : serverLevel.getServer().getPlayerList().getPlayers()){
-            Main.SIMPLE_CHANNEL.send(PacketDistributor.PLAYER.with(()-> serverPlayer),
+            Main.SIMPLE_CHANNEL.send(PacketDistributor.PLAYER.with(serverPlayer),
                     new MessageToClientUpdateOnlinePlayers(playerInfoList));
         }
     }

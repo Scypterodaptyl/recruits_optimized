@@ -1,11 +1,12 @@
 package com.talhanation.recruits.world;
 
+import net.minecraft.core.UUIDUtil;
 import com.talhanation.recruits.Main;
 import net.minecraft.core.BlockPos;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.nbt.ListTag;
 import net.minecraft.nbt.Tag;
-import net.minecraft.resources.ResourceLocation;
+import net.minecraft.resources.Identifier;
 import net.minecraft.world.entity.player.Player;
 
 import java.util.ArrayList;
@@ -15,28 +16,28 @@ import java.util.UUID;
 
 public class RecruitsGroup {
 
-    public static List<ResourceLocation> IMAGES = new ArrayList<>(
+    public static List<Identifier> IMAGES = new ArrayList<>(
         Arrays.asList(
-            new ResourceLocation(Main.MOD_ID, "textures/gui/image/group/sword.png"),
-            new ResourceLocation(Main.MOD_ID, "textures/gui/image/group/shield.png"),
-            new ResourceLocation(Main.MOD_ID, "textures/gui/image/group/bow.png"),
-            new ResourceLocation(Main.MOD_ID, "textures/gui/image/group/crossbow.png"),
-            new ResourceLocation(Main.MOD_ID, "textures/gui/image/group/arrow.png"),
-            new ResourceLocation(Main.MOD_ID, "textures/gui/image/group/horse.png"),
-            new ResourceLocation(Main.MOD_ID, "textures/gui/image/group/horse_arrow.png"),
-            new ResourceLocation(Main.MOD_ID, "textures/gui/image/group/house.png"),
-            new ResourceLocation(Main.MOD_ID, "textures/gui/image/group/tower.png"),
-            new ResourceLocation(Main.MOD_ID, "textures/gui/image/group/fort.png"),
-            new ResourceLocation(Main.MOD_ID, "textures/gui/image/group/tent.png"),
-            new ResourceLocation(Main.MOD_ID, "textures/gui/image/group/ship.png"),
-            new ResourceLocation(Main.MOD_ID, "textures/gui/image/group/ship2.png"),
-            new ResourceLocation(Main.MOD_ID, "textures/gui/image/group/catapult.png"),
-            new ResourceLocation(Main.MOD_ID, "textures/gui/image/group/axe.png"),
-            new ResourceLocation(Main.MOD_ID, "textures/gui/image/group/hoe.png"),
-            new ResourceLocation(Main.MOD_ID, "textures/gui/image/group/pickaxe.png"),
-            new ResourceLocation(Main.MOD_ID, "textures/gui/image/group/sword2.png"),
-            new ResourceLocation(Main.MOD_ID, "textures/gui/image/group/arrow2.png"),
-            new ResourceLocation(Main.MOD_ID, "textures/gui/image/group/3arrow.png")
+            Identifier.fromNamespaceAndPath(Main.MOD_ID, "textures/gui/image/group/sword.png"),
+            Identifier.fromNamespaceAndPath(Main.MOD_ID, "textures/gui/image/group/shield.png"),
+            Identifier.fromNamespaceAndPath(Main.MOD_ID, "textures/gui/image/group/bow.png"),
+            Identifier.fromNamespaceAndPath(Main.MOD_ID, "textures/gui/image/group/crossbow.png"),
+            Identifier.fromNamespaceAndPath(Main.MOD_ID, "textures/gui/image/group/arrow.png"),
+            Identifier.fromNamespaceAndPath(Main.MOD_ID, "textures/gui/image/group/horse.png"),
+            Identifier.fromNamespaceAndPath(Main.MOD_ID, "textures/gui/image/group/horse_arrow.png"),
+            Identifier.fromNamespaceAndPath(Main.MOD_ID, "textures/gui/image/group/house.png"),
+            Identifier.fromNamespaceAndPath(Main.MOD_ID, "textures/gui/image/group/tower.png"),
+            Identifier.fromNamespaceAndPath(Main.MOD_ID, "textures/gui/image/group/fort.png"),
+            Identifier.fromNamespaceAndPath(Main.MOD_ID, "textures/gui/image/group/tent.png"),
+            Identifier.fromNamespaceAndPath(Main.MOD_ID, "textures/gui/image/group/ship.png"),
+            Identifier.fromNamespaceAndPath(Main.MOD_ID, "textures/gui/image/group/ship2.png"),
+            Identifier.fromNamespaceAndPath(Main.MOD_ID, "textures/gui/image/group/catapult.png"),
+            Identifier.fromNamespaceAndPath(Main.MOD_ID, "textures/gui/image/group/axe.png"),
+            Identifier.fromNamespaceAndPath(Main.MOD_ID, "textures/gui/image/group/hoe.png"),
+            Identifier.fromNamespaceAndPath(Main.MOD_ID, "textures/gui/image/group/pickaxe.png"),
+            Identifier.fromNamespaceAndPath(Main.MOD_ID, "textures/gui/image/group/sword2.png"),
+            Identifier.fromNamespaceAndPath(Main.MOD_ID, "textures/gui/image/group/arrow2.png"),
+            Identifier.fromNamespaceAndPath(Main.MOD_ID, "textures/gui/image/group/3arrow.png")
         )
     );
     private UUID uuid;
@@ -164,20 +165,20 @@ public class RecruitsGroup {
 
     public CompoundTag toNBT() {
         CompoundTag tag = new CompoundTag();
-        tag.putUUID("uuid", this.uuid);
+        tag.store("uuid", UUIDUtil.CODEC, this.uuid);
         tag.putString("name", this.name);
-        tag.putUUID("playerUUID", this.playerUUID);
+        tag.store("playerUUID", UUIDUtil.CODEC, this.playerUUID);
         tag.putString("playerName", this.playerName);
         tag.putInt("size", this.size);
         tag.putBoolean("disabled", this.disabled);
         tag.putBoolean("removed", this.removed);
         tag.putInt("image", this.image);
-        if(leaderUUID != null) tag.putUUID("leaderUUID", this.leaderUUID);
+        if(leaderUUID != null) tag.store("leaderUUID", UUIDUtil.CODEC, this.leaderUUID);
 
         ListTag uuidList = new ListTag();
         for (UUID id : members) {
             CompoundTag entry = new CompoundTag();
-            entry.putUUID("id", id);
+            entry.store("id", UUIDUtil.CODEC, id);
             uuidList.add(entry);
         }
         tag.put("members", uuidList);
@@ -188,16 +189,16 @@ public class RecruitsGroup {
     public static RecruitsGroup fromNBT(CompoundTag tag) {
         if(tag == null || tag.isEmpty()) return null;
 
-        UUID uuid = tag.getUUID("uuid");
-        String name = tag.getString("name");
-        String playerName = tag.getString("playerName");
+        UUID uuid = tag.read("uuid", UUIDUtil.CODEC).orElse(null);
+        String name = tag.getStringOr("name", "");
+        String playerName = tag.getStringOr("playerName", "");
 
-        UUID playerUUID = tag.getUUID("playerUUID");
+        UUID playerUUID = tag.read("playerUUID", UUIDUtil.CODEC).orElse(null);
 
-        int size = tag.getInt("size");
-        int image = tag.getInt("image");
+        int size = tag.getIntOr("size", 0);
+        int image = tag.getIntOr("image", 0);
 
-        boolean removed = tag.getBoolean("removed");
+        boolean removed = tag.getBooleanOr("removed", false);
         DisbandContext disbandContext = DisbandContext.fromNBT(tag);
 
         RecruitsGroup group = new RecruitsGroup(name, playerUUID, playerName, size, image, disbandContext);
@@ -205,15 +206,15 @@ public class RecruitsGroup {
         group.removed = removed;
 
         if(tag.contains("leaderUUID")){
-            group.leaderUUID = tag.getUUID("leaderUUID");
+            group.leaderUUID = tag.read("leaderUUID", UUIDUtil.CODEC).orElse(null);
         }
 
-        if (tag.contains("members", Tag.TAG_LIST)) {
-            ListTag uuidList = tag.getList("members", Tag.TAG_COMPOUND);
+        if (tag.contains("members")) {
+            ListTag uuidList = tag.getListOrEmpty("members");
 
             for (Tag entry : uuidList) {
                 CompoundTag uuidTag = (CompoundTag) entry;
-                UUID recruitID = uuidTag.getUUID("id");
+                UUID recruitID = uuidTag.read("id", UUIDUtil.CODEC).orElse(null);
                 group.members.add(recruitID);
             }
         }
@@ -234,13 +235,13 @@ public class RecruitsGroup {
 
     public static List<RecruitsGroup> listFromNbt(CompoundTag compound) {
         List<RecruitsGroup> out = new ArrayList<>();
-        if (compound == null || !compound.contains("Groups", Tag.TAG_LIST)) {
+        if (compound == null || !compound.contains("Groups")) {
             return out;
         }
 
-        ListTag list = compound.getList("Groups", Tag.TAG_COMPOUND);
+        ListTag list = compound.getListOrEmpty("Groups");
         for (int i = 0; i < list.size(); i++) {
-            CompoundTag entry = list.getCompound(i);
+            CompoundTag entry = list.getCompoundOrEmpty(i);
             out.add(RecruitsGroup.fromNBT(entry));
         }
         return out;
@@ -253,7 +254,7 @@ public class RecruitsGroup {
         ListTag list = new ListTag();
         for (UUID uuid : uuids) {
             CompoundTag tag = new CompoundTag();
-            tag.putUUID("UUID", uuid);
+            tag.store("UUID", UUIDUtil.CODEC, uuid);
             list.add(tag);
         }
         compound.put("UUIDs", list);
@@ -262,14 +263,14 @@ public class RecruitsGroup {
 
     public static List<UUID> uuidListFromNbt(CompoundTag compound){
         List<UUID> out = new ArrayList<>();
-        if (compound == null || !compound.contains("UUIDs", Tag.TAG_LIST)) {
+        if (compound == null || !compound.contains("UUIDs")) {
             return out;
         }
-        ListTag list = compound.getList("UUIDs", Tag.TAG_COMPOUND);
+        ListTag list = compound.getListOrEmpty("UUIDs");
         for (int i = 0; i < list.size(); i++) {
-            CompoundTag entry = list.getCompound(i);
+            CompoundTag entry = list.getCompoundOrEmpty(i);
 
-            out.add(entry.getUUID("UUID"));
+            out.add(entry.read("UUID", UUIDUtil.CODEC).orElse(null));
         }
         return out;
     }
@@ -296,9 +297,9 @@ public class RecruitsGroup {
             return tag;
         }
         public static DisbandContext fromNBT(CompoundTag tag) {
-            boolean disband = tag.getBoolean("disband");
-            boolean keepTeam =  tag.getBoolean("keepTeam");;
-            boolean increaseCost = tag.getBoolean("increaseCost");
+            boolean disband = tag.getBooleanOr("disband", false);
+            boolean keepTeam =  tag.getBooleanOr("keepTeam", false);;
+            boolean increaseCost = tag.getBooleanOr("increaseCost", false);
 
             return new DisbandContext(disband, keepTeam, increaseCost);
         }

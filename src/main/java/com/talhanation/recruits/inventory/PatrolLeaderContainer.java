@@ -2,7 +2,7 @@ package com.talhanation.recruits.inventory;
 
 import com.talhanation.recruits.entities.AbstractLeaderEntity;
 import com.talhanation.recruits.init.ModScreens;
-import de.maxhenkel.corelib.inventory.ContainerBase;
+import com.talhanation.recruits.corelib.ContainerBase;
 import net.minecraft.world.SimpleContainer;
 import net.minecraft.world.entity.player.Player;
 

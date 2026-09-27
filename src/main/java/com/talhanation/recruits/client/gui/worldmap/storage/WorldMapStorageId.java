@@ -29,7 +29,7 @@ public final class WorldMapStorageId {
     public static String detect(@Nullable Level level) {
         try {
             Minecraft mc = Minecraft.getInstance();
-            String dimension = level == null ? "unknown" : level.dimension().location().toString();
+            String dimension = level == null ? "unknown" : level.dimension().identifier().toString();
             if (mc.getSingleplayerServer() != null) {
                 var server = mc.getSingleplayerServer();
                 java.nio.file.Path root =

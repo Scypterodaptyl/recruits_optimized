@@ -1,6 +1,9 @@
 package com.talhanation.recruits.client.gui;
 
-import com.mojang.blaze3d.systems.RenderSystem;
+import net.minecraft.client.input.KeyEvent;
+import net.minecraft.client.renderer.RenderPipelines;
+import net.minecraft.client.Minecraft;
+
 import com.talhanation.recruits.Main;
 import com.talhanation.recruits.client.gui.faction.SelectFactionScreen;
 import com.talhanation.recruits.client.gui.widgets.BlackShowingTextField;
@@ -11,18 +14,17 @@ import com.talhanation.recruits.world.RecruitsPlayerInfo;
 import com.talhanation.recruits.world.RecruitsFaction;
 import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.client.gui.components.Button;
-import net.minecraft.client.renderer.GameRenderer;
 import net.minecraft.network.chat.Component;
-import net.minecraft.resources.ResourceLocation;
-import net.minecraft.util.FastColor;
+import net.minecraft.resources.Identifier;
+import net.minecraft.util.ARGB;
 import net.minecraft.world.entity.player.Player;
 import net.minecraftforge.client.gui.widget.ExtendedButton;
 import org.lwjgl.glfw.GLFW;
 
 public class MessengerTreatyScreen extends RecruitsScreenBase {
 
-    private static final ResourceLocation TEXTURE = new ResourceLocation(Main.MOD_ID, "textures/gui/gui_big.png");
-    private static final int FONT_COLOR_FIELD = FastColor.ARGB32.color(255, 255, 255, 255);
+    private static final Identifier TEXTURE = Identifier.fromNamespaceAndPath(Main.MOD_ID, "textures/gui/gui_big.png");
+    private static final int FONT_COLOR_FIELD = ARGB.color(255, 255, 255, 255);
 
     private static final Component TITLE = Component.translatable("gui.recruits.messenger.treaty_title");
     private static final Component BUTTON_SEND = Component.translatable("gui.recruits.messenger.send_treaty");
@@ -48,12 +50,15 @@ public class MessengerTreatyScreen extends RecruitsScreenBase {
     }
 
     @Override
-    public boolean keyPressed(int key, int a, int b) {
+    public boolean keyPressed(KeyEvent event) {
+        int key = event.key();
+        int a = event.scancode();
+        int b = event.modifiers();
         if (key == GLFW.GLFW_KEY_ESCAPE) {
             this.onClose();
             return true;
         }
-        return super.keyPressed(key, a, b);
+        return super.keyPressed(event);
     }
 
     @Override
@@ -94,7 +99,7 @@ public class MessengerTreatyScreen extends RecruitsScreenBase {
                 Component.literal("-"),
                 button -> {
                     int x = 1;
-                    if(hasShiftDown()) x = 5;
+                    if(Minecraft.getInstance().hasShiftDown()) x = 5;
 
                     durationHours = Math.max(1, durationHours - x);
                     setButtons();
@@ -107,7 +112,7 @@ public class MessengerTreatyScreen extends RecruitsScreenBase {
                 Component.literal("+"),
                 button -> {
                     int x = 1;
-                    if(hasShiftDown()) x = 5;
+                    if(Minecraft.getInstance().hasShiftDown()) x = 5;
 
                     durationHours = Math.min(48, durationHours + x);
                     setButtons();
@@ -147,19 +152,16 @@ public class MessengerTreatyScreen extends RecruitsScreenBase {
     }
 
     @Override
-    public void renderBackground(GuiGraphics guiGraphics, int mouseX, int mouseY, float delta) {
-        RenderSystem.setShader(GameRenderer::getPositionTexShader);
-        RenderSystem.setShaderColor(1F, 1F, 1F, 1F);
-        RenderSystem.setShaderTexture(0, TEXTURE);
-        guiGraphics.blit(TEXTURE, guiLeft, guiTop, 0, 0, xSize, ySize);
+    public void renderRecruitsBackground(GuiGraphics guiGraphics, int mouseX, int mouseY, float delta) {
+        guiGraphics.blit(RenderPipelines.GUI_TEXTURED, TEXTURE, guiLeft, guiTop, (float) (0), (float) (0), xSize, ySize, 256, 256);
     }
 
     @Override
     public void renderForeground(GuiGraphics guiGraphics, int mouseX, int mouseY, float delta) {
-        guiGraphics.drawString(font, TITLE, guiLeft + xSize / 2 - font.width(TITLE) / 2, guiTop + 8, FONT_COLOR, false);
+        guiGraphics.drawString(font, TITLE, guiLeft + xSize / 2 - font.width(TITLE) / 2, guiTop + 8, com.talhanation.recruits.client.gui.util.GuiCompat.opaque(FONT_COLOR), false);
 
-        guiGraphics.drawString(font, LABEL_FACTION, guiLeft + 5, guiTop + 18, FONT_COLOR, false);
-        guiGraphics.drawString(font, LABEL_DURATION, guiLeft + 5, guiTop + 77, FONT_COLOR, false);
+        guiGraphics.drawString(font, LABEL_FACTION, guiLeft + 5, guiTop + 18, com.talhanation.recruits.client.gui.util.GuiCompat.opaque(FONT_COLOR), false);
+        guiGraphics.drawString(font, LABEL_DURATION, guiLeft + 5, guiTop + 77, com.talhanation.recruits.client.gui.util.GuiCompat.opaque(FONT_COLOR), false);
 
         if(!messenger.getMainHandItem().isEmpty()){
             guiGraphics.renderFakeItem(messenger.getMainHandItem(), guiLeft + 145, guiTop + ySize - 28);

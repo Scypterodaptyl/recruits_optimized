@@ -21,26 +21,26 @@ public class RecruitsDiplomacySaveData extends SavedData {
     }
 
     public static RecruitsDiplomacySaveData get(ServerLevel level) {
-        return level.getDataStorage().computeIfAbsent(RecruitsDiplomacySaveData::load, RecruitsDiplomacySaveData::new, DATA_NAME);
+        return level.getDataStorage().computeIfAbsent(TYPE);
     }
 
     public static RecruitsDiplomacySaveData load(CompoundTag nbt) {
         RecruitsDiplomacySaveData data = new RecruitsDiplomacySaveData();
 
-        CompoundTag teamsTag = nbt.getCompound("teams");
-        for (String teamKey : teamsTag.getAllKeys()) {
-            CompoundTag relationsTag = teamsTag.getCompound(teamKey);
+        CompoundTag teamsTag = nbt.getCompoundOrEmpty("teams");
+        for (String teamKey : teamsTag.keySet()) {
+            CompoundTag relationsTag = teamsTag.getCompoundOrEmpty(teamKey);
             Map<String, DiplomacyStatus> relations = new HashMap<>();
-            for (String relationKey : relationsTag.getAllKeys()) {
-                byte relationStatusByte = relationsTag.getByte(relationKey);
+            for (String relationKey : relationsTag.keySet()) {
+                byte relationStatusByte = relationsTag.getByteOr(relationKey, (byte) 0);
                 relations.put(relationKey, DiplomacyStatus.fromByte(relationStatusByte));
             }
             data.diplomacyMap.put(teamKey, relations);
         }
 
-        CompoundTag embargoesTag = nbt.getCompound("embargoes");
-        for (String uuidKey : embargoesTag.getAllKeys()) {
-            String csv = embargoesTag.getString(uuidKey);
+        CompoundTag embargoesTag = nbt.getCompoundOrEmpty("embargoes");
+        for (String uuidKey : embargoesTag.keySet()) {
+            String csv = embargoesTag.getStringOr(uuidKey, "");
             if (!csv.isEmpty()) {
                 data.embargoMap.put(UUID.fromString(uuidKey), csv);
             }
@@ -49,8 +49,7 @@ public class RecruitsDiplomacySaveData extends SavedData {
         return data;
     }
 
-    @Override
-    public CompoundTag save(CompoundTag nbt) {
+        public CompoundTag save(CompoundTag nbt) {
         CompoundTag teamsTag = new CompoundTag();
         for (Map.Entry<String, Map<String, DiplomacyStatus>> teamEntry : diplomacyMap.entrySet()) {
             CompoundTag relationsTag = new CompoundTag();
@@ -91,4 +90,6 @@ public class RecruitsDiplomacySaveData extends SavedData {
     public Map<UUID, String> getEmbargoMap() {
         return embargoMap;
     }
+
+    public static final net.minecraft.world.level.saveddata.SavedDataType<RecruitsDiplomacySaveData> TYPE = com.talhanation.recruits.util.SavedDataUtil.type(DATA_NAME, RecruitsDiplomacySaveData::new, RecruitsDiplomacySaveData::load, data -> data.save(new CompoundTag()));
 }

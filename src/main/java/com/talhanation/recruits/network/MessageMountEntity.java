@@ -5,12 +5,12 @@ import com.talhanation.recruits.compat.siegeweapons.SiegeWeapon;
 import com.talhanation.recruits.compat.smallships.SmallShips;
 import com.talhanation.recruits.config.RecruitsServerConfig;
 import com.talhanation.recruits.entities.AbstractRecruitEntity;
-import de.maxhenkel.corelib.net.Message;
+import com.talhanation.recruits.network.Message;
 import net.minecraft.network.FriendlyByteBuf;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.entity.Entity;
 import net.minecraftforge.api.distmarker.Dist;
-import net.minecraftforge.network.NetworkEvent;
+import net.minecraftforge.event.network.CustomPayloadEvent;
 
 import java.util.List;
 import java.util.Objects;
@@ -35,10 +35,10 @@ public class MessageMountEntity implements Message<MessageMountEntity> {
         return Dist.DEDICATED_SERVER;
     }
 
-    public void executeServerSide(NetworkEvent.Context context) {
+    public void executeServerSide(CustomPayloadEvent.Context context) {
         ServerPlayer player = Objects.requireNonNull(context.getSender());
         UUID senderId = player.getUUID();
-        List<Entity> entityList = player.getCommandSenderWorld().getEntitiesOfClass(
+        List<Entity> entityList = player.level().getEntitiesOfClass(
                 Entity.class,
                 player.getBoundingBox().inflate(100),
                 (mount) -> mount.getUUID().equals(target) && RecruitsServerConfig.MountWhiteList.get().contains(mount.getEncodeId())
@@ -47,7 +47,7 @@ public class MessageMountEntity implements Message<MessageMountEntity> {
         );
         if (entityList.isEmpty()) return;
 
-        player.getCommandSenderWorld().getEntitiesOfClass(
+        player.level().getEntitiesOfClass(
                 AbstractRecruitEntity.class,
                 player.getBoundingBox().inflate(100),
                 (recruit) -> recruit.isEffectedByCommand(senderId, group)

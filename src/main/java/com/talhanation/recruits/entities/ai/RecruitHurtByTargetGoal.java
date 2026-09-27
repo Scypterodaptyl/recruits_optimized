@@ -52,7 +52,7 @@ public class RecruitHurtByTargetGoal extends HurtByTargetGoal {
     }
 
     protected void alertOthers() {
-        if (!(this.recruit.getCommandSenderWorld() instanceof ServerLevel serverLevel)) return;
+        if (!(this.recruit.level() instanceof ServerLevel serverLevel)) return;
 
         double d0 = this.getFollowDistance();
         AABB axisalignedbb = AABB.unitCubeFromLowerCorner(this.recruit.position())

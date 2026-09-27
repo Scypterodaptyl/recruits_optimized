@@ -13,7 +13,7 @@ import net.minecraft.network.chat.Component;
 import net.minecraft.network.syncher.EntityDataAccessor;
 import net.minecraft.network.syncher.EntityDataSerializers;
 import net.minecraft.network.syncher.SynchedEntityData;
-import net.minecraft.resources.ResourceLocation;
+import net.minecraft.resources.Identifier;
 import net.minecraft.tags.ItemTags;
 import net.minecraft.util.RandomSource;
 import net.minecraft.world.DifficultyInstance;
@@ -22,7 +22,6 @@ import net.minecraft.world.entity.ai.attributes.AttributeSupplier;
 import net.minecraft.world.entity.ai.attributes.Attributes;
 import net.minecraft.world.entity.item.ItemEntity;
 import net.minecraft.world.entity.monster.CrossbowAttackMob;
-import net.minecraft.world.entity.projectile.Projectile;
 import net.minecraft.world.item.*;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.ServerLevelAccessor;
@@ -53,16 +52,16 @@ public class CrossBowmanEntity extends AbstractRecruitEntity implements Crossbow
     private final Predicate<ItemEntity> ALLOWED_ITEMS = (item) ->
             (!item.hasPickUpDelay() && item.isAlive() && getInventory().canAddItem(item.getItem()) && this.wantsToPickUp(item.getItem()));
 
-    protected void defineSynchedData() {
-        super.defineSynchedData();
-        this.entityData.define(DATA_IS_CHARGING_CROSSBOW, false);
-        this.entityData.define(STRATEGIC_FIRE_POS, Optional.empty());
-        this.entityData.define(SHOULD_STRATEGIC_FIRE, false);
+    protected void defineSynchedData(SynchedEntityData.Builder builder) {
+        super.defineSynchedData(builder);
+        builder.define(DATA_IS_CHARGING_CROSSBOW, false);
+        builder.define(STRATEGIC_FIRE_POS, Optional.empty());
+        builder.define(SHOULD_STRATEGIC_FIRE, false);
     }
 
     @Override
-    public void addAdditionalSaveData(CompoundTag nbt) {
-        super.addAdditionalSaveData(nbt);
+    public void saveRecruitData(CompoundTag nbt) {
+        super.saveRecruitData(nbt);
 
         nbt.putBoolean("isChargingCrossbow", this.getChargingCrossbow());
 
@@ -76,17 +75,17 @@ public class CrossBowmanEntity extends AbstractRecruitEntity implements Crossbow
     }
 
     @Override
-    public void readAdditionalSaveData(CompoundTag nbt) {
-        super.readAdditionalSaveData(nbt);
+    public void loadRecruitData(CompoundTag nbt) {
+        super.loadRecruitData(nbt);
 
-        this.setChargingCrossbow(nbt.getBoolean("isChargingCrossbow"));
+        this.setChargingCrossbow(nbt.getBooleanOr("isChargingCrossbow", false));
 
         if (nbt.contains("StrategicFirePosX") && nbt.contains("StrategicFirePosY") && nbt.contains("StrategicFirePosZ")) {
             this.setStrategicFirePos(new BlockPos (
-                    nbt.getInt("StrategicFirePosX"),
-                    nbt.getInt("StrategicFirePosY"),
-                    nbt.getInt("StrategicFirePosZ")));
-            this.setShouldStrategicFire(nbt.getBoolean("ShouldStrategicFire"));
+                    nbt.getIntOr("StrategicFirePosX", 0),
+                    nbt.getIntOr("StrategicFirePosY", 0),
+                    nbt.getIntOr("StrategicFirePosZ", 0)));
+            this.setShouldStrategicFire(nbt.getBooleanOr("ShouldStrategicFire", false));
         }
     }
     @Override
@@ -105,21 +104,21 @@ public class CrossBowmanEntity extends AbstractRecruitEntity implements Crossbow
         return Mob.createLivingAttributes()
                 .add(Attributes.MAX_HEALTH, 20.0D)
                 .add(Attributes.MOVEMENT_SPEED, 0.3D)
-                .add(ForgeMod.SWIM_SPEED.get(), 0.3D)
+                .add(ForgeMod.SWIM_SPEED.getHolder().get(), 0.3D)
                 .add(Attributes.KNOCKBACK_RESISTANCE, 0.05D)
                 .add(Attributes.ATTACK_DAMAGE, 1.5D)
                 .add(Attributes.FOLLOW_RANGE, 64.0D)
-                .add(ForgeMod.ENTITY_REACH.get(), 0D)
+                .add(Attributes.ENTITY_INTERACTION_RANGE, 0D)
                 .add(Attributes.ATTACK_SPEED);
     }
 
     @Override
     @Nullable
-    public SpawnGroupData finalizeSpawn(ServerLevelAccessor world, DifficultyInstance difficultyInstance, MobSpawnType reason, @Nullable SpawnGroupData data, @Nullable CompoundTag nbt) {
+    public SpawnGroupData finalizeSpawn(ServerLevelAccessor world, DifficultyInstance difficultyInstance, EntitySpawnReason reason, @Nullable SpawnGroupData data) {
         RandomSource randomsource = world.getRandom();
-        SpawnGroupData ilivingentitydata = super.finalizeSpawn(world, difficultyInstance, reason, data, nbt);
+        SpawnGroupData ilivingentitydata = super.finalizeSpawn(world, difficultyInstance, reason, data);
         ((AsyncGroundPathNavigation)this.getNavigation()).setCanOpenDoors(true);
-        this.populateDefaultEquipmentEnchantments(randomsource, difficultyInstance);
+        this.populateDefaultEquipmentEnchantments(world, randomsource, difficultyInstance);
         this.initSpawn();
         return ilivingentitydata;
     }
@@ -135,7 +134,7 @@ public class CrossBowmanEntity extends AbstractRecruitEntity implements Crossbow
         if(RecruitsServerConfig.RangedRecruitsNeedArrowsToShoot.get()){
             if(isMusketModLoaded && IWeapon.isMusketModWeapon(this.getMainHandItem())){
                 int i = this.getRandom().nextInt(32);
-                ItemStack arrows = ForgeRegistries.ITEMS.getDelegateOrThrow(ResourceLocation.tryParse("musketmod:cartridge")).get().getDefaultInstance();
+                ItemStack arrows = ForgeRegistries.ITEMS.getDelegateOrThrow(Identifier.tryParse("musketmod:cartridge")).get().getDefaultInstance();
                 arrows.setCount(14 + i);
                 this.inventory.setItem(6, arrows);
             }
@@ -147,7 +146,7 @@ public class CrossBowmanEntity extends AbstractRecruitEntity implements Crossbow
 
     @Override
     public boolean canHoldItem(ItemStack itemStack){
-        return !(itemStack.getItem() instanceof SwordItem || itemStack.getItem() instanceof ShieldItem) || itemStack.getItem() instanceof CrossbowItem;
+        return !(com.talhanation.recruits.util.ItemCompat.isSword(itemStack) || itemStack.getItem() instanceof ShieldItem) || itemStack.getItem() instanceof CrossbowItem;
     }
     public void performRangedAttack(@NotNull LivingEntity target, float v) {
 
@@ -155,7 +154,7 @@ public class CrossBowmanEntity extends AbstractRecruitEntity implements Crossbow
     @Override
     public boolean wantsToPickUp(@NotNull ItemStack itemStack) {
         if(isMusketModLoaded && IWeapon.isMusketModWeapon(itemStack)) return true;
-        else if ((itemStack.getItem() instanceof BowItem || itemStack.getItem() instanceof ProjectileWeaponItem || itemStack.getItem() instanceof SwordItem) && this.getMainHandItem().isEmpty()){
+        else if ((itemStack.getItem() instanceof BowItem || itemStack.getItem() instanceof ProjectileWeaponItem || com.talhanation.recruits.util.ItemCompat.isSword(itemStack)) && this.getMainHandItem().isEmpty()){
             return !hasSameTypeOfItem(itemStack);
         }
         else if(itemStack.is(ItemTags.ARROWS) && RecruitsServerConfig.RangedRecruitsNeedArrowsToShoot.get())
@@ -174,11 +173,6 @@ public class CrossBowmanEntity extends AbstractRecruitEntity implements Crossbow
         return 5D;
     }
 
-    //Pillager
-    @Override
-    public void shootCrossbowProjectile(@NotNull LivingEntity target, @NotNull ItemStack stack, @NotNull Projectile projectile, float f) {
-        this.shootCrossbowProjectile(this, target, projectile, f, 1.6F);
-    }
 
     private boolean getChargingCrossbow() {
         return this.entityData.get(DATA_IS_CHARGING_CROSSBOW);
@@ -190,6 +184,11 @@ public class CrossBowmanEntity extends AbstractRecruitEntity implements Crossbow
 
     public boolean canFireProjectileWeapon(ProjectileWeaponItem weaponItem) {
         return weaponItem.equals(Items.CROSSBOW);
+    }
+
+    @Override
+    public boolean canUseNonMeleeWeapon(ItemStack stack) {
+        return stack.getItem() instanceof ProjectileWeaponItem weaponItem && this.canFireProjectileWeapon(weaponItem);
     }
     public void onCrossbowAttackPerformed() {
         this.noActionTime = 0;

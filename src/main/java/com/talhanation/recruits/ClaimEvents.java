@@ -17,11 +17,9 @@ import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.ai.Brain;
 import net.minecraft.world.entity.ai.memory.MemoryModuleType;
-import net.minecraft.world.entity.npc.Villager;
+import net.minecraft.world.entity.npc.villager.Villager;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.entity.schedule.Activity;
-import net.minecraft.world.item.BucketItem;
-import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.DaylightDetectorBlock;
 import net.minecraft.world.level.block.DiodeBlock;
@@ -41,7 +39,7 @@ import net.minecraftforge.event.level.ExplosionEvent;
 import net.minecraftforge.event.level.LevelEvent;
 import net.minecraftforge.event.server.ServerStartingEvent;
 import net.minecraftforge.event.server.ServerStoppingEvent;
-import net.minecraftforge.eventbus.api.SubscribeEvent;
+import net.minecraftforge.eventbus.api.listener.SubscribeEvent;
 import net.minecraftforge.network.PacketDistributor;
 
 import java.util.ArrayList;
@@ -86,16 +84,25 @@ public class ClaimEvents {
         if(event.getLevel().isClientSide()) return;
 
         if(event.getEntity() instanceof ServerPlayer player){
-            ServerLevel overworld = player.getServer().overworld();
-            Main.SIMPLE_CHANNEL.send(PacketDistributor.PLAYER.with(() -> player),
+            ServerLevel overworld = player.level().getServer().overworld();
+            Main.SIMPLE_CHANNEL.send(PacketDistributor.PLAYER.with(player),
                     new MessageToClientWorldMapIdentity(RecruitsWorldSaveData.get(overworld).getWorldId()));
             recruitsClaimManager.sendClaimsTo(player);
         }
     }
 
     @SubscribeEvent
+    public void onServerTickPre(TickEvent.ServerTickEvent.Pre event) {
+        this.onServerTick(event);
+    }
+
+    @SubscribeEvent
+    public void onServerTickPost(TickEvent.ServerTickEvent.Post event) {
+        this.onServerTick(event);
+    }
+
     public void onServerTick(TickEvent.ServerTickEvent event){
-        if(event.getServer().overworld().isClientSide()) return;
+        if(event.server().overworld().isClientSide()) return;
 
         siegeCounter++;
         detectionCounter++;
@@ -156,9 +163,9 @@ public class ClaimEvents {
 
             // SiegeEvent.Tick feuern – cancelable, Addons können Damage überschreiben
             com.talhanation.recruits.SiegeEvent.Tick tickEvent = new com.talhanation.recruits.SiegeEvent.Tick(claim, level, attackerSize, defenderSize, baseDamage);
-            MinecraftForge.EVENT_BUS.post(tickEvent);
+            boolean tickEventCanceled = com.talhanation.recruits.SiegeEvent.Tick.BUS.post(tickEvent);
 
-            if(!tickEvent.isCanceled()){
+            if(!tickEventCanceled){
                 claim.setHealth(claim.getHealth() - tickEvent.getDamage());
             }
 
@@ -417,110 +424,113 @@ public class ClaimEvents {
                 .toList();
     }
     @SubscribeEvent
-    public void onBlockBreakEvent(BlockEvent.BreakEvent event) {
-        if(event.getLevel().isClientSide()) return;
+    public boolean onBlockBreakEvent(BlockEvent.BreakEvent event) {
+        if(event.getLevel().isClientSide()) return false;
 
         ChunkAccess access = server.overworld().getChunk(event.getPos());
         RecruitsClaim claim = recruitsClaimManager.getClaim(access.getPos());
         Player player = event.getPlayer();
 
-        if(player.isCreative() && player.hasPermissions(2)){
-            return;
+        if(player.isCreative() && player.permissions().hasPermission(net.minecraft.server.permissions.Permissions.COMMANDS_GAMEMASTER)){
+            return false;
         }
 
         if(claim == null) {
             if(RecruitsServerConfig.BlockPlacingBreakingOnlyWhenClaimed.get()){
-                event.setCanceled(true);
+                return true;
             }
-            return;
+            return false;
         }
         if(!claim.isBlockBreakingAllowed()){
             boolean isInTeam = player.getTeam() != null && player.getTeam().getName().equals(claim.getOwnerFactionStringID());
-            if(!isInTeam) event.setCanceled(true);
+            if(!isInTeam) return true;
         }
-
+        return false;
     }
 
     @SubscribeEvent
-    public void onBlockPlaceEvent(BlockEvent.EntityPlaceEvent event) {
-        if(event.getLevel().isClientSide()) return;
+    public boolean onBlockPlaceEvent(BlockEvent.EntityPlaceEvent event) {
+        if(event.getLevel().isClientSide()) return false;
 
         ChunkAccess access = server.overworld().getChunk(event.getPos());
         RecruitsClaim claim = recruitsClaimManager.getClaim(access.getPos());
         Entity entity = event.getEntity();
 
-        if(entity instanceof Player player && player.isCreative() && player.hasPermissions(2)){
-            return;
+        if(entity instanceof Player player && player.isCreative() && player.permissions().hasPermission(net.minecraft.server.permissions.Permissions.COMMANDS_GAMEMASTER)){
+            return false;
         }
 
         if(claim == null) {
             if(RecruitsServerConfig.BlockPlacingBreakingOnlyWhenClaimed.get()){
-                event.setCanceled(true);
+                return true;
             }
-            return;
+            return false;
         }
         if(!claim.isBlockPlacementAllowed()){
             boolean isInTeam = entity instanceof LivingEntity livingEntity && livingEntity.getTeam() != null && livingEntity.getTeam().getName().equals(claim.getOwnerFactionStringID());
-            if(!isInTeam) event.setCanceled(true);
+            if(!isInTeam) return true;
         }
+        return false;
     }
     @SubscribeEvent
-    public void onExplosion(ExplosionEvent event) {
-        if(event.getLevel().isClientSide()) return;
-        Vec3 vec = event.getExplosion().getPosition();
+    public boolean onExplosion(ExplosionEvent.Start event) {
+        if(event.getLevel().isClientSide()) return false;
+        Vec3 vec = event.getExplosion().center();
         BlockPos pos = new BlockPos((int) vec.x, (int) vec.y, (int) vec.z);
         ChunkAccess access = server.overworld().getChunk(pos);
         RecruitsClaim claim = recruitsClaimManager.getClaim(access.getPos());
 
         Entity entity = event.getExplosion().getDirectSourceEntity();
-        if(entity instanceof Player player && player.isCreative() && player.hasPermissions(2)){
-            return;
+        if(entity instanceof Player player && player.isCreative() && player.permissions().hasPermission(net.minecraft.server.permissions.Permissions.COMMANDS_GAMEMASTER)){
+            return false;
         }
 
         if(claim != null && RecruitsServerConfig.ExplosionProtectionInClaims.get()){
-            event.setCanceled(true);
+            return true;
         }
+        return false;
     }
     @SubscribeEvent
-    public void onBucketInteract(FillBucketEvent event) {
-        if(event.getLevel().isClientSide()) return;
-        if(event.getTarget() == null) return;
+    public boolean onBucketInteract(FillBucketEvent event) {
+        if(event.getLevel().isClientSide()) return false;
+        if(event.getTarget() == null) return false;
 
         Vec3 vec = event.getTarget().getLocation();
         BlockPos pos = new BlockPos((int) vec.x, (int) vec.y, (int) vec.z);
 
         ChunkAccess access = server.overworld().getChunk(pos);
         RecruitsClaim claim = recruitsClaimManager.getClaim(access.getPos());
-        if(claim == null) return;
+        if(claim == null) return false;
 
         Player player = event.getEntity();
 
-        if(player.isCreative() && player.hasPermissions(2)){
-            return;
+        if(player.isCreative() && player.permissions().hasPermission(net.minecraft.server.permissions.Permissions.COMMANDS_GAMEMASTER)){
+            return false;
         }
 
         boolean isInTeam = player.getTeam() != null && player.getTeam().getName().equals(claim.getOwnerFactionStringID());
-        if(!isInTeam) event.setCanceled(true);
+        if(!isInTeam) return true;
+        return false;
     }
 
     @SubscribeEvent
-    public void onBlockInteract(PlayerInteractEvent.RightClickBlock event) {
-        if(event.getLevel().isClientSide()) return;
+    public boolean onBlockInteract(PlayerInteractEvent.RightClickBlock event) {
+        if(event.getLevel().isClientSide()) return false;
         ChunkAccess access = server.overworld().getChunk(event.getPos());
         RecruitsClaim claim = recruitsClaimManager.getClaim(access.getPos());
-        if(claim == null) return;
+        if(claim == null) return false;
 
         BlockPos pos = event.getHitVec().getBlockPos();
         Player player = event.getEntity();
 
-        if(player.isCreative() && player.hasPermissions(2)){
-            return;
+        if(player.isCreative() && player.permissions().hasPermission(net.minecraft.server.permissions.Permissions.COMMANDS_GAMEMASTER)){
+            return false;
         }
 
-        if(claim.isBlockInteractionAllowed()) return;
+        if(claim.isBlockInteractionAllowed()) return false;
 
-        BlockState selectedBlock = player.getCommandSenderWorld().getBlockState(pos);
-        BlockEntity blockEntity = player.getCommandSenderWorld().getBlockEntity(pos);
+        BlockState selectedBlock = player.level().getBlockState(pos);
+        BlockEntity blockEntity = player.level().getBlockEntity(pos);
 
         if (selectedBlock.is(BlockTags.BUTTONS)
                 || selectedBlock.is(BlockTags.DOORS)
@@ -538,9 +548,10 @@ public class ClaimEvents {
         {
             {
                 boolean isInTeam = player.getTeam() != null && player.getTeam().getName().equals(claim.getOwnerFactionStringID());
-                if(!isInTeam) event.setCanceled(true);
+                if(!isInTeam) return true;
             }
         }
+        return false;
     }
 
     public static void sendVillagersHome(ServerLevel level, RecruitsClaim claim) {

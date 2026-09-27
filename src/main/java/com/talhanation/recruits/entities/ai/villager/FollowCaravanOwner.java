@@ -5,8 +5,7 @@ import com.talhanation.recruits.entities.ai.async.NearbyEntityCache;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.ai.goal.Goal;
-import net.minecraft.world.entity.npc.AbstractVillager;
-import net.minecraft.world.entity.npc.Villager;
+import net.minecraft.world.entity.npc.villager.AbstractVillager;
 import net.minecraft.world.phys.AABB;
 
 import javax.annotation.Nullable;
@@ -43,7 +42,7 @@ public class FollowCaravanOwner extends Goal {
 
     @Nullable
     private RecruitEntity getPatrolOwner() {
-        if (!(villager.getCommandSenderWorld() instanceof ServerLevel serverLevel)) return null;
+        if (!(villager.level() instanceof ServerLevel serverLevel)) return null;
 
         AABB aabb = villager.getBoundingBox().inflate(16D);
         for (LivingEntity entity : NearbyEntityCache.livingEntities(serverLevel)) {

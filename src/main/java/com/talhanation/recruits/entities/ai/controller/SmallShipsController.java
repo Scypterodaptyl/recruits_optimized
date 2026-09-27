@@ -9,7 +9,7 @@ import net.minecraft.core.BlockPos;
 import net.minecraft.network.chat.Component;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.LivingEntity;
-import net.minecraft.world.entity.vehicle.Boat;
+import net.minecraft.world.entity.vehicle.boat.Boat;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.Blocks;
 import net.minecraft.world.level.pathfinder.Node;
@@ -107,7 +107,7 @@ public class SmallShipsController {
             currentNode = null;
             path = null;
             ship.setSailState(0);
-            if(DEBUG && captain.getOwner() != null) this.captain.getOwner().sendSystemMessage(Component.literal(captain.getName().getString() + ": REACHED SAILPOS"));
+            if(DEBUG && captain.getOwner() != null) this.captain.getOwner().displayClientMessage(Component.literal(captain.getName().getString() + ": REACHED SAILPOS"), false);
             return;
         }
 
@@ -126,7 +126,7 @@ public class SmallShipsController {
                 right = phi > ref;
 
                 ship.updateSmallShipsControl(right, left, 0);
-                if(DEBUG && captain.getOwner() != null) this.captain.getOwner().sendSystemMessage(Component.literal(captain.getName().getString() + ": ROTATING"));
+                if(DEBUG && captain.getOwner() != null) this.captain.getOwner().displayClientMessage(Component.literal(captain.getName().getString() + ": ROTATING"), false);
 
                 return;
             }
@@ -168,7 +168,7 @@ public class SmallShipsController {
                 }
 
                 ship.updateSmallShipsControl(right, left, sailState);
-                if(DEBUG && captain.getOwner() != null) this.captain.getOwner().sendSystemMessage(Component.literal(captain.getName().getString() + ": OBSTRACLES ARE NEAR"));
+                if(DEBUG && captain.getOwner() != null) this.captain.getOwner().displayClientMessage(Component.literal(captain.getName().getString() + ": OBSTRACLES ARE NEAR"), false);
 
                 return;
             }
@@ -184,7 +184,7 @@ public class SmallShipsController {
                     }
 
                     ship.updateSmallShipsControl(this.captain.getSailPos().getX(), this.captain.getSailPos().getZ(), sailState);
-                    if(DEBUG && captain.getOwner() != null) this.captain.getOwner().sendSystemMessage(Component.literal(captain.getName().getString() + ": FOLLOWING"));
+                    if(DEBUG && captain.getOwner() != null) this.captain.getOwner().displayClientMessage(Component.literal(captain.getName().getString() + ": FOLLOWING"), false);
                     return;
                 }
             }
@@ -193,7 +193,7 @@ public class SmallShipsController {
             if (--recalcPath <= 0) {
                 recalcPath = RECALCULATION_TIME;
                 this.path = pathNavigation.createPath(this.captain.getSailPos(), 32, false, 0);
-                if(DEBUG && captain.getOwner() != null) this.captain.getOwner().sendSystemMessage(Component.literal(captain.getName().getString() + ": CREATING PATH"));
+                if(DEBUG && captain.getOwner() != null) this.captain.getOwner().displayClientMessage(Component.literal(captain.getName().getString() + ": CREATING PATH"), false);
                 if(path != null){
                     try {
                         this.currentNode = path.getEndNode();// FIX for "IndexOutOfBoundsException: Index 23 out of bounds for length 23" or "Index 1 out of bounds for length 1"
@@ -208,7 +208,7 @@ public class SmallShipsController {
 
             if(path != null && DEBUG){
                 for(Node node : this.path.nodes) {
-                    captain.getCommandSenderWorld().setBlock(new BlockPos(node.x, (int) (captain.getY() + 4), node.z), Blocks.ICE.defaultBlockState(), 3);
+                    captain.level().setBlock(new BlockPos(node.x, (int) (captain.getY() + 4), node.z), Blocks.ICE.defaultBlockState(), 3);
                 }
             }
 
@@ -218,13 +218,13 @@ public class SmallShipsController {
                 if (distanceToNode < reach) {
                     calculatePath();
                 }
-                if(DEBUG && captain.getOwner() != null) this.captain.getOwner().sendSystemMessage(Component.literal(captain.getName().getString() + ": FOLLOWING PATH"));
+                if(DEBUG && captain.getOwner() != null) this.captain.getOwner().displayClientMessage(Component.literal(captain.getName().getString() + ": FOLLOWING PATH"), false);
                 ship.updateSmallShipsControl(currentNode.x, currentNode.z, sailState);
 
             }
         }
         else{
-            this.waterObstacleScanner = new WaterObstacleScanner(captain.getCommandSenderWorld(), ship.getBoat());
+            this.waterObstacleScanner = new WaterObstacleScanner(captain.level(), ship.getBoat());
         }
     }
     public Entity target;
@@ -261,12 +261,12 @@ public class SmallShipsController {
         if(captain.enemyArmy.ships.size() > 0){
             captain.enemyArmy.ships.sort(Comparator.comparing(this::enemyDistanceToLeader));
             this.target = captain.enemyArmy.ships.get(0);
-            if(captain.getOwner() != null) this.captain.getOwner().sendSystemMessage(Component.literal(captain.getName().getString() + ": Enemy Ship in contact, im counting " +  captain.enemyArmy.ships + "!"));
+            if(captain.getOwner() != null) this.captain.getOwner().displayClientMessage(Component.literal(captain.getName().getString() + ": Enemy Ship in contact, im counting " +  captain.enemyArmy.ships + "!"), false);
         }
         else if(captain.enemyArmy.getAllUnits().size() > 0){
             captain.enemyArmy.ships.sort(Comparator.comparing(this::enemyDistanceToLeader));
             this.target = captain.enemyArmy.getAllUnits().get(0);
-            if(captain.getOwner() != null) this.captain.getOwner().sendSystemMessage(Component.literal(captain.getName().getString() + ": Enemies in contact, im counting " +  captain.enemyArmy.getAllUnits().size() + "!"));
+            if(captain.getOwner() != null) this.captain.getOwner().displayClientMessage(Component.literal(captain.getName().getString() + ": Enemies in contact, im counting " +  captain.enemyArmy.getAllUnits().size() + "!"), false);
         }
         else {
             //NO ENEMIES LEFT

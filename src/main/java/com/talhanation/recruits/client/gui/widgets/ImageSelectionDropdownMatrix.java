@@ -1,36 +1,36 @@
 package com.talhanation.recruits.client.gui.widgets;
 
-import com.mojang.blaze3d.systems.RenderSystem;
+import net.minecraft.client.renderer.RenderPipelines;
+
 import com.talhanation.recruits.client.gui.group.EditOrAddGroupScreen;
 import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.client.gui.components.AbstractWidget;
 import net.minecraft.client.gui.narration.NarrationElementOutput;
-import net.minecraft.client.renderer.GameRenderer;
 import net.minecraft.network.chat.Component;
-import net.minecraft.resources.ResourceLocation;
-import net.minecraft.util.FastColor;
+import net.minecraft.resources.Identifier;
+import net.minecraft.util.ARGB;
 
 import java.util.List;
 import java.util.function.Consumer;
 
 public class ImageSelectionDropdownMatrix extends AbstractWidget {
 
-    protected static final int BG_FILL = FastColor.ARGB32.color(255, 80, 80, 80);
-    protected static final int BG_FILL_HOVERED = FastColor.ARGB32.color(255, 100, 100, 100);
-    protected static final int BG_FILL_SELECTED = FastColor.ARGB32.color(255, 10, 10, 10);
+    protected static final int BG_FILL = ARGB.color(255, 80, 80, 80);
+    protected static final int BG_FILL_HOVERED = ARGB.color(255, 100, 100, 100);
+    protected static final int BG_FILL_SELECTED = ARGB.color(255, 10, 10, 10);
 
-    private final List<ResourceLocation> options;
-    private final Consumer<ResourceLocation> onSelect;
+    private final List<Identifier> options;
+    private final Consumer<Identifier> onSelect;
     private final EditOrAddGroupScreen parent;
 
-    private ResourceLocation selectedOption;
+    private Identifier selectedOption;
     private boolean isOpen;
 
     private final int cellSize = 22;
     private final int columns = 4;
     private final int rows = 5;
 
-    public ImageSelectionDropdownMatrix(EditOrAddGroupScreen parent, int x, int y, int width, int height, List<ResourceLocation> options, Consumer<ResourceLocation> onSelect) {
+    public ImageSelectionDropdownMatrix(EditOrAddGroupScreen parent, int x, int y, int width, int height, List<Identifier> options, Consumer<Identifier> onSelect) {
         super(x, y, width, height, Component.literal(""));
         this.parent = parent;
         this.options = options;
@@ -49,9 +49,7 @@ public class ImageSelectionDropdownMatrix extends AbstractWidget {
 
         // Selected Image
         if (selectedOption != null) {
-            RenderSystem.setShader(GameRenderer::getPositionTexShader);
-            RenderSystem.setShaderTexture(0, selectedOption);
-            gui.blit(selectedOption, getX() + 3, getY() + 3, 0, 0, height - 6, height - 6, height - 6, height - 6);
+            gui.blit(RenderPipelines.GUI_TEXTURED, selectedOption, getX() + 3, getY() + 3, (float) (0), (float) (0), height - 6, height - 6, height - 6, height - 6);
         }
 
         // Dropdown
@@ -66,7 +64,7 @@ public class ImageSelectionDropdownMatrix extends AbstractWidget {
                 int ox = startX + col * cellSize;
                 int oy = startY + row * cellSize;
 
-                ResourceLocation img = options.get(i);
+                Identifier img = options.get(i);
 
                 // Background
                 if (mouseX >= ox && mouseX <= ox + cellSize && mouseY >= oy && mouseY <= oy + cellSize)
@@ -75,9 +73,7 @@ public class ImageSelectionDropdownMatrix extends AbstractWidget {
                     gui.fill(ox, oy, ox + cellSize, oy + cellSize, BG_FILL);
 
                 // Image
-                RenderSystem.setShader(GameRenderer::getPositionTexShader);
-                RenderSystem.setShaderTexture(0, img);
-                gui.blit(img, ox + 3, oy + 3, 0, 0, 16, 16, 16, 16);
+                gui.blit(RenderPipelines.GUI_TEXTURED, img, ox + 3, oy + 3, (float) (0), (float) (0), 16, 16, 16, 16);
             }
         }
     }
@@ -139,7 +135,7 @@ public class ImageSelectionDropdownMatrix extends AbstractWidget {
     }
 
 
-    private void selectOption(ResourceLocation option) {
+    private void selectOption(Identifier option) {
         selectedOption = option;
         onSelect.accept(option);
         isOpen = false;

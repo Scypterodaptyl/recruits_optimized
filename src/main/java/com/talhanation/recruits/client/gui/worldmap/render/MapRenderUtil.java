@@ -1,9 +1,6 @@
 package com.talhanation.recruits.client.gui.worldmap.render;
 
-import com.mojang.blaze3d.vertex.VertexConsumer;
 import net.minecraft.client.gui.GuiGraphics;
-import net.minecraft.client.renderer.RenderType;
-import org.joml.Matrix4f;
 
 public final class MapRenderUtil {
     private MapRenderUtil() {}
@@ -46,16 +43,20 @@ public final class MapRenderUtil {
                              double x3, double y3,
                              double x4, double y4,
                              int color) {
-        int alpha = (color >>> 24) & 0xFF;
-        int red = (color >>> 16) & 0xFF;
-        int green = (color >>> 8) & 0xFF;
-        int blue = color & 0xFF;
+        GuiQuadRenderState.submitColored(graphics, new float[]{
+                (float) x1, (float) y1,
+                (float) x2, (float) y2,
+                (float) x3, (float) y3,
+                (float) x4, (float) y4
+        }, color);
+    }
 
-        VertexConsumer consumer = graphics.bufferSource().getBuffer(RenderType.gui());
-        Matrix4f matrix = graphics.pose().last().pose();
-        consumer.vertex(matrix, (float) x1, (float) y1, 0.0F).color(red, green, blue, alpha).endVertex();
-        consumer.vertex(matrix, (float) x2, (float) y2, 0.0F).color(red, green, blue, alpha).endVertex();
-        consumer.vertex(matrix, (float) x3, (float) y3, 0.0F).color(red, green, blue, alpha).endVertex();
-        consumer.vertex(matrix, (float) x4, (float) y4, 0.0F).color(red, green, blue, alpha).endVertex();
+    public static void texturedQuad(GuiGraphics graphics, net.minecraft.resources.Identifier texture,
+                                    double x1, double y1, double x2, double y2,
+                                    float u1, float v1, float u2, float v2, int color) {
+        GuiQuadRenderState.submitTextured(graphics, texture,
+                new float[]{(float) x1, (float) y2, (float) x2, (float) y2, (float) x2, (float) y1, (float) x1, (float) y1},
+                new float[]{u1, v2, u2, v2, u2, v1, u1, v1},
+                color);
     }
 }

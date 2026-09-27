@@ -85,9 +85,9 @@ public final class MapTintSampler implements BlockAndTintGetter, MapTintStateOve
     }
 
     @Override
-    public int getMinBuildHeight() {
+    public int getMinY() {
         ClientLevel level = level();
-        return level == null ? 0 : level.getMinBuildHeight();
+        return level == null ? 0 : level.getMinY();
     }
 
     @Override

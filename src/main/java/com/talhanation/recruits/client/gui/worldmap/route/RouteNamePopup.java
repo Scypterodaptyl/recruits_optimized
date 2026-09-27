@@ -1,5 +1,10 @@
 package com.talhanation.recruits.client.gui.worldmap.route;
 
+import net.minecraft.client.input.MouseButtonEvent;
+import net.minecraft.client.input.MouseButtonInfo;
+import net.minecraft.client.input.KeyEvent;
+import net.minecraft.client.input.CharacterEvent;
+
 import com.talhanation.recruits.client.ClientManager;
 import com.talhanation.recruits.client.gui.worldmap.WorldMapScreen;
 import com.talhanation.recruits.world.RecruitsRoute;
@@ -71,7 +76,7 @@ public class RouteNamePopup {
     }
 
     public void tick() {
-        if (visible && nameField != null) nameField.tick();
+        
     }
 
     public void render(GuiGraphics guiGraphics, int mouseX, int mouseY) {
@@ -84,7 +89,7 @@ public class RouteNamePopup {
         guiGraphics.fill(px, py, px + WIDTH, py + HEIGHT, BG_COLOR);
         guiGraphics.renderOutline(px, py, WIDTH, HEIGHT, OUTLINE_COLOR);
 
-        guiGraphics.drawCenteredString(Minecraft.getInstance().font, TITLE, px + WIDTH / 2, py + 6, TEXT_COLOR);
+        guiGraphics.drawCenteredString(Minecraft.getInstance().font, TITLE, px + WIDTH / 2, py + 6, com.talhanation.recruits.client.gui.util.GuiCompat.opaque(TEXT_COLOR));
 
         int fieldX = px + 8;
         int fieldY = py + 20;
@@ -105,7 +110,7 @@ public class RouteNamePopup {
         guiGraphics.fill(x, y, x + w, y + h, hovered ? BTN_HOVERED_COLOR : BTN_COLOR);
         guiGraphics.renderOutline(x, y, w, h, OUTLINE_COLOR);
         guiGraphics.drawCenteredString(
-                Minecraft.getInstance().font, label, x + w / 2, y + (h - 8) / 2, TEXT_COLOR);
+                Minecraft.getInstance().font, label, x + w / 2, y + (h - 8) / 2, com.talhanation.recruits.client.gui.util.GuiCompat.opaque(TEXT_COLOR));
     }
 
     public boolean mouseClicked(double mouseX, double mouseY) {
@@ -121,7 +126,7 @@ public class RouteNamePopup {
         }
 
         // Forward to EditBox so cursor repositions on click
-        if (nameField != null) nameField.mouseClicked(mouseX, mouseY, 0);
+        if (nameField != null) nameField.mouseClicked(new MouseButtonEvent(mouseX, mouseY, new MouseButtonInfo(0, 0)), false);
 
         int btnY = py + HEIGHT - 18;
 
@@ -153,13 +158,15 @@ public class RouteNamePopup {
         }
 
         // Forward all other keys to EditBox (arrows, home, end, backspace, delete, ctrl+a, etc.)
-        if (nameField != null) nameField.keyPressed(keyCode, 0, 0);
+        if (nameField != null) nameField.keyPressed(new KeyEvent(keyCode, 0, 0));
         return true;
     }
 
-    public boolean charTyped(char chr, int modifiers) {
+    public boolean charTyped(CharacterEvent event) {
+        char chr = (char) event.codepoint();
+        int modifiers = event.modifiers();
         if (!visible) return false;
-        if (nameField != null) nameField.charTyped(chr, modifiers);
+        if (nameField != null) nameField.charTyped(new CharacterEvent(chr, modifiers));
         return true;
     }
 }

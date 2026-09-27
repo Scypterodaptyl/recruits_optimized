@@ -1,6 +1,10 @@
 package com.talhanation.recruits.client.gui.faction;
 
-import com.mojang.blaze3d.systems.RenderSystem;
+import net.minecraft.client.input.MouseButtonEvent;
+import net.minecraft.client.input.MouseButtonInfo;
+import net.minecraft.client.input.KeyEvent;
+import net.minecraft.client.renderer.RenderPipelines;
+
 import com.talhanation.recruits.Main;
 import com.talhanation.recruits.client.ClientManager;
 import com.talhanation.recruits.client.events.RecruitsToastManager;
@@ -13,7 +17,7 @@ import net.minecraft.client.gui.components.Button;
 import net.minecraft.client.gui.components.EditBox;
 import net.minecraft.client.gui.screens.Screen;
 import net.minecraft.network.chat.Component;
-import net.minecraft.resources.ResourceLocation;
+import net.minecraft.resources.Identifier;
 import net.minecraft.util.Mth;
 import net.minecraftforge.api.distmarker.Dist;
 import net.minecraftforge.api.distmarker.OnlyIn;
@@ -26,7 +30,7 @@ import static com.talhanation.recruits.client.events.RecruitsToastManager.*;
 @OnlyIn(Dist.CLIENT)
 public class RecruitsFactionListScreen extends ListScreenBase implements IFactionSelection{
 
-    protected static final ResourceLocation TEXTURE = new ResourceLocation(Main.MOD_ID, "textures/gui/select_player.png");
+    protected static final Identifier TEXTURE = Identifier.fromNamespaceAndPath(Main.MOD_ID, "textures/gui/select_player.png");
     protected static final Component TITLE = Component.translatable("gui.recruits.team_creation.teams_list");
     protected static final Component JOIN_BUTTON = Component.translatable("gui.recruits.button.join");
     protected static final Component BACK_BUTTON = Component.translatable("gui.recruits.button.back");
@@ -107,7 +111,7 @@ public class RecruitsFactionListScreen extends ListScreenBase implements IFactio
     public void tick() {
         super.tick();
         if(searchBox != null){
-            searchBox.tick();
+            
         }
         if(teamList != null){
             teamList.tick();
@@ -115,8 +119,11 @@ public class RecruitsFactionListScreen extends ListScreenBase implements IFactio
     }
 
     @Override
-    public boolean keyPressed(int p_96552_, int p_96553_, int p_96554_) {
-        boolean flag = super.keyPressed(p_96552_, p_96553_, p_96554_);
+    public boolean keyPressed(KeyEvent event) {
+        int p_96552_ = event.key();
+        int p_96553_ = event.scancode();
+        int p_96554_ = event.modifiers();
+        boolean flag = super.keyPressed(event);
         this.selected = null;
         this.teamList.setFocused(null);
         this.sendJoinRequestButton.active = false;
@@ -130,19 +137,18 @@ public class RecruitsFactionListScreen extends ListScreenBase implements IFactio
     }
 
     @Override
-    public void renderBackground(GuiGraphics guiGraphics, int mouseX, int mouseY, float delta) {
-        RenderSystem.setShaderTexture(0, TEXTURE);
-        guiGraphics.blit(TEXTURE, guiLeft, guiTop, 0, 0, xSize, HEADER_SIZE);
+    public void renderRecruitsBackground(GuiGraphics guiGraphics, int mouseX, int mouseY, float delta) {
+        guiGraphics.blit(RenderPipelines.GUI_TEXTURED, TEXTURE, guiLeft, guiTop, (float) (0), (float) (0), xSize, HEADER_SIZE, 256, 256);
         for (int i = 0; i < units; i++) {
-            guiGraphics.blit(TEXTURE, guiLeft, guiTop + HEADER_SIZE + UNIT_SIZE * i, 0, HEADER_SIZE, xSize, UNIT_SIZE);
+            guiGraphics.blit(RenderPipelines.GUI_TEXTURED, TEXTURE, guiLeft, guiTop + HEADER_SIZE + UNIT_SIZE * i, (float) (0), (float) (HEADER_SIZE), xSize, UNIT_SIZE, 256, 256);
         }
-        guiGraphics.blit(TEXTURE, guiLeft, guiTop + HEADER_SIZE + UNIT_SIZE * units, 0, HEADER_SIZE + UNIT_SIZE, xSize, FOOTER_SIZE);
-        guiGraphics.blit(TEXTURE, guiLeft + 10, guiTop + HEADER_SIZE + 6 - 2, xSize, 0, 12, 12);
+        guiGraphics.blit(RenderPipelines.GUI_TEXTURED, TEXTURE, guiLeft, guiTop + HEADER_SIZE + UNIT_SIZE * units, (float) (0), (float) (HEADER_SIZE + UNIT_SIZE), xSize, FOOTER_SIZE, 256, 256);
+        guiGraphics.blit(RenderPipelines.GUI_TEXTURED, TEXTURE, guiLeft + 10, guiTop + HEADER_SIZE + 6 - 2, (float) (xSize), (float) (0), 12, 12, 256, 256);
     }
 
     @Override
     public void renderForeground(GuiGraphics guiGraphics, int mouseX, int mouseY, float delta) {
-        guiGraphics.drawString(font, this.getTitle(), width / 2 - font.width(TITLE) / 2, guiTop + 5, 4210752, false);
+        guiGraphics.drawString(font, this.getTitle(), width / 2 - font.width(TITLE) / 2, guiTop + 5, 0xFF404040, false);
 
         if (!teamList.isEmpty()) {
             teamList.render(guiGraphics, mouseX, mouseY, delta);
@@ -163,9 +169,12 @@ public class RecruitsFactionListScreen extends ListScreenBase implements IFactio
     }
 
     @Override
-    public boolean mouseClicked(double x, double y, int z) {
-        if(teamList != null) teamList.mouseClicked(x,y,z);
-        boolean flag = super.mouseClicked(x, y, z);
+    public boolean mouseClicked(MouseButtonEvent event, boolean doubleClick) {
+        double x = event.x();
+        double y = event.y();
+        int z = event.button();
+        if(teamList != null) teamList.mouseClicked(new MouseButtonEvent(x, y, new MouseButtonInfo(z, 0)), false);
+        boolean flag = super.mouseClicked(event, doubleClick);
         if(this.teamList.getFocused() != null){
             this.selected = this.teamList.getFocused().getTeamInfo();
             this.sendJoinRequestButton.active = getJoinRequestButtonState();

@@ -1,12 +1,12 @@
 package com.talhanation.recruits.network;
 
 import com.talhanation.recruits.entities.AssassinLeaderEntity;
-import de.maxhenkel.corelib.net.Message;
+import com.talhanation.recruits.network.Message;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.network.FriendlyByteBuf;
 import net.minecraftforge.api.distmarker.Dist;
-import net.minecraftforge.network.NetworkEvent;
+import net.minecraftforge.event.network.CustomPayloadEvent;
 
 import java.util.Objects;
 import java.util.UUID;
@@ -32,13 +32,13 @@ public class MessageAssassinGui implements Message<MessageAssassinGui> {
     }
 
     @Override
-    public void executeServerSide(NetworkEvent.Context context) {
+    public void executeServerSide(CustomPayloadEvent.Context context) {
         ServerPlayer player = Objects.requireNonNull(context.getSender());
         if (!player.getUUID().equals(uuid)) {
             return;
         }
 
-        player.getCommandSenderWorld().getEntitiesOfClass(
+        player.level().getEntitiesOfClass(
                 AssassinLeaderEntity.class,
                 player.getBoundingBox().inflate(16.0D),
                 v -> v.getUUID().equals(this.recruit) && v.isAlive()

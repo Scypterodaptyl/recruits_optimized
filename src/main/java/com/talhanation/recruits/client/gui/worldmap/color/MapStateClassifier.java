@@ -1,10 +1,8 @@
 package com.talhanation.recruits.client.gui.worldmap.color;
 
 import net.minecraft.client.renderer.ItemBlockRenderTypes;
-import net.minecraft.client.renderer.RenderType;
 import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.Blocks;
-import net.minecraft.world.level.block.GlassBlock;
 import net.minecraft.world.level.block.IceBlock;
 import net.minecraft.world.level.block.RenderShape;
 import net.minecraft.world.level.block.state.BlockState;
@@ -41,7 +39,7 @@ public final class MapStateClassifier {
         Block block = state.getBlock();
         if (block == Blocks.GLASS || block == Blocks.GLASS_PANE) return false;
 
-        if (block instanceof GlassBlock) return true;
+        if (block instanceof net.minecraft.world.level.block.TintedGlassBlock) return true;
         return hasTranslucentRenderType(state);
     }
 
@@ -79,7 +77,7 @@ public final class MapStateClassifier {
         if (!state.getFluidState().isEmpty()) return true;
 
         Block block = state.getBlock();
-        if (block == Blocks.GRASS
+        if (block == Blocks.SHORT_GRASS
                 || block == Blocks.TORCH
                 || block == Blocks.GLASS
                 || block == Blocks.GLASS_PANE) {
@@ -91,7 +89,7 @@ public final class MapStateClassifier {
 
     private static boolean hasTranslucentRenderType(BlockState state) {
         try {
-            return ItemBlockRenderTypes.getRenderLayers(state).contains(RenderType.translucent());
+            return ItemBlockRenderTypes.getChunkRenderType(state) == net.minecraft.client.renderer.chunk.ChunkSectionLayer.TRANSLUCENT;
         } catch (RuntimeException ignored) {
             return false;
         }

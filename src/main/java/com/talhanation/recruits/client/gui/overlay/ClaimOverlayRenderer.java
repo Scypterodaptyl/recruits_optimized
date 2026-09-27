@@ -1,6 +1,7 @@
 package com.talhanation.recruits.client.gui.overlay;
 
-import com.mojang.blaze3d.vertex.PoseStack;
+import net.minecraft.client.renderer.RenderPipelines;
+
 import com.talhanation.recruits.client.gui.component.BannerRenderer;
 import com.talhanation.recruits.client.gui.faction.FactionEditScreen;
 import com.talhanation.recruits.world.RecruitsClaim;
@@ -8,7 +9,7 @@ import com.talhanation.recruits.world.RecruitsFaction;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.Font;
 import net.minecraft.client.gui.GuiGraphics;
-import net.minecraft.resources.ResourceLocation;
+import net.minecraft.resources.Identifier;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -20,7 +21,7 @@ public class ClaimOverlayRenderer {
     private static final int PANEL_HEIGHT_FULL = 45;
     private static final int PANEL_HEIGHT_COMPACT = 15;
     private static final int BACKGROUND_ALPHA = 0x0F;
-    private static final ResourceLocation SIEGE_ICON = new ResourceLocation("recruits:textures/gui/image/enemy.png");
+    private static final Identifier SIEGE_ICON = Identifier.parse("recruits:textures/gui/image/enemy.png");
 
     private boolean dataChanged = true;
 
@@ -68,26 +69,26 @@ public class ClaimOverlayRenderer {
         }
 
         String claimName = truncateText(font, claim.getName(), width - 80);
-        guiGraphics.drawString(font, claimName, x + 60, y + 10, textColor, false);
+        guiGraphics.drawString(font, claimName, x + 60, y + 10, com.talhanation.recruits.client.gui.util.GuiCompat.opaque(textColor), false);
 
 
         if (claim.getPlayerInfo() != null) {
             String claimOwner = truncateText(font, claim.getPlayerInfo().getName(), width - 80);
 
-            PoseStack poseStack = guiGraphics.pose();
-            poseStack.pushPose();
+            org.joml.Matrix3x2fStack poseStack = guiGraphics.pose();
+            poseStack.pushMatrix();
             try {
                 float scale = 0.5f;
                 int originalX = x + 60;
                 int originalY = y + 20;
-                poseStack.translate(originalX, originalY, 0);
-                poseStack.scale(scale, scale, 1.0f);
+                poseStack.translate((float) (originalX), (float) (originalY));
+                poseStack.scale((float) (scale), (float) (scale));
                 if (faction != null) {
-                    guiGraphics.drawString(font, faction.getTeamDisplayName(), 0, 0, 0xAAAAAA, false);
+                    guiGraphics.drawString(font, faction.getTeamDisplayName(), 0, 0, 0xFFAAAAAA, false);
                 }
-                guiGraphics.drawString(font, claimOwner, 0, 10, 0xAAAAAA, false);
+                guiGraphics.drawString(font, claimOwner, 0, 10, 0xFFAAAAAA, false);
             } finally {
-                poseStack.popPose();
+                poseStack.popMatrix();
             }
         }
     }
@@ -102,7 +103,7 @@ public class ClaimOverlayRenderer {
         int textX = x + (width - textWidth) / 2;
         int textY = y + (height - 9) / 2;
 
-        guiGraphics.drawString(font, displayText, textX, textY, textColor, false);
+        guiGraphics.drawString(font, displayText, textX, textY, com.talhanation.recruits.client.gui.util.GuiCompat.opaque(textColor), false);
     }
 
     private void renderSiegeContent(GuiGraphics guiGraphics, RecruitsClaim claim, int x, int y, int width, int height, Font font, float alpha, ClaimOverlayManager.OverlayState state) {
@@ -112,7 +113,7 @@ public class ClaimOverlayRenderer {
         String name = truncateText(font, claim.getName(), width - 40);
         int nameWidth = font.width(name);
         int nameX = x + (width - nameWidth) / 2;
-        guiGraphics.drawString(font, name, nameX, y + 2, normalTextColor, false);
+        guiGraphics.drawString(font, name, nameX, y + 2, com.talhanation.recruits.client.gui.util.GuiCompat.opaque(normalTextColor), false);
 
         int bannerSize = 48;
         int bannerY = y + 15;
@@ -124,7 +125,7 @@ public class ClaimOverlayRenderer {
 
         String ownerFactionName = truncateText(font, claim.getOwnerFaction().getTeamDisplayName(), 60);
         int ownerFactionNameWidth = font.width(ownerFactionName);
-        guiGraphics.drawString(font, ownerFactionName, x + 15 - ownerFactionNameWidth/2, y + 2, 0xAAAAAA, false);
+        guiGraphics.drawString(font, ownerFactionName, x + 15 - ownerFactionNameWidth/2, y + 2, 0xFFAAAAAA, false);
 
         if (!claim.attackingParties.isEmpty()) {
             BannerRenderer attackerBanner = getBannerRenderer(claim.attackingParties.get(0));
@@ -135,7 +136,7 @@ public class ClaimOverlayRenderer {
             int attackerNameWidth = font.width(name);
             int attackerNameX = x - 15 + width - attackerNameWidth/2;
 
-            guiGraphics.drawString(font, attackerName, attackerNameX, y + 2, 0xAAAAAA, false);
+            guiGraphics.drawString(font, attackerName, attackerNameX, y + 2, 0xFFAAAAAA, false);
         }
 
         int barWidth = 100;
@@ -151,7 +152,7 @@ public class ClaimOverlayRenderer {
 
 
         int iconSize = 18;
-        guiGraphics.blit(SIEGE_ICON, x + width / 2 - iconSize / 2, y + 14, 0, 0, iconSize, iconSize, iconSize, iconSize);
+        guiGraphics.blit(RenderPipelines.GUI_TEXTURED, SIEGE_ICON, x + width / 2 - iconSize / 2, y + 14, (float) (0), (float) (0), iconSize, iconSize, iconSize, iconSize);
 
         if (state != ClaimOverlayManager.OverlayState.FULL) return;
 

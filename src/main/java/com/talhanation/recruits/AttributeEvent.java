@@ -3,16 +3,12 @@ package com.talhanation.recruits;
 import com.talhanation.recruits.entities.*;
 import com.talhanation.recruits.init.ModEntityTypes;
 import net.minecraftforge.event.entity.EntityAttributeCreationEvent;
-import net.minecraftforge.eventbus.api.SubscribeEvent;
-import net.minecraftforge.fml.common.Mod;
 
 import java.util.Random;
 
-@Mod.EventBusSubscriber(modid = Main.MOD_ID, bus = Mod.EventBusSubscriber.Bus.MOD)
 public class AttributeEvent {
     protected final Random random = new Random();
 
-    @SubscribeEvent
     public static void entityAttributeEvent(final EntityAttributeCreationEvent event) {
         //event.put(ModEntityTypes.ASSASSIN.get(), AssassinEntity.setAttributes().build());
         //event.put(ModEntityTypes.ASSASSIN_LEADER.get(), AssassinLeaderEntity.setAttributes().build());

@@ -9,12 +9,12 @@ import com.talhanation.recruits.Main;
 import com.talhanation.recruits.entities.CaptainEntity;
 import com.talhanation.recruits.entities.IRangedRecruit;
 import com.talhanation.recruits.util.Kalkuel;
-import net.minecraft.resources.ResourceLocation;
+import net.minecraft.resources.Identifier;
 import net.minecraft.tags.ItemTags;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.player.Player;
-import net.minecraft.world.entity.vehicle.Boat;
+import net.minecraft.world.entity.vehicle.boat.Boat;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.Items;
 import net.minecraft.world.phys.Vec3;
@@ -469,11 +469,11 @@ public class SmallShips {
     @Nullable
     public static ItemStack getSmallShipsItem() {
         if (!Main.isSmallShipsLoaded) return null;
-        return ForgeRegistries.ITEMS.getDelegateOrThrow(ResourceLocation.tryParse("smallships:oak_cog")).get().getDefaultInstance();
+        return ForgeRegistries.ITEMS.getDelegateOrThrow(Identifier.tryParse("smallships:oak_cog")).get().getDefaultInstance();
     }
 
     public void repairShip(CaptainEntity captain) {
-        int amount = (10 + captain.getCommandSenderWorld().random.nextInt(5));
+        int amount = (10 + captain.level().random.nextInt(5));
         try{
             if (Main.isSmallShipsLoaded && Main.isSmallShipsCompatible && boat.getEncodeId().contains("smallships")) {
                 Class<?> shipClass = resolveClass("com.talhanation.smallships.world.entity.ship.Ship");

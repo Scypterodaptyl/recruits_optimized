@@ -42,7 +42,7 @@ public class AsyncGroundPathNavigation extends AsyncPathNavigation {
     }
 
     protected boolean canUpdatePath() {
-        return this.mob.onGround() || this.isInLiquid() || this.mob.isPassenger();
+        return this.mob.onGround() || this.mob.isInLiquid() || this.mob.isPassenger();
     }
 
     protected @NotNull Vec3 getTempMobPos() {
@@ -52,13 +52,13 @@ public class AsyncGroundPathNavigation extends AsyncPathNavigation {
     public Path createPath(BlockPos p_26475_, int p_26476_) {
         if (this.level.getBlockState(p_26475_).isAir()) {
             BlockPos blockpos;
-            for(blockpos = p_26475_.below(); blockpos.getY() > this.level.getMinBuildHeight() && this.level.getBlockState(blockpos).isAir(); blockpos = blockpos.below()) {}
+            for(blockpos = p_26475_.below(); blockpos.getY() > this.level.getMinY() && this.level.getBlockState(blockpos).isAir(); blockpos = blockpos.below()) {}
 
-            if (blockpos.getY() > this.level.getMinBuildHeight()) {
+            if (blockpos.getY() > this.level.getMinY()) {
                 return super.createPath(blockpos.above(), p_26476_);
             }
 
-            while(blockpos.getY() < this.level.getMaxBuildHeight() && this.level.getBlockState(blockpos).isAir()) {
+            while(blockpos.getY() < this.level.getMaxY() && this.level.getBlockState(blockpos).isAir()) {
                 blockpos = blockpos.above();
             }
 
@@ -69,7 +69,7 @@ public class AsyncGroundPathNavigation extends AsyncPathNavigation {
             return super.createPath(p_26475_, p_26476_);
         } else {
             BlockPos blockpos1;
-            for(blockpos1 = p_26475_.above(); blockpos1.getY() < this.level.getMaxBuildHeight() && this.level.getBlockState(blockpos1).isSolid(); blockpos1 = blockpos1.above()) {
+            for(blockpos1 = p_26475_.above(); blockpos1.getY() < this.level.getMaxY() && this.level.getBlockState(blockpos1).isSolid(); blockpos1 = blockpos1.above()) {
             }
 
             return super.createPath(blockpos1, p_26476_);
@@ -119,13 +119,13 @@ public class AsyncGroundPathNavigation extends AsyncPathNavigation {
 
     }
 
-    protected boolean hasValidPathType(BlockPathTypes p_26467_) {
-        if (p_26467_ == BlockPathTypes.WATER) {
+    protected boolean hasValidPathType(PathType p_26467_) {
+        if (p_26467_ == PathType.WATER) {
             return false;
-        } else if (p_26467_ == BlockPathTypes.LAVA) {
+        } else if (p_26467_ == PathType.LAVA) {
             return false;
         } else {
-            return p_26467_ != BlockPathTypes.OPEN;
+            return p_26467_ != PathType.OPEN;
         }
     }
 
@@ -147,5 +147,10 @@ public class AsyncGroundPathNavigation extends AsyncPathNavigation {
 
     public void setAvoidSun(boolean p_26491_) {
         this.avoidSun = p_26491_;
+    }
+
+    @Override
+    public boolean canNavigateGround() {
+        return true;
     }
 }

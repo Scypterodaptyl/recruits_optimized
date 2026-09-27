@@ -131,7 +131,7 @@ public class RecruitStrategicFire extends Goal {
         }
     }
     public boolean isBow(ItemStack itemStack){
-        String name = this.bowman.getMainHandItem().getDescriptionId();
+        String name = this.bowman.getMainHandItem().getItem().getDescriptionId();
         return itemStack.is(Items.BOW) || itemStack.getItem() instanceof BowItem || itemStack.getItem() instanceof ProjectileWeaponItem || name.contains("bow");
     }
 

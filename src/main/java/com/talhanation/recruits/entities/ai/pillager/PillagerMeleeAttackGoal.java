@@ -5,11 +5,10 @@ import net.minecraft.world.entity.EntitySelector;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.ai.goal.Goal;
 import net.minecraft.world.entity.ai.sensing.Sensing;
-import net.minecraft.world.entity.monster.Pillager;
+import net.minecraft.world.entity.monster.illager.Pillager;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.AxeItem;
 import net.minecraft.world.item.Item;
-import net.minecraft.world.item.SwordItem;
 import net.minecraft.world.level.pathfinder.Node;
 import net.minecraft.world.level.pathfinder.Path;
 
@@ -38,10 +37,10 @@ public class PillagerMeleeAttackGoal extends Goal {
     }
 
     public boolean canUse() {
-        long i = this.mob.getCommandSenderWorld().getGameTime();
+        long i = this.mob.level().getGameTime();
         Item itemInHand = mob.getItemInHand(InteractionHand.MAIN_HAND).getItem();
 
-        if (!(itemInHand instanceof SwordItem) && !(itemInHand instanceof AxeItem)){
+        if (!(itemInHand.getDefaultInstance().is(net.minecraft.tags.ItemTags.SWORDS)) && !(itemInHand instanceof AxeItem)){
             return false;
         }
 
@@ -82,7 +81,7 @@ public class PillagerMeleeAttackGoal extends Goal {
             return false;
         } else if (!this.followingTargetEvenIfNotSeen) {
             return !this.mob.getNavigation().isDone();
-        } else if (!this.mob.isWithinRestriction(livingentity.blockPosition())) {
+        } else if (!this.mob.isWithinHome(livingentity.blockPosition())) {
             return false;
         } else {
             return !(livingentity instanceof Player) || !livingentity.isSpectator() && !((Player)livingentity).isCreative();
@@ -161,7 +160,7 @@ public class PillagerMeleeAttackGoal extends Goal {
         if (p_190102_2_ <= d0 && this.ticksUntilNextAttack <= 0) {
             this.resetAttackCooldown();
             this.mob.swing(InteractionHand.MAIN_HAND);
-            this.mob.doHurtTarget(p_190102_1_);
+            this.mob.doHurtTarget((net.minecraft.server.level.ServerLevel) this.mob.level(), p_190102_1_);
         }
 
     }

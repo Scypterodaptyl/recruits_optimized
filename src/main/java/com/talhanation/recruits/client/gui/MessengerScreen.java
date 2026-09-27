@@ -1,6 +1,10 @@
 package com.talhanation.recruits.client.gui;
 
-import com.mojang.blaze3d.systems.RenderSystem;
+import net.minecraft.client.input.MouseButtonEvent;
+import net.minecraft.client.input.MouseButtonInfo;
+import net.minecraft.client.input.KeyEvent;
+import net.minecraft.client.renderer.RenderPipelines;
+
 import com.talhanation.recruits.Main;
 import com.talhanation.recruits.client.gui.player.PlayersList;
 import com.talhanation.recruits.client.gui.player.SelectPlayerScreen;
@@ -12,11 +16,10 @@ import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.client.gui.components.Button;
 import net.minecraft.client.gui.components.MultiLineEditBox;
 import net.minecraft.client.gui.components.Tooltip;
-import net.minecraft.client.renderer.GameRenderer;
 import net.minecraft.network.chat.Component;
 import net.minecraft.network.chat.MutableComponent;
-import net.minecraft.resources.ResourceLocation;
-import net.minecraft.util.FastColor;
+import net.minecraft.resources.Identifier;
+import net.minecraft.util.ARGB;
 import net.minecraft.world.entity.player.Player;
 import net.minecraftforge.client.gui.widget.ExtendedButton;
 import org.lwjgl.glfw.GLFW;
@@ -24,8 +27,8 @@ import org.lwjgl.glfw.GLFW;
 
 public class MessengerScreen extends RecruitsScreenBase {
 
-    private static final ResourceLocation TEXTURE = new ResourceLocation(Main.MOD_ID, "textures/gui/professions/blank_gui.png");
-    protected static final int PLAYER_NAME_COLOR = FastColor.ARGB32.color(255, 255, 255, 255);
+    private static final Identifier TEXTURE = Identifier.fromNamespaceAndPath(Main.MOD_ID, "textures/gui/professions/blank_gui.png");
+    protected static final int PLAYER_NAME_COLOR = ARGB.color(255, 255, 255, 255);
     private final Player player;
     public static RecruitsPlayerInfo playerInfo;
     private final MessengerEntity messenger;
@@ -41,14 +44,17 @@ public class MessengerScreen extends RecruitsScreenBase {
     }
 
     @Override
-    public boolean keyPressed(int key, int a, int b) {
+    public boolean keyPressed(KeyEvent event) {
+        int key = event.key();
+        int a = event.scancode();
+        int b = event.modifiers();
         if (key == GLFW.GLFW_KEY_ESCAPE) {
             this.onClose();
             return true;
         }
 
         setFocused(textFieldMessage);
-        return textFieldMessage.keyPressed(key, a, b) || textFieldMessage.isFocused() || super.keyPressed(key, a, b);
+        return textFieldMessage.keyPressed(new KeyEvent(key, a, b)) || textFieldMessage.isFocused() || super.keyPressed(event);
     }
     @Override
     protected void init() {
@@ -58,20 +64,23 @@ public class MessengerScreen extends RecruitsScreenBase {
     }
     public void tick() {
         super.tick();
-        if(textFieldMessage != null) textFieldMessage.tick();
+        
     }
 
-    public boolean mouseClicked(double p_100753_, double p_100754_, int p_100755_) {
+    public boolean mouseClicked(MouseButtonEvent event, boolean doubleClick) {
+        double p_100753_ = event.x();
+        double p_100754_ = event.y();
+        int p_100755_ = event.button();
         if (this.textFieldMessage.isFocused()) {
-            this.textFieldMessage.mouseClicked(p_100753_, p_100754_, p_100755_);
+            this.textFieldMessage.mouseClicked(new MouseButtonEvent(p_100753_, p_100754_, new MouseButtonInfo(p_100755_, 0)), false);
         }
-        return super.mouseClicked(p_100753_, p_100754_, p_100755_);
+        return super.mouseClicked(event, doubleClick);
     }
 
     private void setButtons() {
         clearWidgets();
 
-        this.textFieldMessage = new MultiLineEditBox(font, guiLeft + 3, guiTop + ySize - 203,  186, 150, Component.literal(""), Component.literal(""));
+        this.textFieldMessage = MultiLineEditBox.builder().setX(guiLeft + 3).setY(guiTop + ySize - 203).setPlaceholder(Component.literal("")).build(font, 186, 150, Component.literal(""));
         this.textFieldMessage.setValue(messenger.getMessage());
         addRenderableWidget(textFieldMessage);
 
@@ -121,18 +130,15 @@ public class MessengerScreen extends RecruitsScreenBase {
     }
 
     @Override
-    public void renderBackground(GuiGraphics guiGraphics, int mouseX, int mouseY, float delta) {
-        RenderSystem.setShader(GameRenderer::getPositionTexShader);
-        RenderSystem.setShaderColor(1F, 1F, 1F, 1F);
-        RenderSystem.setShaderTexture(0, TEXTURE);
-        guiGraphics.blit(TEXTURE, guiLeft, guiTop, 0, 0, xSize, ySize);
+    public void renderRecruitsBackground(GuiGraphics guiGraphics, int mouseX, int mouseY, float delta) {
+        guiGraphics.blit(RenderPipelines.GUI_TEXTURED, TEXTURE, guiLeft, guiTop, (float) (0), (float) (0), xSize, ySize, 256, 256);
     }
     @Override
     public void renderForeground(GuiGraphics guiGraphics, int mouseX, int mouseY, float delta) {
         int fontColor = 4210752;
 
-        guiGraphics.drawString(font, "Player:", guiLeft + 5, guiTop + 5, fontColor, false);
-        guiGraphics.drawString(font, "Message:", guiLeft + 5, guiTop + 35, fontColor, false);
+        guiGraphics.drawString(font, "Player:", guiLeft + 5, guiTop + 5, com.talhanation.recruits.client.gui.util.GuiCompat.opaque(fontColor), false);
+        guiGraphics.drawString(font, "Message:", guiLeft + 5, guiTop + 35, com.talhanation.recruits.client.gui.util.GuiCompat.opaque(fontColor), false);
 
         if(!messenger.getMainHandItem().isEmpty()){
             guiGraphics.renderFakeItem(messenger.getMainHandItem(), guiLeft + 140, guiTop + ySize - 48);

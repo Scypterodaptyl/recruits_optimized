@@ -1,12 +1,12 @@
 package com.talhanation.recruits.network;
 
 import com.talhanation.recruits.entities.AbstractLeaderEntity;
-import de.maxhenkel.corelib.net.Message;
+import com.talhanation.recruits.network.Message;
 import net.minecraft.core.BlockPos;
 import net.minecraft.network.FriendlyByteBuf;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraftforge.api.distmarker.Dist;
-import net.minecraftforge.network.NetworkEvent;
+import net.minecraftforge.event.network.CustomPayloadEvent;
 
 import javax.annotation.Nullable;
 import java.util.List;
@@ -52,11 +52,11 @@ public class MessagePatrolLeaderSetRoute implements Message<MessagePatrolLeaderS
     private static final int MAX_WAYPOINTS = 64;
 
     @Override
-    public void executeServerSide(NetworkEvent.Context context) {
+    public void executeServerSide(CustomPayloadEvent.Context context) {
         ServerPlayer player = Objects.requireNonNull(context.getSender());
         if (waypoints.size() > MAX_WAYPOINTS || waypoints.size() != waitSeconds.size()) return;
 
-        player.getCommandSenderWorld().getEntitiesOfClass(
+        player.level().getEntitiesOfClass(
                 AbstractLeaderEntity.class,
                 player.getBoundingBox().inflate(64.0D),
                 leader -> leader.getUUID().equals(this.recruit) && leader.isAlive() && leader.isEffectedByCommand(player.getUUID())
@@ -75,8 +75,8 @@ public class MessagePatrolLeaderSetRoute implements Message<MessagePatrolLeaderS
         this.recruit     = buf.readUUID();
         boolean hasRoute = buf.readBoolean();
         this.routeId     = hasRoute ? buf.readUUID() : null;
-        this.waypoints   = buf.readList(FriendlyByteBuf::readBlockPos);
-        this.waitSeconds = buf.readList(FriendlyByteBuf::readVarInt);
+        this.waypoints   = buf.readList(b -> b.readBlockPos());
+        this.waitSeconds = buf.readList(b -> b.readVarInt());
         return this;
     }
 
@@ -85,7 +85,7 @@ public class MessagePatrolLeaderSetRoute implements Message<MessagePatrolLeaderS
         buf.writeUUID(this.recruit);
         buf.writeBoolean(this.routeId != null);
         if (this.routeId != null) buf.writeUUID(this.routeId);
-        buf.writeCollection(this.waypoints, FriendlyByteBuf::writeBlockPos);
-        buf.writeCollection(this.waitSeconds, FriendlyByteBuf::writeVarInt);
+        buf.writeCollection(this.waypoints, (b, v) -> b.writeBlockPos(v));
+        buf.writeCollection(this.waitSeconds, (b, v) -> b.writeVarInt(v));
     }
 }

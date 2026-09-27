@@ -8,7 +8,7 @@ import com.talhanation.recruits.world.RecruitsFaction;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.network.chat.Component;
-import net.minecraft.util.FastColor;
+import net.minecraft.util.ARGB;
 import net.minecraftforge.api.distmarker.Dist;
 import net.minecraftforge.api.distmarker.OnlyIn;
 import org.jetbrains.annotations.NotNull;
@@ -19,10 +19,10 @@ import javax.annotation.Nullable;
 public class RecruitsFactionEntry extends ListScreenEntryBase<RecruitsFactionEntry> {
     protected static final int SKIN_SIZE = 24;
     protected static final int PADDING = 4;
-    protected static final int BG_FILL = FastColor.ARGB32.color(255, 60, 60, 60);
-    protected static final int BG_FILL_HOVERED = FastColor.ARGB32.color(255, 100, 100, 100);
-    protected static final int BG_FILL_SELECTED = FastColor.ARGB32.color(255, 10, 10, 10);
-    protected static final int PLAYER_NAME_COLOR = FastColor.ARGB32.color(255, 255, 255, 255);
+    protected static final int BG_FILL = ARGB.color(255, 60, 60, 60);
+    protected static final int BG_FILL_HOVERED = ARGB.color(255, 100, 100, 100);
+    protected static final int BG_FILL_SELECTED = ARGB.color(255, 10, 10, 10);
+    protected static final int PLAYER_NAME_COLOR = ARGB.color(255, 255, 255, 255);
 
     protected final Minecraft minecraft;
     protected final IFactionSelection screen;
@@ -39,7 +39,12 @@ public class RecruitsFactionEntry extends ListScreenEntryBase<RecruitsFactionEnt
     }
 
     @Override
-    public void render(GuiGraphics guiGraphics, int index, int top, int left, int width, int height, int mouseX, int mouseY, boolean hovered, float delta) {
+    public void renderContent(GuiGraphics guiGraphics, int mouseX, int mouseY, boolean hovered, float delta) {
+        int index = 0;
+        int top = this.getY();
+        int left = this.getX();
+        int width = this.getWidth();
+        int height = this.getHeight() - 4;
         int skinX = left + PADDING;
         int skinY = top + (height - SKIN_SIZE) / 2;
         int textX = skinX + SKIN_SIZE + PADDING;
@@ -69,8 +74,8 @@ public class RecruitsFactionEntry extends ListScreenEntryBase<RecruitsFactionEnt
 
         GuiComponent.fill(guiGraphics, left + 10, top + 20, left + 200,top + 10, 0x8000FF00);
          */
-        guiGraphics.drawString(minecraft.font, team.getTeamDisplayName(), (float) textX + 10, (float) textY,  PLAYER_NAME_COLOR, false);
-        if(showPlayerCount) guiGraphics.drawString(minecraft.font, getPlayersText(team.getPlayers()).getString(), (float) textX + 120, (float) textY, PLAYER_NAME_COLOR, false);
+        guiGraphics.drawString(minecraft.font, team.getTeamDisplayName(), (int) ((float) textX + 10), (int) ((float) textY), com.talhanation.recruits.client.gui.util.GuiCompat.opaque(PLAYER_NAME_COLOR), false);
+        if(showPlayerCount) guiGraphics.drawString(minecraft.font, getPlayersText(team.getPlayers()).getString(), (int) ((float) textX + 120), (int) ((float) textY), com.talhanation.recruits.client.gui.util.GuiCompat.opaque(PLAYER_NAME_COLOR), false);
     }
 
     @Nullable

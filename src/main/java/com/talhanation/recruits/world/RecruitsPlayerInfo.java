@@ -1,5 +1,6 @@
 package com.talhanation.recruits.world;
 
+import net.minecraft.core.UUIDUtil;
 
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.nbt.ListTag;
@@ -67,7 +68,7 @@ public class RecruitsPlayerInfo {
 
     public CompoundTag toNBT() {
         CompoundTag nbt = new CompoundTag();
-        nbt.putUUID("UUID", uuid);
+        nbt.store("UUID", UUIDUtil.CODEC, uuid);
         nbt.putString("Name", name);
         nbt.putBoolean("Online", online);
         if(recruitsFaction != null){
@@ -79,10 +80,10 @@ public class RecruitsPlayerInfo {
     public static RecruitsPlayerInfo getFromNBT(CompoundTag nbt) {
         if(nbt == null || nbt.isEmpty()) return null;
 
-        UUID uuid = nbt.getUUID("UUID");
-        String name = nbt.getString("Name");
-        boolean online = nbt.getBoolean("Online");
-        RecruitsFaction team = RecruitsFaction.fromNBT(nbt.getCompound("RecruitsTeam"));
+        UUID uuid = nbt.read("UUID", UUIDUtil.CODEC).orElse(null);
+        String name = nbt.getStringOr("Name", "");
+        boolean online = nbt.getBooleanOr("Online", false);
+        RecruitsFaction team = RecruitsFaction.fromNBT(nbt.getCompoundOrEmpty("RecruitsTeam"));
 
         RecruitsPlayerInfo info = new RecruitsPlayerInfo(uuid, name, team);
         info.setOnline(online);
@@ -104,10 +105,10 @@ public class RecruitsPlayerInfo {
 
     public static List<RecruitsPlayerInfo> getListFromNBT(CompoundTag nbt) {
         List<RecruitsPlayerInfo> list = new ArrayList<>();
-        ListTag playerList = nbt.getList("Players", 10);
+        ListTag playerList = nbt.getListOrEmpty("Players");
 
         for (int i = 0; i < playerList.size(); i++) {
-            CompoundTag playerTag = playerList.getCompound(i);
+            CompoundTag playerTag = playerList.getCompoundOrEmpty(i);
             RecruitsPlayerInfo playerInfo = RecruitsPlayerInfo.getFromNBT(playerTag);
             list.add(playerInfo);
         }

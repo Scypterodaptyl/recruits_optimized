@@ -25,6 +25,8 @@ import java.util.List;
 
 
 public class RecruitUpkeepPosGoal extends Goal {
+    // BlockEntity#getPersistentData no longer exists, keep the transient chest state here instead
+    private static final java.util.Map<ChestBlockEntity, CompoundTag> CHEST_STATE = new java.util.WeakHashMap<>();
     public AbstractRecruitEntity recruit;
     public BlockPos chestPos;
     public Container container;
@@ -63,15 +65,15 @@ public class RecruitUpkeepPosGoal extends Goal {
         this.chestPos = recruit.getUpkeepPos();
 
         if(chestPos != null) {
-            BlockEntity entity = recruit.getCommandSenderWorld().getBlockEntity(chestPos);
-            BlockState blockState = recruit.getCommandSenderWorld().getBlockState(chestPos);
+            BlockEntity entity = recruit.level().getBlockEntity(chestPos);
+            BlockState blockState = recruit.level().getBlockState(chestPos);
             if (blockState.getBlock() instanceof ChestBlock chestBlock) {
-                this.container = ChestBlock.getContainer(chestBlock, blockState, recruit.getCommandSenderWorld(), chestPos, false);
+                this.container = ChestBlock.getContainer(chestBlock, blockState, recruit.level(), chestPos, false);
             } else if (entity instanceof Container containerEntity) {
                 this.container = containerEntity;
             } else {
                 if (recruit.getOwner() != null && messageNotChest) {
-                    recruit.getOwner().sendSystemMessage(TEXT_CANT_INTERACT(recruit.getName().getString()));
+                    recruit.getOwner().displayClientMessage(TEXT_CANT_INTERACT(recruit.getName().getString()), false);
                     messageNotChest = false;
                 }
                 this.chestPos = null;
@@ -81,7 +83,7 @@ public class RecruitUpkeepPosGoal extends Goal {
                 double distance = this.recruit.position().distanceToSqr(Vec3.atCenterOf(chestPos));
                 if(distance > 10000){
                     if(recruit.getOwner() != null && messageNotInRange){
-                        recruit.getOwner().sendSystemMessage(TEXT_NOT_IN_RANGE(recruit.getName().getString()));
+                        recruit.getOwner().displayClientMessage(TEXT_NOT_IN_RANGE(recruit.getName().getString()), false);
                         messageNotInRange = false;
                     }
                     recruit.clearUpkeepPos();
@@ -136,7 +138,7 @@ public class RecruitUpkeepPosGoal extends Goal {
                                 foodItem.shrink(1);
                             } else {
                                 if(recruit.getOwner() != null && message){
-                                    recruit.getOwner().sendSystemMessage(TEXT_NO_PLACE(recruit.getName().getString()));
+                                    recruit.getOwner().displayClientMessage(TEXT_NO_PLACE(recruit.getName().getString()), false);
                                     message = false;
                                 }
                                 this.stop();
@@ -146,7 +148,7 @@ public class RecruitUpkeepPosGoal extends Goal {
                     }
                     else {
                         if(recruit.getOwner() != null && message){
-                            recruit.getOwner().sendSystemMessage(TEXT_FOOD(recruit.getName().getString()));
+                            recruit.getOwner().displayClientMessage(TEXT_FOOD(recruit.getName().getString()), false);
                             message = false;
                         }
                         this.stop();
@@ -161,7 +163,7 @@ public class RecruitUpkeepPosGoal extends Goal {
 
             if(chestPos == null){
                 if(recruit.getOwner() != null && messageNeedNewChest){
-                    recruit.getOwner().sendSystemMessage(NEED_NEW_UPKEEP(recruit.getName().getString()));
+                    recruit.getOwner().displayClientMessage(NEED_NEW_UPKEEP(recruit.getName().getString()), false);
                     messageNeedNewChest = false;
                 }
 
@@ -207,7 +209,7 @@ public class RecruitUpkeepPosGoal extends Goal {
                 for (int y = -range; y < range; y++) {
                     for (int z = -range; z < range; z++) {
                         chestPos = recruit.getUpkeepPos().offset(x, y, z);
-                        BlockEntity block = recruit.getCommandSenderWorld().getBlockEntity(chestPos);
+                        BlockEntity block = recruit.level().getBlockEntity(chestPos);
                         if (block instanceof Container blockContainer){
                             if(isFoodInContainer(blockContainer)) return chestPos;
                             else list.add(chestPos);
@@ -252,34 +254,34 @@ public class RecruitUpkeepPosGoal extends Goal {
 
     public void interactChest(Container container, boolean open) {
         if(this.chestPos != null && (container instanceof CompoundContainer || container instanceof ChestBlockEntity)){
-            BlockState state = this.recruit.getCommandSenderWorld().getBlockState(this.chestPos);
+            BlockState state = this.recruit.level().getBlockState(this.chestPos);
             Block block = state.getBlock();
             boolean isOpened = false;
             CompoundTag compoundTag = new CompoundTag();
-            if(recruit.getCommandSenderWorld().getBlockEntity(chestPos) instanceof ChestBlockEntity chestBlockEntity){
-                compoundTag = chestBlockEntity.getPersistentData();
+            if(recruit.level().getBlockEntity(chestPos) instanceof ChestBlockEntity chestBlockEntity){
+                compoundTag = CHEST_STATE.computeIfAbsent(chestBlockEntity, be -> new CompoundTag());
                 if(compoundTag.contains("isOpened"))
-                    isOpened = compoundTag.getBoolean("isOpened");
+                    isOpened = compoundTag.getBooleanOr("isOpened", false);
                 else
                     compoundTag.putBoolean("isOpened", false);
             }
 
             if (open) {
                 if(!isOpened){
-                    this.recruit.getCommandSenderWorld().blockEvent(this.chestPos, block, 1, 1);
-                    this.recruit.getCommandSenderWorld().playSound(null, chestPos, SoundEvents.CHEST_OPEN, recruit.getSoundSource(), 0.7F, 0.8F + 0.4F * recruit.getRandom().nextFloat());
+                    this.recruit.level().blockEvent(this.chestPos, block, 1, 1);
+                    this.recruit.level().playSound(null, chestPos, SoundEvents.CHEST_OPEN, recruit.getSoundSource(), 0.7F, 0.8F + 0.4F * recruit.getRandom().nextFloat());
                     compoundTag.putBoolean("isOpened", true);
                 }
             }
             else {
                 if(isOpened){
-                    this.recruit.getCommandSenderWorld().blockEvent(this.chestPos, block, 1, 0);
-                    this.recruit.getCommandSenderWorld().playSound(null, chestPos, SoundEvents.CHEST_CLOSE, recruit.getSoundSource(), 0.7F, 0.8F + 0.4F * recruit.getRandom().nextFloat());
+                    this.recruit.level().blockEvent(this.chestPos, block, 1, 0);
+                    this.recruit.level().playSound(null, chestPos, SoundEvents.CHEST_CLOSE, recruit.getSoundSource(), 0.7F, 0.8F + 0.4F * recruit.getRandom().nextFloat());
                     compoundTag.putBoolean("isOpened", false);
                 }
 
             }
-            this.recruit.getCommandSenderWorld().gameEvent(this.recruit, open ? GameEvent.BLOCK_OPEN : GameEvent.BLOCK_CLOSE, chestPos);
+            this.recruit.level().gameEvent(this.recruit, open ? GameEvent.BLOCK_OPEN : GameEvent.BLOCK_CLOSE, chestPos);
         }
     }
 

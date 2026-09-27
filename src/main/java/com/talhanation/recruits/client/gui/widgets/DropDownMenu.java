@@ -1,22 +1,23 @@
 package com.talhanation.recruits.client.gui.widgets;
 
-import com.mojang.blaze3d.vertex.PoseStack;
+import net.minecraft.client.input.MouseButtonEvent;
+
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.client.gui.components.AbstractWidget;
 import net.minecraft.client.gui.narration.NarrationElementOutput;
 import net.minecraft.network.chat.Component;
-import net.minecraft.util.FastColor;
+import net.minecraft.util.ARGB;
 
 import java.util.List;
 import java.util.function.Consumer;
 import java.util.function.Function;
 public class DropDownMenu<T> extends AbstractWidget {
-    private int bgFill = FastColor.ARGB32.color(255, 60, 60, 60);
-    private int bgFillHovered = FastColor.ARGB32.color(255, 100, 100, 100);
-    private int bgFillSelected = FastColor.ARGB32.color(255, 10, 10, 10);
-    private int displayColor = FastColor.ARGB32.color(255, 255, 255, 255);
-    private int optionTextColor = FastColor.ARGB32.color(255, 255, 255, 255);
+    private int bgFill = ARGB.color(255, 60, 60, 60);
+    private int bgFillHovered = ARGB.color(255, 100, 100, 100);
+    private int bgFillSelected = ARGB.color(255, 10, 10, 10);
+    private int displayColor = ARGB.color(255, 255, 255, 255);
+    private int optionTextColor = ARGB.color(255, 255, 255, 255);
 
     private final List<T> options;
     private final Consumer<T> onSelect;
@@ -47,7 +48,7 @@ public class DropDownMenu<T> extends AbstractWidget {
         else
             guiGraphics.fill(this.getX(), this.getY(), this.getX() + this.width, this.getY() + this.height, bgFillSelected);
 
-        guiGraphics.drawCenteredString(Minecraft.getInstance().font, getSelectedText(), this.getX() + this.width / 2, this.getY() + (this.height - 8) / 2, displayColor);
+        guiGraphics.drawCenteredString(Minecraft.getInstance().font, getSelectedText(), this.getX() + this.width / 2, this.getY() + (this.height - 8) / 2, com.talhanation.recruits.client.gui.util.GuiCompat.opaque(displayColor));
 
         renderArrow(guiGraphics, this.getX() + this.width - 10, this.getY() + this.height / 2, isOpen, displayColor);
 
@@ -63,13 +64,15 @@ public class DropDownMenu<T> extends AbstractWidget {
                 }
 
                 String text = optionTextGetter.apply(option);
-                guiGraphics.drawCenteredString(Minecraft.getInstance().font, text, this.getX() + this.width / 2, optionY + (optionHeight - 8) / 2, optionTextColor);
+                guiGraphics.drawCenteredString(Minecraft.getInstance().font, text, this.getX() + this.width / 2, optionY + (optionHeight - 8) / 2, com.talhanation.recruits.client.gui.util.GuiCompat.opaque(optionTextColor));
             }
         }
     }
 
     @Override
-    public void onClick(double mouseX, double mouseY) {
+    public void onClick(MouseButtonEvent event, boolean doubleClick) {
+        double mouseX = event.x();
+        double mouseY = event.y();
         // Do not use
     }
 

@@ -9,7 +9,7 @@ import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.Mob;
 import net.minecraft.world.entity.ai.attributes.Attributes;
 import net.minecraft.world.entity.ai.goal.Goal;
-import net.minecraft.world.entity.animal.horse.AbstractHorse;
+import net.minecraft.world.entity.animal.equine.AbstractHorse;
 import net.minecraft.world.entity.monster.Monster;
 import net.minecraft.world.entity.monster.RangedAttackMob;
 import net.minecraft.world.entity.player.Player;
@@ -82,7 +82,7 @@ public class UseShield extends Goal {
             double distanceToTarget = this.entity.distanceToSqr(target);
             boolean isTargetInReachToBlock = this.entity instanceof HorsemanEntity horseman && horseman.getVehicle() instanceof AbstractHorse ?  70 > distanceToTarget :  120 > distanceToTarget ;
 
-            boolean isDanger = itemInHand instanceof AxeItem || itemInHand instanceof PickaxeItem || itemInHand instanceof SwordItem;
+            boolean isDanger = itemInHand instanceof AxeItem || itemInHand.getDefaultInstance().is(net.minecraft.tags.ItemTags.PICKAXES) || itemInHand.getDefaultInstance().is(net.minecraft.tags.ItemTags.SWORDS);
 
             if(isSelfTargeted){
                 //For Ranged

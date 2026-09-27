@@ -12,7 +12,7 @@ import net.minecraft.network.chat.Component;
 import net.minecraft.network.chat.MutableComponent;
 import net.minecraft.world.Container;
 import net.minecraft.world.entity.Entity;
-import net.minecraft.world.entity.animal.horse.AbstractHorse;
+import net.minecraft.world.entity.animal.equine.AbstractHorse;
 import net.minecraft.world.entity.npc.InventoryCarrier;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.ItemStack;
@@ -184,8 +184,8 @@ public class OtherCategory implements ICommandCategory {
     private boolean isUpkeepPosition(BlockPos rayBlockPos, Player player) {
         if(rayBlockPos == null) return false;
 
-        BlockEntity entity = player.getCommandSenderWorld().getBlockEntity(rayBlockPos);
-        BlockState blockState = player.getCommandSenderWorld().getBlockState(rayBlockPos);
+        BlockEntity entity = player.level().getBlockEntity(rayBlockPos);
+        BlockState blockState = player.level().getBlockState(rayBlockPos);
 
         return entity instanceof Container || blockState.getBlock() instanceof ChestBlock;
     }

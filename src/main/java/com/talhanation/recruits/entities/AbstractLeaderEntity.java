@@ -1,5 +1,6 @@
 package com.talhanation.recruits.entities;
 
+import net.minecraft.core.UUIDUtil;
 import com.talhanation.recruits.Main;
 import com.talhanation.recruits.compat.smallships.SmallShips;
 import com.talhanation.recruits.entities.ai.controller.IAttackController;
@@ -25,7 +26,7 @@ import net.minecraft.world.damagesource.DamageSource;
 import net.minecraft.world.entity.EntityType;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.MobCategory;
-import net.minecraft.world.entity.monster.Pillager;
+import net.minecraft.world.entity.monster.illager.Pillager;
 import net.minecraft.world.entity.player.Inventory;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.inventory.AbstractContainerMenu;
@@ -38,7 +39,6 @@ import net.minecraft.world.level.block.Blocks;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.phys.AABB;
 import net.minecraft.world.phys.Vec3;
-import net.minecraftforge.network.NetworkHooks;
 import net.minecraftforge.network.PacketDistributor;
 import org.jetbrains.annotations.NotNull;
 
@@ -56,7 +56,7 @@ public abstract class AbstractLeaderEntity extends AbstractChunkLoaderEntity imp
     private static final EntityDataAccessor<Byte> ENEMY_ACTION = SynchedEntityData.defineId(AbstractLeaderEntity.class, EntityDataSerializers.BYTE);
     private static final EntityDataAccessor<Byte> PATROLLING_STATE = SynchedEntityData.defineId(AbstractLeaderEntity.class, EntityDataSerializers.BYTE);
     private static final EntityDataAccessor<Byte> INFO_MODE = SynchedEntityData.defineId(AbstractLeaderEntity.class, EntityDataSerializers.BYTE);
-    private static final EntityDataAccessor<Optional<UUID>> ROUTE_ID = SynchedEntityData.defineId(AbstractLeaderEntity.class, EntityDataSerializers.OPTIONAL_UUID);
+    private static final EntityDataAccessor<Optional<UUID>> ROUTE_ID = SynchedEntityData.defineId(AbstractLeaderEntity.class, com.talhanation.recruits.init.ModDataSerializers.OPTIONAL_UUID);
     public boolean returning;
     public boolean retreating;
     public int commandCooldown = 0;
@@ -83,20 +83,20 @@ public abstract class AbstractLeaderEntity extends AbstractChunkLoaderEntity imp
     /** Per-waypoint wait time in seconds (parallel to WAYPOINTS). 0 = no wait. */
     public java.util.ArrayList<Integer> WAYPOINT_WAIT_SECONDS = new java.util.ArrayList<>();
 
-    protected void defineSynchedData() {
-        super.defineSynchedData();
-        this.entityData.define(WAYPOINT_INDEX, 0);
-        this.entityData.define(WAIT_TIME_IN_MIN, 0);
-        this.entityData.define(CYCLE, false);
-        this.entityData.define(PATROL_SPEED, (byte) 1); // 0=SLOW 1=NORMAL 2=FAST
-        this.entityData.define(ENEMY_ACTION, (byte) 0); // 0=CHARGE 1=HOLD 2=KEEP_PATROLLING
-        this.entityData.define(PATROLLING_STATE, (byte) 3);
-        this.entityData.define(INFO_MODE, (byte) 0);
-        this.entityData.define(ROUTE_ID, Optional.empty());
+    protected void defineSynchedData(SynchedEntityData.Builder builder) {
+        super.defineSynchedData(builder);
+        builder.define(WAYPOINT_INDEX, 0);
+        builder.define(WAIT_TIME_IN_MIN, 0);
+        builder.define(CYCLE, false);
+        builder.define(PATROL_SPEED, (byte) 1); // 0=SLOW 1=NORMAL 2=FAST
+        builder.define(ENEMY_ACTION, (byte) 0); // 0=CHARGE 1=HOLD 2=KEEP_PATROLLING
+        builder.define(PATROLLING_STATE, (byte) 3);
+        builder.define(INFO_MODE, (byte) 0);
+        builder.define(ROUTE_ID, Optional.empty());
     }
 
-    public void addAdditionalSaveData(CompoundTag nbt) {
-        super.addAdditionalSaveData(nbt);
+    public void saveRecruitData(CompoundTag nbt) {
+        super.saveRecruitData(nbt);
         nbt.putInt("waypoint_index", this.getWaypointIndex());
         nbt.putInt("wait_time_in_min", this.getWaitTimeInMin());
         nbt.putInt("waiting_time", this.waitingTime);
@@ -109,7 +109,7 @@ public abstract class AbstractLeaderEntity extends AbstractChunkLoaderEntity imp
         nbt.putString("OwnerName", this.ownerName);
         nbt.putByte("patrolSpeed", this.getPatrolSpeed());
         nbt.putByte("enemyAction", this.getEnemyAction());
-        if (this.getRouteID() != null) nbt.putUUID("routeId", this.getRouteID());
+        if (this.getRouteID() != null) nbt.store("routeId", UUIDUtil.CODEC, this.getRouteID());
         nbt.putInt("waitForRecruitsUpkeepTime", this.waitForRecruitsUpkeepTime);
 
         ListTag waypointItems = new ListTag();
@@ -118,7 +118,7 @@ public abstract class AbstractLeaderEntity extends AbstractChunkLoaderEntity imp
             if (!itemstack.isEmpty()) {
                 CompoundTag compoundnbt = new CompoundTag();
                 compoundnbt.putByte("WaypointItem", (byte) i);
-                itemstack.save(compoundnbt);
+                com.talhanation.recruits.util.NbtCompat.saveItem(itemstack, compoundnbt);
                 waypointItems.add(compoundnbt);
             }
         }
@@ -150,51 +150,51 @@ public abstract class AbstractLeaderEntity extends AbstractChunkLoaderEntity imp
         nbt.put("ArmyData", armyTag);
     }
 
-    public void readAdditionalSaveData(CompoundTag nbt) {
-        super.readAdditionalSaveData(nbt);
+    public void loadRecruitData(CompoundTag nbt) {
+        super.loadRecruitData(nbt);
 
-        this.setWaypointIndex(nbt.getInt("waypoint_index"));
-        this.setWaitTimeInMin(nbt.getInt("wait_time_in_min"));
-        this.setCycle(nbt.getBoolean("cycle"));
-        this.setPatrolState(State.fromIndex(nbt.getByte("patrolState")));
-        this.prevState = State.fromIndex(nbt.getByte("prevPatrolState"));
-        this.returning = nbt.getBoolean("returning");
-        this.retreating = nbt.getBoolean("retreating");
-        this.waitingTime = nbt.getInt("waiting_time");
-        this.waitForRecruitsUpkeepTime = nbt.getInt("waitForRecruitsUpkeepTime");
-        this.setInfoMode(nbt.getByte("infoMode"));
-        this.ownerName = nbt.getString("OwnerName");
-        this.setPatrolSpeed(nbt.getByte("patrolSpeed"));
-        this.setEnemyAction(nbt.getByte("enemyAction"));
-        if (nbt.hasUUID("routeId")) this.setRouteID(nbt.getUUID("routeId"));
+        this.setWaypointIndex(nbt.getIntOr("waypoint_index", 0));
+        this.setWaitTimeInMin(nbt.getIntOr("wait_time_in_min", 0));
+        this.setCycle(nbt.getBooleanOr("cycle", false));
+        this.setPatrolState(State.fromIndex(nbt.getByteOr("patrolState", (byte) 0)));
+        this.prevState = State.fromIndex(nbt.getByteOr("prevPatrolState", (byte) 0));
+        this.returning = nbt.getBooleanOr("returning", false);
+        this.retreating = nbt.getBooleanOr("retreating", false);
+        this.waitingTime = nbt.getIntOr("waiting_time", 0);
+        this.waitForRecruitsUpkeepTime = nbt.getIntOr("waitForRecruitsUpkeepTime", 0);
+        this.setInfoMode(nbt.getByteOr("infoMode", (byte) 0));
+        this.ownerName = nbt.getStringOr("OwnerName", "");
+        this.setPatrolSpeed(nbt.getByteOr("patrolSpeed", (byte) 0));
+        this.setEnemyAction(nbt.getByteOr("enemyAction", (byte) 0));
+        if (nbt.read("routeId", UUIDUtil.CODEC).isPresent()) this.setRouteID(nbt.read("routeId", UUIDUtil.CODEC).orElse(null));
 
-        ListTag waypointItems = nbt.getList("WaypointItems", 10);
+        ListTag waypointItems = nbt.getListOrEmpty("WaypointItems");
         for (int i = 0; i < waypointItems.size(); ++i) {
-            CompoundTag compoundnbt = waypointItems.getCompound(i);
+            CompoundTag compoundnbt = waypointItems.getCompoundOrEmpty(i);
 
-            ItemStack itemStack = ItemStack.of(compoundnbt);
+            ItemStack itemStack = com.talhanation.recruits.util.NbtCompat.loadItem(compoundnbt);
             this.WAYPOINT_ITEMS.push(itemStack);
         }
 
-        ListTag waypoints = nbt.getList("Waypoints", 10);
+        ListTag waypoints = nbt.getListOrEmpty("Waypoints");
         for (int i = 0; i < waypoints.size(); ++i) {
-            CompoundTag compoundnbt = waypoints.getCompound(i);
+            CompoundTag compoundnbt = waypoints.getCompoundOrEmpty(i);
             BlockPos pos = new BlockPos(
-                    (int)compoundnbt.getDouble("PosX"),
-                    (int)compoundnbt.getDouble("PosY"),
-                    (int)compoundnbt.getDouble("PosZ"));
+                    (int)compoundnbt.getDoubleOr("PosX", 0.0D),
+                    (int)compoundnbt.getDoubleOr("PosY", 0.0D),
+                    (int)compoundnbt.getDoubleOr("PosZ", 0.0D));
             this.WAYPOINTS.push(pos);
         }
 
         WAYPOINT_WAIT_SECONDS.clear();
-        ListTag waypointWaits = nbt.getList("WaypointWaits", 10);
+        ListTag waypointWaits = nbt.getListOrEmpty("WaypointWaits");
         for (int i = 0; i < waypointWaits.size(); i++) {
-            WAYPOINT_WAIT_SECONDS.add(waypointWaits.getCompound(i).getInt("WaitSec"));
+            WAYPOINT_WAIT_SECONDS.add(waypointWaits.getCompoundOrEmpty(i).getIntOr("WaitSec", 0));
         }
         while (WAYPOINT_WAIT_SECONDS.size() < WAYPOINTS.size()) WAYPOINT_WAIT_SECONDS.add(0);
 
-        if (nbt.contains("ArmyData") && !this.getCommandSenderWorld().isClientSide()) {
-            army = NPCArmy.load((ServerLevel) this.getCommandSenderWorld(), nbt.getCompound("ArmyData"));
+        if (nbt.contains("ArmyData") && !this.level().isClientSide()) {
+            army = NPCArmy.load((ServerLevel) this.level(), nbt.getCompoundOrEmpty("ArmyData"));
             army.initRecruits(true);
         }
     }
@@ -320,7 +320,7 @@ public abstract class AbstractLeaderEntity extends AbstractChunkLoaderEntity imp
 
             case RETREATING -> {
                 if(this.getOwner() != null && !retreatingMessage) {
-                    this.getOwner().sendSystemMessage(RETREATING());
+                    this.getOwner().displayClientMessage(RETREATING(), false);
                     retreatingMessage = true;
                 }
                 this.retreating = true;
@@ -351,7 +351,7 @@ public abstract class AbstractLeaderEntity extends AbstractChunkLoaderEntity imp
     }
 
     private void checkForPotentialEnemies() {
-        if (!(this.getCommandSenderWorld() instanceof ServerLevel serverLevel)) return;
+        if (!(this.level() instanceof ServerLevel serverLevel)) return;
 
         AABB scanBox = this.getBoundingBox().inflate(100D);
         List<LivingEntity> targets = new ArrayList<>();
@@ -473,10 +473,10 @@ public abstract class AbstractLeaderEntity extends AbstractChunkLoaderEntity imp
         InfoMode infoMode = InfoMode.fromIndex(getInfoMode());
         if(this.getOwner() != null && infoCooldown == 0 && infoMode != InfoMode.NONE){
             if((infoMode == InfoMode.ALL || infoMode == InfoMode.HOSTILE) && (target.getType().getCategory() == MobCategory.MONSTER || target instanceof Pillager)){
-                this.getOwner().sendSystemMessage(HOSTILE_CONTACT(this.getOnPos()));
+                this.getOwner().displayClientMessage(HOSTILE_CONTACT(this.getOnPos()), false);
             }
             else if((infoMode == InfoMode.ALL || infoMode == InfoMode.ENEMY) && (target instanceof Player || target instanceof AbstractRecruitEntity recruitTarget && (recruitTarget.isOwned() || recruitTarget.getTeam() != null))){
-                this.getOwner().sendSystemMessage(ENEMY_CONTACT(target.getType().toString(), this.getOnPos()));
+                this.getOwner().displayClientMessage(ENEMY_CONTACT(target.getType().toString(), this.getOnPos()), false);
             }
 
             infoCooldown = 20 * 60;
@@ -661,10 +661,10 @@ public abstract class AbstractLeaderEntity extends AbstractChunkLoaderEntity imp
      * surface block so ship navigation receives an accurate water level.
      */
     private BlockPos resolveServerY(BlockPos pos) {
-        net.minecraft.world.level.Level level = getCommandSenderWorld();
+        net.minecraft.world.level.Level level = level();
         int surfaceY = level.getHeight(net.minecraft.world.level.levelgen.Heightmap.Types.WORLD_SURFACE,
                 pos.getX(), pos.getZ()) - 1;
-        int y = Math.max(surfaceY, level.getMinBuildHeight());
+        int y = Math.max(surfaceY, level.getMinY());
         return new BlockPos(pos.getX(), y, pos.getZ());
     }
 
@@ -725,7 +725,7 @@ public abstract class AbstractLeaderEntity extends AbstractChunkLoaderEntity imp
     }
 
     public ItemStack getItemStackToRender(BlockPos pos){
-        BlockState state = this.getCommandSenderWorld().getBlockState(pos);
+        BlockState state = this.level().getBlockState(pos);
         ItemStack itemStack;
         if (state.is(Blocks.WATER) || state.is(Blocks.KELP) || state.is(Blocks.KELP_PLANT)){
             if(this instanceof CaptainEntity){
@@ -839,16 +839,16 @@ public abstract class AbstractLeaderEntity extends AbstractChunkLoaderEntity imp
     }
 
     @Override
-    public boolean hurt(@NotNull DamageSource dmg, float amt) {
+    public boolean hurtServer(net.minecraft.server.level.ServerLevel serverLevel, @NotNull DamageSource dmg, float amt) {
         if (this.getMaxHealth() * 0.25 > this.getHealth() && state != State.RETREATING) {
             this.state = State.RETREATING;
         }
-        return super.hurt(dmg, amt);
+        return super.hurtServer(serverLevel, dmg, amt);
     }
 
     public void openSpecialGUI(Player player) {
         if (player instanceof ServerPlayer) {
-            NetworkHooks.openScreen((ServerPlayer) player, new MenuProvider() {
+            ((ServerPlayer) player).openMenu(new MenuProvider() {
                 @Override
                 public @NotNull Component getDisplayName() {
                     return AbstractLeaderEntity.this.getName();
@@ -864,7 +864,7 @@ public abstract class AbstractLeaderEntity extends AbstractChunkLoaderEntity imp
         }
 
         if (player instanceof ServerPlayer) {
-            Main.SIMPLE_CHANNEL.send(PacketDistributor.PLAYER.with(() -> (ServerPlayer) player), new MessageToClientUpdateLeaderScreen(this.WAYPOINTS, this.WAYPOINT_ITEMS, this.army.getTotalUnits()));
+            Main.SIMPLE_CHANNEL.send(PacketDistributor.PLAYER.with((ServerPlayer) player), new MessageToClientUpdateLeaderScreen(this.WAYPOINTS, this.WAYPOINT_ITEMS, this.army.getTotalUnits()));
         }
     }
 }

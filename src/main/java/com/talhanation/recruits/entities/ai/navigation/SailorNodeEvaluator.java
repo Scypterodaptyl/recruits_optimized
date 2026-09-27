@@ -7,7 +7,7 @@ import net.minecraft.util.Mth;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.Mob;
 import net.minecraft.world.level.PathNavigationRegion;
-import net.minecraft.world.level.pathfinder.BlockPathTypes;
+import net.minecraft.world.level.pathfinder.PathType;
 import net.minecraft.world.level.pathfinder.Node;
 import net.minecraft.world.level.pathfinder.SwimNodeEvaluator;
 import net.minecraft.world.level.pathfinder.Target;
@@ -28,14 +28,14 @@ public class SailorNodeEvaluator extends SwimNodeEvaluator {
     public void prepare(@NotNull PathNavigationRegion region, @NotNull Mob mob) {
         super.prepare(region, mob);
 
-        this.oldWaterMalus = mob.getPathfindingMalus(BlockPathTypes.WATER);
-        mob.setPathfindingMalus(BlockPathTypes.WATER, 8.0F);
+        this.oldWaterMalus = mob.getPathfindingMalus(PathType.WATER);
+        mob.setPathfindingMalus(PathType.WATER, 8.0F);
 
-        this.oldBlockedMalus = mob.getPathfindingMalus(BlockPathTypes.BLOCKED);
-        mob.setPathfindingMalus(BlockPathTypes.BLOCKED, -1F);
+        this.oldBlockedMalus = mob.getPathfindingMalus(PathType.BLOCKED);
+        mob.setPathfindingMalus(PathType.BLOCKED, -1F);
 
-        this.oldBreachMalus = mob.getPathfindingMalus(BlockPathTypes.BREACH);
-        mob.setPathfindingMalus(BlockPathTypes.BREACH, 0.0F);
+        this.oldBreachMalus = mob.getPathfindingMalus(PathType.BREACH);
+        mob.setPathfindingMalus(PathType.BREACH, 0.0F);
 
         Entity vehicle = this.mob.getVehicle();
         float width = vehicle != null ? vehicle.getBbWidth() + 3.0F : mob.getBbWidth() + 1.0F;
@@ -48,9 +48,9 @@ public class SailorNodeEvaluator extends SwimNodeEvaluator {
 
     @Nullable
     protected Node getNode(int x, int y, int z) {
-        BlockPathTypes blockPathType = this.getCachedBlockType(x, y, z);
+        PathType blockPathType = this.getCachedBlockType(x, y, z);
 
-        if (blockPathType != BlockPathTypes.WATER && blockPathType != BlockPathTypes.BREACH) {
+        if (blockPathType != PathType.WATER && blockPathType != PathType.BREACH) {
             return null;
         }
 
@@ -71,28 +71,28 @@ public class SailorNodeEvaluator extends SwimNodeEvaluator {
 
         for (Direction direction : Direction.Plane.HORIZONTAL) {
             mutablePos.set(x, y, z).move(direction, 2);
-            if (this.level.getFluidState(mutablePos).isEmpty()) {
+            if (this.currentContext.level().getFluidState(mutablePos).isEmpty()) {
                 node.costMalus += 4.0F;
             }
 
             mutablePos.move(direction, 2);
-            if (this.level.getFluidState(mutablePos).isEmpty()) {
+            if (this.currentContext.level().getFluidState(mutablePos).isEmpty()) {
                 node.costMalus += 8.0F;
             }
 
             mutablePos.move(direction, 2);
-            if (this.level.getFluidState(mutablePos).isEmpty()) {
+            if (this.currentContext.level().getFluidState(mutablePos).isEmpty()) {
                 node.costMalus += 16.0F;
             }
         }
 
         mutablePos.set(x, y - 2, z);
-        if (this.level.getFluidState(mutablePos).isEmpty()) {
+        if (this.currentContext.level().getFluidState(mutablePos).isEmpty()) {
             node.costMalus += 4.0F;
         }
 
         mutablePos.set(x, y - 1, z);
-        if (this.level.getFluidState(mutablePos).isEmpty()) {
+        if (this.currentContext.level().getFluidState(mutablePos).isEmpty()) {
             node.costMalus += 8.0F;
         }
 
@@ -108,9 +108,9 @@ public class SailorNodeEvaluator extends SwimNodeEvaluator {
     }
 
     public void done() {
-        this.mob.setPathfindingMalus(BlockPathTypes.WATER, this.oldWaterMalus);
-        this.mob.setPathfindingMalus(BlockPathTypes.BLOCKED, this.oldBlockedMalus);
-        this.mob.setPathfindingMalus(BlockPathTypes.BREACH, this.oldBreachMalus);
+        this.mob.setPathfindingMalus(PathType.WATER, this.oldWaterMalus);
+        this.mob.setPathfindingMalus(PathType.BLOCKED, this.oldBlockedMalus);
+        this.mob.setPathfindingMalus(PathType.BREACH, this.oldBreachMalus);
         super.done();
     }
 
@@ -123,8 +123,8 @@ public class SailorNodeEvaluator extends SwimNodeEvaluator {
         return getNodeRaw(Mth.floor(nodeX), Mth.floor(this.mob.getY()), Mth.floor(nodeZ));
     }
 
-    @Nullable
-    public Target getGoal(double p_77550_, double p_77551_, double p_77552_) {
-        return this.getTargetFromNode(this.getNodeRaw(Mth.floor(p_77550_), Mth.floor(p_77551_), Mth.floor(p_77552_)));
+    @Override
+    public @NotNull Target getTarget(double p_77550_, double p_77551_, double p_77552_) {
+        return new Target(this.getNodeRaw(Mth.floor(p_77550_), Mth.floor(p_77551_), Mth.floor(p_77552_)));
     }
 }

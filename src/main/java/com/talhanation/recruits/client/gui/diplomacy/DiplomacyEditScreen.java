@@ -1,6 +1,7 @@
 package com.talhanation.recruits.client.gui.diplomacy;
 
-import com.mojang.blaze3d.systems.RenderSystem;
+import net.minecraft.client.renderer.RenderPipelines;
+
 import com.talhanation.recruits.Main;
 import com.talhanation.recruits.client.ClientManager;
 import com.talhanation.recruits.client.gui.component.BannerRenderer;
@@ -12,16 +13,15 @@ import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.client.gui.components.Button;
 import net.minecraft.client.gui.screens.Screen;
-import net.minecraft.client.renderer.GameRenderer;
 import net.minecraft.network.chat.Component;
-import net.minecraft.resources.ResourceLocation;
+import net.minecraft.resources.Identifier;
 import net.minecraftforge.client.gui.widget.ExtendedButton;
 import org.jetbrains.annotations.NotNull;
 
 
 public class DiplomacyEditScreen extends RecruitsScreenBase {
 
-    private static final ResourceLocation TEXTURE = new ResourceLocation(Main.MOD_ID, "textures/gui/gui_big.png");
+    private static final Identifier TEXTURE = Identifier.fromNamespaceAndPath(Main.MOD_ID, "textures/gui/gui_big.png");
     private static final Component TITLE = Component.translatable("gui.recruits.diplomacy_edit.title");
     protected static final Component BUTTON_CONFIRM = Component.translatable("gui.recruits.button.confirm");
     protected static final Component BUTTON_BACK = Component.translatable("gui.recruits.button.back");
@@ -143,11 +143,8 @@ public class DiplomacyEditScreen extends RecruitsScreenBase {
     }
 
     @Override
-    public void renderBackground(GuiGraphics guiGraphics, int mouseX, int mouseY, float delta) {
-        RenderSystem.setShader(GameRenderer::getPositionTexShader);
-        RenderSystem.setShaderColor(1F, 1F, 1F, 1F);
-        RenderSystem.setShaderTexture(0, TEXTURE);
-        guiGraphics.blit(TEXTURE, guiLeft, guiTop, 0, 0, xSize, ySize);
+    public void renderRecruitsBackground(GuiGraphics guiGraphics, int mouseX, int mouseY, float delta) {
+        guiGraphics.blit(RenderPipelines.GUI_TEXTURED, TEXTURE, guiLeft, guiTop, (float) (0), (float) (0), xSize, ySize, 256, 256);
     }
     int x3 = 120;
     int y3 = 90;
@@ -165,22 +162,16 @@ public class DiplomacyEditScreen extends RecruitsScreenBase {
     public void renderForeground(GuiGraphics guiGraphics, int mouseX, int mouseY, float delta) {
         if(ClientManager.ownFaction == null) return;
 
-        guiGraphics.drawString(font, TITLE, guiLeft + xSize / 2 - font.width(TITLE) / 2, guiTop + 7, FONT_COLOR, false);
+        guiGraphics.drawString(font, TITLE, guiLeft + xSize / 2 - font.width(TITLE) / 2, guiTop + 7, com.talhanation.recruits.client.gui.util.GuiCompat.opaque(FONT_COLOR), false);
 
-        guiGraphics.drawString(font, ClientManager.ownFaction.getTeamDisplayName(), x5 + guiLeft + xSize / 2 - font.width(ClientManager.ownFaction.getTeamDisplayName()) / 2, guiTop + 7 - y5, FONT_COLOR, false);
-        guiGraphics.drawString(font, otherTeam.getTeamDisplayName(), x6 + guiLeft + xSize / 2 - font.width(otherTeam.getTeamDisplayName()) / 2, guiTop + 7 - y6, FONT_COLOR, false);
+        guiGraphics.drawString(font, ClientManager.ownFaction.getTeamDisplayName(), x5 + guiLeft + xSize / 2 - font.width(ClientManager.ownFaction.getTeamDisplayName()) / 2, guiTop + 7 - y5, com.talhanation.recruits.client.gui.util.GuiCompat.opaque(FONT_COLOR), false);
+        guiGraphics.drawString(font, otherTeam.getTeamDisplayName(), x6 + guiLeft + xSize / 2 - font.width(otherTeam.getTeamDisplayName()) / 2, guiTop + 7 - y6, com.talhanation.recruits.client.gui.util.GuiCompat.opaque(FONT_COLOR), false);
 
-        RenderSystem.setShader(GameRenderer::getPositionTexShader);
-        RenderSystem.setShaderColor(1F, 1F, 1F, 1F);
-        RenderSystem.setShaderTexture(0, getDiplomacyStatusIcon(othersStance));
-        guiGraphics.blit(getDiplomacyStatusIcon(othersStance), this.guiLeft + x3, guiTop + ySize - y3, 0, 0, 21, 21, 21, 21);
-        guiGraphics.drawString(font, othersStance.name(), x7 + guiLeft + xSize / 2 - font.width(othersStance.name()) / 2, guiTop + 7 - y7, FONT_COLOR,false);
+        guiGraphics.blit(RenderPipelines.GUI_TEXTURED, getDiplomacyStatusIcon(othersStance), this.guiLeft + x3, guiTop + ySize - y3, (float) (0), (float) (0), 21, 21, 21, 21);
+        guiGraphics.drawString(font, othersStance.name(), x7 + guiLeft + xSize / 2 - font.width(othersStance.name()) / 2, guiTop + 7 - y7, com.talhanation.recruits.client.gui.util.GuiCompat.opaque(FONT_COLOR),false);
 
-        RenderSystem.setShader(GameRenderer::getPositionTexShader);
-        RenderSystem.setShaderColor(1F, 1F, 1F, 1F);
-        RenderSystem.setShaderTexture(0, getDiplomacyStatusIcon(newStance));
-        guiGraphics.blit(getDiplomacyStatusIcon(newStance), this.guiLeft + x4, guiTop + ySize - y4, 0, 0, 21, 21, 21, 21);
-        guiGraphics.drawString(font, newStance.name(), x8 + guiLeft + xSize / 2 - font.width(newStance.name()) / 2,  guiTop + 7 - y8, FONT_COLOR, false);
+        guiGraphics.blit(RenderPipelines.GUI_TEXTURED, getDiplomacyStatusIcon(newStance), this.guiLeft + x4, guiTop + ySize - y4, (float) (0), (float) (0), 21, 21, 21, 21);
+        guiGraphics.drawString(font, newStance.name(), x8 + guiLeft + xSize / 2 - font.width(newStance.name()) / 2,  guiTop + 7 - y8, com.talhanation.recruits.client.gui.util.GuiCompat.opaque(FONT_COLOR), false);
 
         boolean hasTreaty = ClientManager.hasTreaty(ClientManager.ownFaction.getStringID(), otherTeam.getStringID());
         if (hasTreaty) {
@@ -206,13 +197,13 @@ public class DiplomacyEditScreen extends RecruitsScreenBase {
         bannerOther.renderBanner(guiGraphics, this.guiLeft + x2, guiTop + ySize - y2, this.width, this.height, 40);
     }
 
-    public ResourceLocation getDiplomacyStatusIcon(RecruitsDiplomacyManager.DiplomacyStatus status){
-        ResourceLocation location;
+    public Identifier getDiplomacyStatusIcon(RecruitsDiplomacyManager.DiplomacyStatus status){
+        Identifier location;
 
          switch (status){
-            default -> location = new ResourceLocation(Main.MOD_ID, "textures/gui/image/neutral.png");
-            case ALLY ->  location = new ResourceLocation(Main.MOD_ID, "textures/gui/image/ally.png");
-            case ENEMY ->  location = new ResourceLocation(Main.MOD_ID, "textures/gui/image/enemy.png");
+            default -> location = Identifier.fromNamespaceAndPath(Main.MOD_ID, "textures/gui/image/neutral.png");
+            case ALLY ->  location = Identifier.fromNamespaceAndPath(Main.MOD_ID, "textures/gui/image/ally.png");
+            case ENEMY ->  location = Identifier.fromNamespaceAndPath(Main.MOD_ID, "textures/gui/image/enemy.png");
         }
         return location;
     }

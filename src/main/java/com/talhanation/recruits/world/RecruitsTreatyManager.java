@@ -5,7 +5,6 @@ import com.talhanation.recruits.Main;
 import com.talhanation.recruits.network.MessageToClientSetDiplomaticToast;
 import com.talhanation.recruits.network.MessageToClientUpdateTreaties;
 import net.minecraft.nbt.CompoundTag;
-import net.minecraft.nbt.ListTag;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraftforge.network.PacketDistributor;
@@ -108,13 +107,13 @@ public class RecruitsTreatyManager {
 
         List<ServerPlayer> playersA = FactionEvents.recruitsFactionManager.getPlayersInTeam(factionAId, level);
         for (ServerPlayer player : playersA) {
-            Main.SIMPLE_CHANNEL.send(PacketDistributor.PLAYER.with(() -> player),
+            Main.SIMPLE_CHANNEL.send(PacketDistributor.PLAYER.with(player),
                     new MessageToClientSetDiplomaticToast(toastId, factionB));
         }
 
         List<ServerPlayer> playersB = FactionEvents.recruitsFactionManager.getPlayersInTeam(factionBId, level);
         for (ServerPlayer player : playersB) {
-            Main.SIMPLE_CHANNEL.send(PacketDistributor.PLAYER.with(() -> player),
+            Main.SIMPLE_CHANNEL.send(PacketDistributor.PLAYER.with(player),
                     new MessageToClientSetDiplomaticToast(toastId, factionA));
         }
     }
@@ -126,14 +125,14 @@ public class RecruitsTreatyManager {
     public void broadcastTreatiesToAll(ServerLevel level) {
         if (level == null) return;
         for (ServerPlayer player : level.players()) {
-            Main.SIMPLE_CHANNEL.send(PacketDistributor.PLAYER.with(() -> player),
+            Main.SIMPLE_CHANNEL.send(PacketDistributor.PLAYER.with(player),
                     new MessageToClientUpdateTreaties(treaties));
         }
     }
 
     public void broadcastTreatiesToPlayer(ServerPlayer player) {
         if (player == null) return;
-        Main.SIMPLE_CHANNEL.send(PacketDistributor.PLAYER.with(() -> player),
+        Main.SIMPLE_CHANNEL.send(PacketDistributor.PLAYER.with(player),
                 new MessageToClientUpdateTreaties(treaties));
     }
 
@@ -145,8 +144,8 @@ public class RecruitsTreatyManager {
 
     public static Map<String, Long> mapFromNbt(CompoundTag nbt) {
         Map<String, Long> map = new HashMap<>();
-        for (String key : nbt.getAllKeys()) {
-            map.put(key, nbt.getLong(key));
+        for (String key : nbt.keySet()) {
+            map.put(key, nbt.getLongOr(key, 0L));
         }
         return map;
     }

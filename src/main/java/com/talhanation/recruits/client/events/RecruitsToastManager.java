@@ -9,18 +9,18 @@ import net.minecraft.ChatFormatting;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.components.toasts.Toast;
 import net.minecraft.network.chat.Component;
-import net.minecraft.resources.ResourceLocation;
+import net.minecraft.resources.Identifier;
 import net.minecraftforge.api.distmarker.Dist;
 import net.minecraftforge.api.distmarker.OnlyIn;
 import org.jetbrains.annotations.Nullable;
 @OnlyIn(Dist.CLIENT)
 public class RecruitsToastManager {
-    private static final ResourceLocation LETTER_IMAGE = new ResourceLocation(Main.MOD_ID, "textures/gui/image/letter.png");
-    private static final ResourceLocation ALLY_IMAGE = new ResourceLocation(Main.MOD_ID, "textures/gui/image/ally.png");
-    private static final ResourceLocation ENEMY_IMAGE = new ResourceLocation(Main.MOD_ID, "textures/gui/image/enemy.png");
-    private static final ResourceLocation NEUTRAL_IMAGE = new ResourceLocation(Main.MOD_ID, "textures/gui/image/neutral.png");
-    private static final ResourceLocation CROWN_IMAGE = new ResourceLocation(Main.MOD_ID, "textures/gui/image/leader_crown.png");
-    private static final ResourceLocation EMBARGO_IMAGE = new ResourceLocation(Main.MOD_ID, "textures/gui/image/embargo.png");
+    private static final Identifier LETTER_IMAGE = Identifier.fromNamespaceAndPath(Main.MOD_ID, "textures/gui/image/letter.png");
+    private static final Identifier ALLY_IMAGE = Identifier.fromNamespaceAndPath(Main.MOD_ID, "textures/gui/image/ally.png");
+    private static final Identifier ENEMY_IMAGE = Identifier.fromNamespaceAndPath(Main.MOD_ID, "textures/gui/image/enemy.png");
+    private static final Identifier NEUTRAL_IMAGE = Identifier.fromNamespaceAndPath(Main.MOD_ID, "textures/gui/image/neutral.png");
+    private static final Identifier CROWN_IMAGE = Identifier.fromNamespaceAndPath(Main.MOD_ID, "textures/gui/image/leader_crown.png");
+    private static final Identifier EMBARGO_IMAGE = Identifier.fromNamespaceAndPath(Main.MOD_ID, "textures/gui/image/embargo.png");
     public static Images savedTeamForPlayer;//dirty fix calling twice bug
     public static Images savedForPlayer;//dirty fix for calling twice bug
     public static void setTeamToastForPlayer(Images id, @Nullable Component title, @Nullable Component text, RecruitsFaction team){
@@ -60,7 +60,7 @@ public class RecruitsToastManager {
         }
 
         Minecraft minecraft = Minecraft.getInstance();
-        minecraft.getToasts().addToast(toast);
+        minecraft.getToastManager().addToast(toast);
     }
     public static void setToastForPlayer(Images id, @Nullable Component title, @Nullable Component text){
         if(!RecruitsClientConfig.RecruitsToasts.get()) return;
@@ -93,7 +93,7 @@ public class RecruitsToastManager {
         }
 
         Minecraft minecraft = Minecraft.getInstance();
-        minecraft.getToasts().addToast(toast);
+        minecraft.getToastManager().addToast(toast);
     }
 
     @OnlyIn(Dist.CLIENT)

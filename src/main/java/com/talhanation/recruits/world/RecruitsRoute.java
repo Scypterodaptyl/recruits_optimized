@@ -1,5 +1,6 @@
 package com.talhanation.recruits.world;
 
+import net.minecraft.core.UUIDUtil;
 import net.minecraft.core.BlockPos;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.nbt.ListTag;
@@ -63,7 +64,7 @@ public class RecruitsRoute {
 
     public CompoundTag toNBT() {
         CompoundTag nbt = new CompoundTag();
-        nbt.putUUID("ID", id);
+        nbt.store("ID", UUIDUtil.CODEC, id);
         nbt.putString("Name", name);
 
         ListTag waypointList = new ListTag();
@@ -77,14 +78,14 @@ public class RecruitsRoute {
     public static RecruitsRoute fromNBT(CompoundTag nbt) {
         if (nbt == null || nbt.isEmpty()) return null;
 
-        UUID id = nbt.hasUUID("ID") ? nbt.getUUID("ID") : UUID.randomUUID();
-        String name = nbt.getString("Name");
+        UUID id = nbt.read("ID", UUIDUtil.CODEC).isPresent() ? nbt.read("ID", UUIDUtil.CODEC).orElse(null) : UUID.randomUUID();
+        String name = nbt.getStringOr("Name", "");
 
         List<Waypoint> waypoints = new ArrayList<>();
-        ListTag waypointList = nbt.getList("Waypoints", 10);
+        ListTag waypointList = nbt.getListOrEmpty("Waypoints");
         int waypointCount = Math.min(waypointList.size(), MAX_WAYPOINTS);
         for (int i = 0; i < waypointCount; i++) {
-            Waypoint waypoint = Waypoint.fromNBT(waypointList.getCompound(i));
+            Waypoint waypoint = Waypoint.fromNBT(waypointList.getCompoundOrEmpty(i));
             if (waypoint != null) waypoints.add(waypoint);
         }
         return new RecruitsRoute(id, name, waypoints);
@@ -93,7 +94,7 @@ public class RecruitsRoute {
     public void saveToFile(File directory) throws IOException {
         if (!directory.exists()) directory.mkdirs();
         File routeFile = routeFile(directory);
-        NbtIo.write(this.toNBT(), routeFile);
+        NbtIo.write(this.toNBT(), routeFile.toPath());
 
         File legacyFile = legacyRouteFile(directory);
         if (!legacyFile.equals(routeFile) && legacyFile.exists()) legacyFile.delete();
@@ -110,7 +111,7 @@ public class RecruitsRoute {
     @Nullable
     public static RecruitsRoute loadFromFile(File file) throws IOException {
         if (!file.exists()) return null;
-        CompoundTag nbt = NbtIo.read(file);
+        CompoundTag nbt = NbtIo.read(file.toPath());
         if (nbt == null) return null;
         return fromNBT(nbt);
     }
@@ -196,7 +197,7 @@ public class RecruitsRoute {
         @Nullable
         public static WaypointAction fromNBT(CompoundTag nbt) {
             if (nbt == null || nbt.isEmpty()) return null;
-            return new WaypointAction(Type.fromString(nbt.getString("ActionType")), nbt.getInt("WaitSeconds"));
+            return new WaypointAction(Type.fromString(nbt.getStringOr("ActionType", "")), nbt.getIntOr("WaitSeconds", 0));
         }
 
         @Override
@@ -256,12 +257,12 @@ public class RecruitsRoute {
 
             WaypointAction action = null;
             if (nbt.contains("Action")) {
-                action = WaypointAction.fromNBT(nbt.getCompound("Action"));
+                action = WaypointAction.fromNBT(nbt.getCompoundOrEmpty("Action"));
             }
 
             return new Waypoint(
-                    nbt.getString("Name"),
-                    new BlockPos(nbt.getInt("X"), nbt.getInt("Y"), nbt.getInt("Z")),
+                    nbt.getStringOr("Name", ""),
+                    new BlockPos(nbt.getIntOr("X", 0), nbt.getIntOr("Y", 0), nbt.getIntOr("Z", 0)),
                     action
             );
         }

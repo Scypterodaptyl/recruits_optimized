@@ -4,7 +4,7 @@ import net.minecraft.world.InteractionHand;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.ai.attributes.Attributes;
 import net.minecraft.world.entity.ai.goal.Goal;
-import net.minecraft.world.entity.monster.AbstractIllager;
+import net.minecraft.world.entity.monster.illager.AbstractIllager;
 import net.minecraft.world.entity.monster.Monster;
 import net.minecraft.world.entity.monster.RangedAttackMob;
 import net.minecraft.world.item.*;
@@ -59,7 +59,7 @@ public class PillagerUseShield extends Goal {
             boolean isClose = target.distanceTo(this.pillager) <= 3.75D;
             boolean isFar = target.distanceTo(this.pillager) >= 20.0D;
             boolean inRange =  !isFar && target.distanceTo(this.pillager) <= 15.0D;
-            boolean isDanger = itemInHand instanceof CrossbowItem && CrossbowItem.isCharged(itemStackinHand) || itemInHand instanceof AxeItem || itemInHand instanceof PickaxeItem || itemInHand instanceof SwordItem;
+            boolean isDanger = itemInHand instanceof CrossbowItem && CrossbowItem.isCharged(itemStackinHand) || itemInHand instanceof AxeItem || itemInHand.getDefaultInstance().is(net.minecraft.tags.ItemTags.PICKAXES) || itemInHand.getDefaultInstance().is(net.minecraft.tags.ItemTags.SWORDS);
 
             if (target instanceof RangedAttackMob && inRange ) {
                 return true;

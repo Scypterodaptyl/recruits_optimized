@@ -58,7 +58,7 @@ public class RecruitsDiplomacyManager {
 
         DiplomacyEvent.RelationChanged relEvent =
                 new DiplomacyEvent.RelationChanged(team, otherTeam, level, currentRelation, relation);
-        if (MinecraftForge.EVENT_BUS.post(relEvent)) return;
+        if (DiplomacyEvent.RelationChanged.BUS.post(relEvent)) return;
 
         diplomacyMap.computeIfAbsent(team, k -> new ConcurrentHashMap<>()).put(otherTeam, relation);
         if(notifyPlayers) this.notifyPlayersInTeam(team, otherTeam, relation, level);
@@ -103,11 +103,11 @@ public class RecruitsDiplomacyManager {
         if(team != null && otherTeam != null){
             List<ServerPlayer> playersInTeam = FactionEvents.recruitsFactionManager.getPlayersInTeam(team.getStringID(), level);
             for (ServerPlayer player : playersInTeam) {
-                Main.SIMPLE_CHANNEL.send(PacketDistributor.PLAYER.with(()-> player), new MessageToClientSetDiplomaticToast(relation.getByteValue(), otherTeam));
+                Main.SIMPLE_CHANNEL.send(PacketDistributor.PLAYER.with(player), new MessageToClientSetDiplomaticToast(relation.getByteValue(), otherTeam));
             }
             List<ServerPlayer> playersInTeam2 = FactionEvents.recruitsFactionManager.getPlayersInTeam(otherTeam.getStringID(), level);
             for (ServerPlayer player : playersInTeam2) {
-                Main.SIMPLE_CHANNEL.send(PacketDistributor.PLAYER.with(()-> player), new MessageToClientSetDiplomaticToast(relation.getByteValue() + 4, team));
+                Main.SIMPLE_CHANNEL.send(PacketDistributor.PLAYER.with(player), new MessageToClientSetDiplomaticToast(relation.getByteValue() + 4, team));
             }
         }
     }
@@ -124,11 +124,11 @@ public class RecruitsDiplomacyManager {
 
     public static Map<String, Map<String, RecruitsDiplomacyManager.DiplomacyStatus>> mapFromNbt(CompoundTag nbt) {
         Map<String, Map<String, RecruitsDiplomacyManager.DiplomacyStatus>> diplomacyMap = new HashMap<>();
-        for (String team : nbt.getAllKeys()) {
-            CompoundTag teamTag = nbt.getCompound(team);
+        for (String team : nbt.keySet()) {
+            CompoundTag teamTag = nbt.getCompoundOrEmpty(team);
             Map<String, DiplomacyStatus> relations = new HashMap<>();
-            for (String otherTeam : teamTag.getAllKeys()) {
-                byte statusByte = teamTag.getByte(otherTeam);
+            for (String otherTeam : teamTag.keySet()) {
+                byte statusByte = teamTag.getByteOr(otherTeam, (byte) 0);
                 relations.put(otherTeam, DiplomacyStatus.fromByte(statusByte));
             }
             diplomacyMap.put(team, relations);
@@ -138,14 +138,14 @@ public class RecruitsDiplomacyManager {
 
     public void broadcastDiplomacyMapToPlayer(Player player) {
         if (player == null) return;
-        Main.SIMPLE_CHANNEL.send(PacketDistributor.PLAYER.with(()-> (ServerPlayer) player),
+        Main.SIMPLE_CHANNEL.send(PacketDistributor.PLAYER.with((ServerPlayer) player),
                 new MessageToClientUpdateDiplomacyList(diplomacyMap));
     }
 
     public void broadcastDiplomacyMapToAll(ServerLevel serverLevel) {
         if (serverLevel == null) return;
         for(ServerPlayer serverPlayer : serverLevel.players()){
-            Main.SIMPLE_CHANNEL.send(PacketDistributor.PLAYER.with(()-> serverPlayer),
+            Main.SIMPLE_CHANNEL.send(PacketDistributor.PLAYER.with(serverPlayer),
                     new MessageToClientUpdateDiplomacyList(diplomacyMap));
         }
     }
@@ -171,7 +171,7 @@ public class RecruitsDiplomacyManager {
         if (declaringFaction != null) {
             ServerPlayer embargoedPlayer = level.getServer().getPlayerList().getPlayer(embargoedPlayerUUID);
             if (embargoedPlayer != null) {
-                Main.SIMPLE_CHANNEL.send(PacketDistributor.PLAYER.with(() -> embargoedPlayer),
+                Main.SIMPLE_CHANNEL.send(PacketDistributor.PLAYER.with(embargoedPlayer),
                         new MessageToClientSetDiplomaticToast(30, declaringFaction));
             }
         }
@@ -197,7 +197,7 @@ public class RecruitsDiplomacyManager {
         if (declaringFaction != null) {
             ServerPlayer embargoedPlayer = level.getServer().getPlayerList().getPlayer(embargoedPlayerUUID);
             if (embargoedPlayer != null) {
-                Main.SIMPLE_CHANNEL.send(PacketDistributor.PLAYER.with(() -> embargoedPlayer),
+                Main.SIMPLE_CHANNEL.send(PacketDistributor.PLAYER.with(embargoedPlayer),
                         new MessageToClientSetDiplomaticToast(31, declaringFaction));
             }
         }
@@ -223,14 +223,14 @@ public class RecruitsDiplomacyManager {
 
     public void broadcastEmbargoesToPlayer(Player player) {
         if (player == null) return;
-        Main.SIMPLE_CHANNEL.send(PacketDistributor.PLAYER.with(()-> (ServerPlayer) player),
+        Main.SIMPLE_CHANNEL.send(PacketDistributor.PLAYER.with((ServerPlayer) player),
                 new MessageToClientUpdateEmbargoes(embargoMap));
     }
 
     public void broadcastEmbargoesToAll(ServerLevel serverLevel) {
         if (serverLevel == null) return;
         for(ServerPlayer serverPlayer : serverLevel.players()){
-            Main.SIMPLE_CHANNEL.send(PacketDistributor.PLAYER.with(()-> serverPlayer),
+            Main.SIMPLE_CHANNEL.send(PacketDistributor.PLAYER.with(serverPlayer),
                     new MessageToClientUpdateEmbargoes(embargoMap));
         }
     }
@@ -247,8 +247,8 @@ public class RecruitsDiplomacyManager {
 
     public static Map<UUID, String> embargoMapFromNbt(CompoundTag nbt) {
         Map<UUID, String> map = new HashMap<>();
-        for (String key : nbt.getAllKeys()) {
-            String csv = nbt.getString(key);
+        for (String key : nbt.keySet()) {
+            String csv = nbt.getStringOr(key, "");
             if (!csv.isEmpty()) {
                 map.put(UUID.fromString(key), csv);
             }

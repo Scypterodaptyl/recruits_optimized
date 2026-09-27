@@ -1,16 +1,17 @@
 package com.talhanation.recruits.client.gui.widgets;
 
-import com.mojang.blaze3d.systems.RenderSystem;
-import com.mojang.blaze3d.vertex.PoseStack;
+import net.minecraft.client.input.MouseButtonEvent;
+import net.minecraft.client.input.MouseButtonInfo;
+import net.minecraft.client.renderer.RenderPipelines;
+
 import com.talhanation.recruits.util.GameProfileUtils;
 import net.minecraft.client.gui.Font;
 import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.client.gui.components.AbstractWidget;
 import net.minecraft.client.gui.components.Button;
 import net.minecraft.client.gui.narration.NarrationElementOutput;
-import net.minecraft.client.renderer.GameRenderer;
 import net.minecraft.network.chat.Component;
-import net.minecraft.util.FastColor;
+import net.minecraft.util.ARGB;
 import net.minecraftforge.client.gui.widget.ExtendedButton;
 import org.jetbrains.annotations.Nullable;
 
@@ -19,8 +20,8 @@ import java.util.UUID;
 public class SelectedPlayerWidget extends AbstractWidget {
     private final int x, y, width, height;
     private final Button actionButton;
-    private final int PLAYER_NAME_COLOR = FastColor.ARGB32.color(255, 255, 255, 255);
-    private final int BACKGROUND_COLOR = FastColor.ARGB32.color(255, 0, 0, 0);
+    private final int PLAYER_NAME_COLOR = ARGB.color(255, 255, 255, 255);
+    private final int BACKGROUND_COLOR = ARGB.color(255, 0, 0, 0);
 
     private final Font font;
     @Nullable
@@ -58,28 +59,29 @@ public class SelectedPlayerWidget extends AbstractWidget {
         if (playerUUID != null && playerName != null) {
             guiGraphics.fill(x, y, x + width, y + height, BACKGROUND_COLOR);
 
-            RenderSystem.setShader(GameRenderer::getPositionTexShader);
-            RenderSystem.setShaderTexture(0, GameProfileUtils.getSkin(playerUUID));
-            guiGraphics.blit(GameProfileUtils.getSkin(playerUUID), x, y, 20, 20, 8, 8, 8, 8, 64, 64);
-            RenderSystem.enableBlend();
-            guiGraphics.blit(GameProfileUtils.getSkin(playerUUID), x, y, 20, 20, 40, 8, 8, 8, 64, 64);
-            RenderSystem.disableBlend();
+            guiGraphics.blit(RenderPipelines.GUI_TEXTURED, GameProfileUtils.getSkin(playerUUID), x, y, (float) (8), (float) (8), 20, 20, 8, 8, 64, 64);
+            guiGraphics.blit(RenderPipelines.GUI_TEXTURED, GameProfileUtils.getSkin(playerUUID), x, y, (float) (40), (float) (8), 20, 20, 8, 8, 64, 64);
 
-            guiGraphics.drawString(font, playerName, x + 25, y + 6, PLAYER_NAME_COLOR, false);
+            guiGraphics.drawString(font, playerName, x + 25, y + 6, com.talhanation.recruits.client.gui.util.GuiCompat.opaque(PLAYER_NAME_COLOR), false);
 
             actionButton.render(guiGraphics, mouseX, mouseY, partialTick);
         }
     }
 
     @Override
-    public boolean mouseClicked(double x, double y, int i) {
-        if(actionButton.isMouseOver(x,y) && actionButton.active && actionButton.visible) actionButton.onClick(x, y);
-        return super.mouseClicked(x,y,i);
+    public boolean mouseClicked(MouseButtonEvent event, boolean doubleClick) {
+        double x = event.x();
+        double y = event.y();
+        int i = event.button();
+        if(actionButton.isMouseOver(x,y) && actionButton.active && actionButton.visible) actionButton.onClick(new MouseButtonEvent(x, y, new MouseButtonInfo(0, 0)), false);
+        return super.mouseClicked(event, doubleClick);
     }
 
     @Override
-    public void onClick(double x, double y) {
-        if(actionButton.isMouseOver(x,y) && actionButton.active && actionButton.visible) actionButton.onClick(x, y);
+    public void onClick(MouseButtonEvent event, boolean doubleClick) {
+        double x = event.x();
+        double y = event.y();
+        if(actionButton.isMouseOver(x,y) && actionButton.active && actionButton.visible) actionButton.onClick(new MouseButtonEvent(x, y, new MouseButtonInfo(0, 0)), false);
     }
 
     @Override

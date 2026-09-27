@@ -54,7 +54,7 @@ public class RecruitsClaimManager {
         // ClaimEvent.Updated feuern – cancelable
         boolean isNew = !claimsById.containsKey(claim.getUUID());
         ClaimEvent.Updated updateEvent = new ClaimEvent.Updated(claim, level, isNew);
-        if (MinecraftForge.EVENT_BUS.post(updateEvent)) return;
+        if (ClaimEvent.Updated.BUS.post(updateEvent)) return;
 
         this.removeClaimFromIndexes(claim.getUUID());
 
@@ -83,7 +83,7 @@ public class RecruitsClaimManager {
 
     private void removeClaim(ServerLevel level, RecruitsClaim claim) {
         // ClaimEvent.Removed feuern
-        MinecraftForge.EVENT_BUS.post(new ClaimEvent.Removed(claim, level));
+        ClaimEvent.Removed.BUS.post(new ClaimEvent.Removed(claim, level));
 
         this.removeClaimFromIndexes(claim.getUUID());
         activeSieges.remove(claim.getUUID());
@@ -164,7 +164,7 @@ public class RecruitsClaimManager {
         if (claim == null || players == null || players.isEmpty()) return;
 
         for (ServerPlayer player : players) {
-            Main.SIMPLE_CHANNEL.send(PacketDistributor.PLAYER.with(() -> player),
+            Main.SIMPLE_CHANNEL.send(PacketDistributor.PLAYER.with(player),
                     new MessageToClientUpdateClaim(claim));
         }
     }
@@ -173,7 +173,7 @@ public class RecruitsClaimManager {
         if (level == null || claim == null) return;
 
         for (ServerPlayer player : level.getServer().getPlayerList().getPlayers()) {
-            Main.SIMPLE_CHANNEL.send(PacketDistributor.PLAYER.with(() -> player),
+            Main.SIMPLE_CHANNEL.send(PacketDistributor.PLAYER.with(player),
                     new MessageToClientUpdateClaim(claim));
         }
     }
@@ -212,7 +212,7 @@ public class RecruitsClaimManager {
 
     private void sendClaimBatch(
             ServerPlayer player, List<RecruitsClaim> claims, boolean resetClaims, boolean syncComplete) {
-        Main.SIMPLE_CHANNEL.send(PacketDistributor.PLAYER.with(() -> player),
+        Main.SIMPLE_CHANNEL.send(PacketDistributor.PLAYER.with(player),
                 new MessageToClientUpdateClaims(
                         claims,
                         RecruitsServerConfig.ClaimingCost.get(),

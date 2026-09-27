@@ -131,7 +131,7 @@ public class FormationUtils {
 
             if (pos != null) {
                 BlockPos blockPos = FormationUtils.getPositionOrSurface(
-                        recruit.getCommandSenderWorld(),
+                        recruit.level(),
                         new BlockPos((int) Math.round(pos.x), (int) Math.round(pos.y), (int) Math.round(pos.z))
                 );
 
@@ -227,7 +227,7 @@ public class FormationUtils {
 
             if (pos != null) {
                 BlockPos blockPos = FormationUtils.getPositionOrSurface(
-                        recruit.getCommandSenderWorld(),
+                        recruit.level(),
                         new BlockPos((int) Math.round(pos.x), (int) Math.round(pos.y), (int) Math.round(pos.z))
                 );
 
@@ -312,7 +312,7 @@ public class FormationUtils {
 
             if (pos != null) {
                 BlockPos blockPos = FormationUtils.getPositionOrSurface(
-                        recruit.getCommandSenderWorld(),
+                        recruit.level(),
                         new BlockPos((int) Math.round(pos.x), (int) Math.round(pos.y), (int) Math.round(pos.z))
                 );
 
@@ -388,7 +388,7 @@ public class FormationUtils {
 
             if (pos != null) {
                 BlockPos blockPos = FormationUtils.getPositionOrSurface(
-                        recruit.getCommandSenderWorld(),
+                        recruit.level(),
                         new BlockPos((int) Math.round(pos.x), (int) Math.round(pos.y), (int) Math.round(pos.z))
                 );
 
@@ -489,7 +489,7 @@ public class FormationUtils {
 
             if (pos != null) {
                 BlockPos blockPos = FormationUtils.getPositionOrSurface(
-                        recruit.getCommandSenderWorld(),
+                        recruit.level(),
                         new BlockPos((int) Math.round(pos.x), (int) Math.round(pos.y), (int) Math.round(pos.z))
                 );
 
@@ -582,7 +582,7 @@ public class FormationUtils {
 
             if (pos != null) {
                 BlockPos blockPos = FormationUtils.getPositionOrSurface(
-                        recruit.getCommandSenderWorld(),
+                        recruit.level(),
                         new BlockPos((int) Math.round(pos.x), (int) Math.round(pos.y), (int) Math.round(pos.z))
                 );
 
@@ -655,7 +655,7 @@ public class FormationUtils {
             Vec3 pos = possiblePositions.get(i).position;
 
             BlockPos blockPos = FormationUtils.getPositionOrSurface(
-                    recruit.getCommandSenderWorld(),
+                    recruit.level(),
                     new BlockPos((int) Math.round(pos.x), (int) Math.round(pos.y), (int) Math.round(pos.z))
             );
 

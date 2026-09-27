@@ -16,7 +16,6 @@ import com.talhanation.recruits.RecruitEvent;
 import net.minecraftforge.common.MinecraftForge;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.network.chat.Component;
-import net.minecraft.network.chat.MutableComponent;
 import net.minecraft.server.MinecraftServer;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
@@ -25,12 +24,12 @@ import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.EntityType;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.animal.Animal;
-import net.minecraft.world.entity.animal.horse.AbstractChestedHorse;
-import net.minecraft.world.entity.animal.horse.AbstractHorse;
-import net.minecraft.world.entity.monster.AbstractIllager;
+import net.minecraft.world.entity.animal.equine.AbstractChestedHorse;
+import net.minecraft.world.entity.animal.equine.AbstractHorse;
+import net.minecraft.world.entity.monster.illager.AbstractIllager;
 import net.minecraft.world.entity.player.Inventory;
 import net.minecraft.world.entity.player.Player;
-import net.minecraft.world.entity.projectile.AbstractArrow;
+import net.minecraft.world.entity.projectile.arrow.AbstractArrow;
 import net.minecraft.world.entity.projectile.Projectile;
 import net.minecraft.world.inventory.AbstractContainerMenu;
 import net.minecraft.world.phys.EntityHitResult;
@@ -49,8 +48,7 @@ import net.minecraftforge.event.level.LevelEvent;
 import net.minecraftforge.event.server.ServerStartedEvent;
 import net.minecraftforge.event.server.ServerStartingEvent;
 import net.minecraftforge.event.server.ServerStoppingEvent;
-import net.minecraftforge.eventbus.api.SubscribeEvent;
-import net.minecraftforge.network.NetworkHooks;
+import net.minecraftforge.eventbus.api.listener.SubscribeEvent;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.*;
@@ -74,11 +72,11 @@ public class RecruitEvents {
 
     public static void promoteRecruit(AbstractRecruitEntity recruit, int profession, String name, ServerPlayer player) {
         RecruitEvent.Promoted promoteEvent = new RecruitEvent.Promoted(recruit, profession, name, player);
-        MinecraftForge.EVENT_BUS.post(promoteEvent);
-        if (promoteEvent.isCanceled()) return;
+        boolean promoteEventCanceled = RecruitEvent.Promoted.BUS.post(promoteEvent);
+        if (promoteEventCanceled) return;
 
         EntityType<? extends AbstractRecruitEntity> companionType = entitiesByProfession.get(profession);
-        AbstractRecruitEntity abstractRecruit = companionType.create(recruit.getCommandSenderWorld());
+        AbstractRecruitEntity abstractRecruit = companionType.create(recruit.level(), net.minecraft.world.entity.EntitySpawnReason.CONVERSION);
         if (abstractRecruit instanceof ICompanion companion) {
             abstractRecruit.setCustomName(Component.literal(name));
             abstractRecruit.copyPosition(recruit);
@@ -88,10 +86,10 @@ public class RecruitEvents {
             UUID groupUUID = recruit.getGroup();
 
             recruit.discard();
-            abstractRecruit.getCommandSenderWorld().addFreshEntity(abstractRecruit);
+            abstractRecruit.level().addFreshEntity(abstractRecruit);
 
-            if (groupUUID != null && !recruit.getCommandSenderWorld().isClientSide()) {
-                ServerLevel serverLevel = (ServerLevel) abstractRecruit.getCommandSenderWorld();
+            if (groupUUID != null && !recruit.level().isClientSide()) {
+                ServerLevel serverLevel = (ServerLevel) abstractRecruit.level();
                 recruitsGroupsManager.addMember(groupUUID, abstractRecruit.getUUID(), serverLevel);
                 recruitsGroupsManager.removeMember(groupUUID, recruit.getUUID(), serverLevel);
 
@@ -103,7 +101,7 @@ public class RecruitEvents {
 
     public static void openPromoteScreen(Player player, AbstractRecruitEntity recruit) {
         if (player instanceof ServerPlayer) {
-            NetworkHooks.openScreen((ServerPlayer) player, new MenuProvider() {
+            ((ServerPlayer) player).openMenu(new MenuProvider() {
                 @Override
                 public @NotNull Component getDisplayName()  {
                     return recruit.getName();
@@ -122,7 +120,7 @@ public class RecruitEvents {
     }
 
     public static void handleGroupBackwardCompatibility(AbstractRecruitEntity recruit, int oldGroupNumber) {
-        if(recruit.getCommandSenderWorld().isClientSide()) return;
+        if(recruit.level().isClientSide()) return;
         if(recruit.getOwner() != null){
             ServerPlayer serverPlayer = (ServerPlayer) recruit.getOwner();
             String name = "Group " + oldGroupNumber;
@@ -196,7 +194,7 @@ public class RecruitEvents {
             double targetZ = event.getTargetZ();
             UUID player_uuid = player.getUUID();
 
-            List<AbstractRecruitEntity> recruits = player.getCommandSenderWorld().getEntitiesOfClass(
+            List<AbstractRecruitEntity> recruits = player.level().getEntitiesOfClass(
                     AbstractRecruitEntity.class,
                     player.getBoundingBox()
                             .inflate(64, 32, 64),
@@ -208,8 +206,17 @@ public class RecruitEvents {
     }
 
     @SubscribeEvent
+    public void onServerTickPre(TickEvent.LevelTickEvent.Pre event) {
+        this.onServerTick(event);
+    }
+
+    @SubscribeEvent
+    public void onServerTickPost(TickEvent.LevelTickEvent.Post event) {
+        this.onServerTick(event);
+    }
+
     public void onServerTick(TickEvent.LevelTickEvent event) {
-        if (!event.level.isClientSide && event.level instanceof ServerLevel serverWorld) {
+        if (!event.level().isClientSide() && event.level() instanceof ServerLevel serverWorld) {
             if (RecruitsServerConfig.ShouldRecruitPatrolsSpawn.get()) {
                 RECRUIT_PATROL.computeIfAbsent(serverWorld,
                         serverLevel -> new RecruitsPatrolSpawn(serverWorld));
@@ -355,7 +362,7 @@ public class RecruitEvents {
                 return;
             }
 
-            player.getCommandSenderWorld().getEntitiesOfClass(
+            player.level().getEntitiesOfClass(
                     AbstractRecruitEntity.class,
                     player.getBoundingBox().inflate(64F),
                     (recruit) -> !recruit.isOwned() &&
@@ -366,8 +373,10 @@ public class RecruitEvents {
     }
 
     @SubscribeEvent
-    public void onLivingHurt(LivingHurtEvent event) {
-        if(event.getEntity().getCommandSenderWorld().isClientSide()) return;
+    public boolean onLivingHurt(LivingHurtEvent event) {
+        // the old listener kept running after cancelling the event
+        boolean cancel = false;
+        if(event.getEntity().level().isClientSide()) return cancel;
 
         if (Main.isMusketModLoaded) {
             Entity sourceEntity = event.getSource().getEntity();
@@ -376,7 +385,7 @@ public class RecruitEvents {
                 if (target instanceof LivingEntity impactEntity) {
 
                     if (!canAttack(owner, impactEntity)) {
-                        event.setCanceled(true);
+                        cancel = true;
                     } else {
                         owner.addXp(2);
                         owner.checkLevel();
@@ -388,9 +397,9 @@ public class RecruitEvents {
         Entity target = event.getEntity();
         Entity source = event.getSource().getEntity();
         if (source instanceof LivingEntity sourceEntity) {
-            if (target.getTeam() == null) return;
+            if (target.getTeam() == null) return cancel;
 
-            target.getCommandSenderWorld().getEntitiesOfClass(
+            target.level().getEntitiesOfClass(
                     AbstractRecruitEntity.class,
                     target.getBoundingBox().inflate(32D),
                     (recruit) -> recruit.getTarget() == null &&
@@ -398,25 +407,27 @@ public class RecruitEvents {
                             recruit.getTeam().equals(target.getTeam())
             ).forEach((recruit) -> recruit.setTarget(sourceEntity));
         }
+        return cancel;
     }
 
     private static final double DAMAGE_THRESHOLD_PERCENTAGE = 0.75;
 
     @SubscribeEvent
-    public void onLivingAttack(LivingAttackEvent event) {
-        if(event.getEntity().getCommandSenderWorld().isClientSide()) return;
+    public boolean onLivingAttack(LivingAttackEvent event) {
+        if(event.getEntity().level().isClientSide()) return false;
 
         Entity target = event.getEntity();
         Entity source = event.getSource().getEntity();
 
-        if (!target.getCommandSenderWorld().isClientSide() && target instanceof LivingEntity livingTarget && source instanceof LivingEntity livingSource) {
+        if (!target.level().isClientSide() && target instanceof LivingEntity livingTarget && source instanceof LivingEntity livingSource) {
             if (!canAttack(livingSource, livingTarget)){
-                event.setCanceled(true);
+                return true;
             }
             else{
-                handleSignificantDamage(livingSource, livingTarget, event.getAmount(), (ServerLevel) livingTarget.getCommandSenderWorld());
+                handleSignificantDamage(livingSource, livingTarget, event.getAmount(), (ServerLevel) livingTarget.level());
             }
         }
+        return false;
     }
 
     private void handleSignificantDamage(LivingEntity attacker, LivingEntity target, double damage, ServerLevel level) {
@@ -698,7 +709,7 @@ public class RecruitEvents {
 
             //Morale loss when recruits teammate die
             UUID owner = recruit.getOwnerUUID();
-            recruit.getCommandSenderWorld().getEntitiesOfClass(
+            recruit.level().getEntitiesOfClass(
                     AbstractRecruitEntity.class,
                     recruit.getBoundingBox().inflate(64.0D),
                     (entity) -> entity.getOwnerUUID() != null && entity.getOwnerUUID().equals(owner)
@@ -714,10 +725,9 @@ public class RecruitEvents {
     private int tickCounter = 0;
 
     @SubscribeEvent
-    public void onWorldTickArrowCleaner(TickEvent.LevelTickEvent event) {//for 1.18 and 1.19 use TickEvent.WorldTickEvent
-        if (event.level.isClientSide()) return;
+    public void onWorldTickArrowCleaner(TickEvent.LevelTickEvent.Post event) {//for 1.18 and 1.19 use TickEvent.WorldTickEvent
+        if (event.level().isClientSide()) return;
         if (!RecruitsServerConfig.AllowArrowCleaning.get()) return;
-        if (event.phase != TickEvent.Phase.END) return;
         if (server == null) return;
 
 
@@ -725,7 +735,7 @@ public class RecruitEvents {
         tickCounter = 0;
 
 
-        List<AbstractArrow> arrows = event.level.getEntitiesOfClass(AbstractArrow.class, event.level.getWorldBorder().getCollisionShape().bounds());
+        List<AbstractArrow> arrows = event.level().getEntitiesOfClass(AbstractArrow.class, event.level().getWorldBorder().getCollisionShape().bounds());
         trackedArrows.addAll(arrows);
 
 

@@ -24,7 +24,7 @@ import net.minecraft.world.entity.ai.attributes.AttributeSupplier;
 import net.minecraft.world.entity.ai.attributes.Attributes;
 import net.minecraft.world.entity.ai.navigation.PathNavigation;
 import net.minecraft.world.entity.item.ItemEntity;
-import net.minecraft.world.entity.vehicle.Boat;
+import net.minecraft.world.entity.vehicle.boat.Boat;
 import net.minecraft.world.item.*;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.ServerLevelAccessor;
@@ -50,11 +50,11 @@ public class CaptainEntity extends AbstractLeaderEntity implements IStrategicFir
         this.smallShipsController = new SmallShipsController(this, world);
         this.smallShipsController.tryMountShip(getVehicle());
     }
-    protected void defineSynchedData() {
-        super.defineSynchedData();
-        this.entityData.define(SAIL_POS, Optional.empty());
-        this.entityData.define(STRATEGIC_FIRE_POS, Optional.empty());
-        this.entityData.define(SHOULD_STRATEGIC_FIRE, false);
+    protected void defineSynchedData(SynchedEntityData.Builder builder) {
+        super.defineSynchedData(builder);
+        builder.define(SAIL_POS, Optional.empty());
+        builder.define(STRATEGIC_FIRE_POS, Optional.empty());
+        builder.define(SHOULD_STRATEGIC_FIRE, false);
     }
     @Override
     protected void registerGoals() {
@@ -74,7 +74,7 @@ public class CaptainEntity extends AbstractLeaderEntity implements IStrategicFir
     public PathNavigation getNavigation() {
         if (this.getVehicle() instanceof Boat) {
             if (sailorNavigation == null) {
-                sailorNavigation = new SailorPathNavigation(this, this.getCommandSenderWorld());
+                sailorNavigation = new SailorPathNavigation(this, this.level());
             }
             return sailorNavigation;
         }
@@ -98,15 +98,15 @@ public class CaptainEntity extends AbstractLeaderEntity implements IStrategicFir
 
     public void setHoldPos(Vec3 holdPos){
         if(SmallShips.isSmallShip(this.getVehicle())){
-            if(!WaterObstacleScanner.isWaterBlockPos(this.getCommandSenderWorld(), new BlockPos((int) holdPos.x, (int) holdPos.y, (int) holdPos.z))){
+            if(!WaterObstacleScanner.isWaterBlockPos(this.level(), new BlockPos((int) holdPos.x, (int) holdPos.y, (int) holdPos.z))){
                 super.setHoldPos(holdPos);
             }
         }
         super.setHoldPos(holdPos);
     }
 
-    public void addAdditionalSaveData(CompoundTag nbt) {
-        super.addAdditionalSaveData(nbt);
+    public void saveRecruitData(CompoundTag nbt) {
+        super.saveRecruitData(nbt);
         if(this.getSailPos() != null){
             nbt.putInt("SailPosX", this.getSailPos().getX());
             nbt.putInt("SailPosY", this.getSailPos().getY());
@@ -122,21 +122,21 @@ public class CaptainEntity extends AbstractLeaderEntity implements IStrategicFir
         }
     }
 
-    public void readAdditionalSaveData(CompoundTag nbt) {
-        super.readAdditionalSaveData(nbt);
+    public void loadRecruitData(CompoundTag nbt) {
+        super.loadRecruitData(nbt);
         if (nbt.contains("SailPosX") && nbt.contains("SailPosY") && nbt.contains("SailPosZ")) {
             this.setSailPos(new BlockPos (
-                    nbt.getInt("SailPosX"),
-                    nbt.getInt("SailPosY"),
-                    nbt.getInt("SailPosZ")));
+                    nbt.getIntOr("SailPosX", 0),
+                    nbt.getIntOr("SailPosY", 0),
+                    nbt.getIntOr("SailPosZ", 0)));
         }
 
         if (nbt.contains("StrategicFirePosX") && nbt.contains("StrategicFirePosY") && nbt.contains("StrategicFirePosZ")) {
             this.setStrategicFirePos(new BlockPos (
-                    nbt.getInt("StrategicFirePosX"),
-                    nbt.getInt("StrategicFirePosY"),
-                    nbt.getInt("StrategicFirePosZ")));
-            this.setShouldStrategicFire(nbt.getBoolean("ShouldStrategicFire"));
+                    nbt.getIntOr("StrategicFirePosX", 0),
+                    nbt.getIntOr("StrategicFirePosY", 0),
+                    nbt.getIntOr("StrategicFirePosZ", 0)));
+            this.setShouldStrategicFire(nbt.getBooleanOr("ShouldStrategicFire", false));
         }
     }
 
@@ -148,14 +148,14 @@ public class CaptainEntity extends AbstractLeaderEntity implements IStrategicFir
                 .add(Attributes.KNOCKBACK_RESISTANCE, 0.1D)
                 .add(Attributes.ATTACK_DAMAGE, 0.5D)
                 .add(Attributes.FOLLOW_RANGE, 128.0D)
-                .add(ForgeMod.ENTITY_REACH.get(), 0D)
+                .add(Attributes.ENTITY_INTERACTION_RANGE, 0D)
                 .add(Attributes.ATTACK_SPEED);
     }
 
 
     @Nullable
-    public SpawnGroupData finalizeSpawn(ServerLevelAccessor world, DifficultyInstance difficultyInstance, MobSpawnType reason, @Nullable SpawnGroupData data, @Nullable CompoundTag nbt) {
-        SpawnGroupData ilivingentitydata = super.finalizeSpawn(world, difficultyInstance, reason, data, nbt);
+    public SpawnGroupData finalizeSpawn(ServerLevelAccessor world, DifficultyInstance difficultyInstance, EntitySpawnReason reason, @Nullable SpawnGroupData data) {
+        SpawnGroupData ilivingentitydata = super.finalizeSpawn(world, difficultyInstance, reason, data);
         ((AsyncGroundPathNavigation) this.getNavigation()).setCanOpenDoors(true);
 
         this.initSpawn();
@@ -171,9 +171,9 @@ public class CaptainEntity extends AbstractLeaderEntity implements IStrategicFir
     }
 
     @Override
-    public boolean startRiding(Entity entity) {
+    public boolean startRiding(Entity entity, boolean force, boolean sendEvent) {
         smallShipsController.tryMountShip(entity);
-        return super.startRiding(entity);
+        return super.startRiding(entity, force, sendEvent);
     }
 
     @Override
@@ -184,9 +184,9 @@ public class CaptainEntity extends AbstractLeaderEntity implements IStrategicFir
 
     @Override
     public boolean wantsToPickUp(ItemStack itemStack) {//TODO: add ranged combat
-        if(itemStack.getDescriptionId().contains("smallships")) return true;
+        if(itemStack.getItem().getDescriptionId().contains("smallships")) return true;
 
-        if((itemStack.getItem() instanceof SwordItem && this.getMatchingItem(item -> item.getItem() instanceof SwordItem) == null) ||
+        if((com.talhanation.recruits.util.ItemCompat.isSword(itemStack) && this.getMatchingItem(item -> com.talhanation.recruits.util.ItemCompat.isSword(item)) == null) ||
                 (itemStack.getItem() instanceof BowItem && this.getMatchingItem(item -> item.getItem() instanceof BowItem) == null) ||
                 (itemStack.getItem() instanceof ShieldItem) && this.getMatchingItem(item -> item.getItem() instanceof ShieldItem) == null)
             return true;
@@ -248,10 +248,10 @@ public class CaptainEntity extends AbstractLeaderEntity implements IStrategicFir
     protected void moveToCurrentWaypoint() {
         if(this.getVehicle() != null && this.getVehicle() instanceof Boat){
             // Correct Y to actual water surface so SailorPathNavigation finds a valid target.
-            int surfaceY = getCommandSenderWorld().getHeight(
+            int surfaceY = level().getHeight(
                     net.minecraft.world.level.levelgen.Heightmap.Types.WORLD_SURFACE,
                     this.currentWaypoint.getX(), this.currentWaypoint.getZ()) - 1;
-            int y = Math.max(surfaceY, getCommandSenderWorld().getMinBuildHeight());
+            int y = Math.max(surfaceY, level().getMinY());
             this.setSailPos(new BlockPos(this.currentWaypoint.getX(), y, this.currentWaypoint.getZ()));
         }
         else super.moveToCurrentWaypoint();
@@ -380,13 +380,13 @@ public class CaptainEntity extends AbstractLeaderEntity implements IStrategicFir
     }
 
     public void refillCannonBalls() {
-        if(this.getInventory().hasAnyMatching(itemStack -> itemStack.getDescriptionId().contains("cannon_ball"))){
+        if(this.getInventory().hasAnyMatching(itemStack -> itemStack.getItem().getDescriptionId().contains("cannon_ball"))){
             if(this.getVehicle() instanceof Container container){
 
                 for(int i = 0; i < this.getInventory().getContainerSize(); i++){
                     ItemStack stack = this.getInventory().getItem(i);
 
-                    if(stack.getDescriptionId().contains("cannon_ball")){
+                    if(stack.getItem().getDescriptionId().contains("cannon_ball")){
                         ItemStack cannonball = stack.copy();
                         for(int k = 0; k < container.getContainerSize(); k++){
                             if(container.getItem(k).isEmpty()) {
@@ -409,7 +409,7 @@ public class CaptainEntity extends AbstractLeaderEntity implements IStrategicFir
         for(int i = 0; i < container.getContainerSize(); i++){
             ItemStack stack = container.getItem(i);
 
-            if(stack.getDescriptionId().contains("cannon_ball")){
+            if(stack.getItem().getDescriptionId().contains("cannon_ball")){
                     count += stack.getCount();
             }
         }
@@ -422,9 +422,9 @@ public class CaptainEntity extends AbstractLeaderEntity implements IStrategicFir
     }
 
     @Override
-    public boolean hurt(@NotNull DamageSource dmg, float amt) {
+    public boolean hurtServer(net.minecraft.server.level.ServerLevel serverLevel, @NotNull DamageSource dmg, float amt) {
         this.commandCooldown = 0;
-        return super.hurt(dmg, amt);
+        return super.hurtServer(serverLevel, dmg, amt);
     }
 }
 

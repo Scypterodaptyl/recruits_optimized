@@ -2,7 +2,7 @@ package com.talhanation.recruits.pathfinding;
 
 import net.minecraft.core.BlockPos;
 import net.minecraft.world.level.Level;
-import net.minecraft.world.level.pathfinder.BlockPathTypes;
+import net.minecraft.world.level.pathfinder.PathType;
 
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
@@ -14,7 +14,7 @@ public final class SharedBlockPathTypeCache {
 
     private static final class Entry {
         final long expiresAt;
-        final Map<Long, BlockPathTypes> types = new ConcurrentHashMap<>();
+        final Map<Long, PathType> types = new ConcurrentHashMap<>();
 
         Entry(long expiresAt) {
             this.expiresAt = expiresAt;
@@ -24,7 +24,7 @@ public final class SharedBlockPathTypeCache {
     private SharedBlockPathTypeCache() {
     }
 
-    public static BlockPathTypes computeIfAbsent(Level level, int x, int y, int z, Supplier<BlockPathTypes> compute) {
+    public static PathType computeIfAbsent(Level level, int x, int y, int z, Supplier<PathType> compute) {
         Entry entry = currentEntry(level);
         return entry.types.computeIfAbsent(BlockPos.asLong(x, y, z), key -> compute.get());
     }

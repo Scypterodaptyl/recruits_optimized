@@ -1,5 +1,6 @@
 package com.talhanation.recruits.world;
 
+import net.minecraft.core.UUIDUtil;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.nbt.ListTag;
 import net.minecraft.nbt.StringTag;
@@ -17,13 +18,13 @@ public class RecruitsTeamSaveData extends SavedData {
 
     public static RecruitsTeamSaveData get(ServerLevel level) {
         DimensionDataStorage storage = level.getDataStorage();
-        return storage.computeIfAbsent(RecruitsTeamSaveData::load, RecruitsTeamSaveData::new, FILE_ID);
+        return storage.computeIfAbsent(TYPE);
     }
 
     public static RecruitsTeamSaveData load(CompoundTag nbt) {
         RecruitsTeamSaveData data = new RecruitsTeamSaveData();
-        if (nbt.contains("Teams", 9)) {
-            data.teams = loadTeams(nbt.getList("Teams", 10));
+        if (nbt.contains("Teams")) {
+            data.teams = loadTeams(nbt.getListOrEmpty("Teams"));
         }
         return data;
     }
@@ -31,36 +32,35 @@ public class RecruitsTeamSaveData extends SavedData {
     private static Map<String, RecruitsFaction> loadTeams(ListTag list) {
         Map<String, RecruitsFaction> loadedTeams = new HashMap<>();
         for (int i = 0; i < list.size(); ++i) {
-            CompoundTag nbt = list.getCompound(i);
+            CompoundTag nbt = list.getCompoundOrEmpty(i);
             RecruitsFaction recruitsFaction = new RecruitsFaction();
 
-            recruitsFaction.setStringID(nbt.getString("TeamName"));
-            recruitsFaction.setTeamDisplayName(nbt.getString("TeamDisplayName"));
-            recruitsFaction.setTeamLeaderID(nbt.getUUID("TeamLeaderID"));
-            recruitsFaction.setTeamLeaderName(nbt.getString("TeamLeaderName"));
+            recruitsFaction.setStringID(nbt.getStringOr("TeamName", ""));
+            recruitsFaction.setTeamDisplayName(nbt.getStringOr("TeamDisplayName", ""));
+            recruitsFaction.setTeamLeaderID(nbt.read("TeamLeaderID", UUIDUtil.CODEC).orElse(null));
+            recruitsFaction.setTeamLeaderName(nbt.getStringOr("TeamLeaderName", ""));
             recruitsFaction.setBanner((CompoundTag) nbt.get("TeamBanner"));
-            recruitsFaction.setPlayers(nbt.getInt("Players"));
-            recruitsFaction.setNPCs(nbt.getInt("NPCs"));
+            recruitsFaction.setPlayers(nbt.getIntOr("Players", 0));
+            recruitsFaction.setNPCs(nbt.getIntOr("NPCs", 0));
 
-            recruitsFaction.setMaxPlayers(nbt.getInt("MaxPlayers"));
-            recruitsFaction.setMaxNPCs(nbt.getInt("MaxNPCs"));
+            recruitsFaction.setMaxPlayers(nbt.getIntOr("MaxPlayers", 0));
+            recruitsFaction.setMaxNPCs(nbt.getIntOr("MaxNPCs", 0));
 
-            ListTag joinRequestsList = nbt.getList("JoinRequests", 8);
+            ListTag joinRequestsList = nbt.getListOrEmpty("JoinRequests");
             for (int j = 0; j < joinRequestsList.size(); ++j) {
-                recruitsFaction.getJoinRequests().add(joinRequestsList.getString(j));
+                recruitsFaction.getJoinRequests().add(joinRequestsList.getStringOr(j, ""));
             }
 
-            recruitsFaction.setUnitColor(nbt.getByte("Color"));
-            recruitsFaction.setTeamColor(nbt.getInt("TeamColor"));
-            recruitsFaction.setMaxNPCsPerPlayer(nbt.getInt("maxNpcsPerPlayer"));
+            recruitsFaction.setUnitColor(nbt.getByteOr("Color", (byte) 0));
+            recruitsFaction.setTeamColor(nbt.getIntOr("TeamColor", 0));
+            recruitsFaction.setMaxNPCsPerPlayer(nbt.getIntOr("maxNpcsPerPlayer", 0));
 
             loadedTeams.put(recruitsFaction.getStringID(), recruitsFaction);
         }
         return loadedTeams;
     }
 
-    @Override
-    public CompoundTag save(CompoundTag nbt) {
+        public CompoundTag save(CompoundTag nbt) {
         nbt.put("Teams", saveTeams());
         return nbt;
     }
@@ -71,7 +71,7 @@ public class RecruitsTeamSaveData extends SavedData {
             CompoundTag nbt = new CompoundTag();
             nbt.putString("TeamName", team.getStringID());
             nbt.putString("TeamDisplayName", team.getTeamDisplayName());
-            nbt.putUUID("TeamLeaderID", team.getTeamLeaderUUID());
+            nbt.store("TeamLeaderID", UUIDUtil.CODEC, team.getTeamLeaderUUID());
             nbt.putString("TeamLeaderName", team.getTeamLeaderName());
             nbt.put("TeamBanner", team.getBanner());
             nbt.putInt("Players", team.getPlayers());
@@ -101,5 +101,6 @@ public class RecruitsTeamSaveData extends SavedData {
     public void setTeams(Map<String, RecruitsFaction> teams) {
         this.teams = teams;
     }
-}
 
+    public static final net.minecraft.world.level.saveddata.SavedDataType<RecruitsTeamSaveData> TYPE = com.talhanation.recruits.util.SavedDataUtil.type(FILE_ID, RecruitsTeamSaveData::new, RecruitsTeamSaveData::load, data -> data.save(new CompoundTag()));
+}

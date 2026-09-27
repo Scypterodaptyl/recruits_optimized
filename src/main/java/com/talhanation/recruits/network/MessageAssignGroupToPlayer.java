@@ -6,13 +6,13 @@ import com.talhanation.recruits.entities.AbstractRecruitEntity;
 import com.talhanation.recruits.world.RecruitsFaction;
 import com.talhanation.recruits.world.RecruitsGroup;
 import com.talhanation.recruits.world.RecruitsPlayerInfo;
-import de.maxhenkel.corelib.net.Message;
+import com.talhanation.recruits.network.Message;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.network.FriendlyByteBuf;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraftforge.api.distmarker.Dist;
-import net.minecraftforge.network.NetworkEvent;
+import net.minecraftforge.event.network.CustomPayloadEvent;
 
 import java.util.List;
 import java.util.Objects;
@@ -39,17 +39,17 @@ public class MessageAssignGroupToPlayer implements Message<MessageAssignGroupToP
         return Dist.DEDICATED_SERVER;
     }
 
-    public void executeServerSide(NetworkEvent.Context context) {
+    public void executeServerSide(CustomPayloadEvent.Context context) {
         ServerPlayer player = Objects.requireNonNull(context.getSender());
         RecruitsGroup group = RecruitEvents.recruitsGroupsManager.getGroup(groupUUID);
-        ServerLevel serverLevel = (ServerLevel) player.getCommandSenderWorld();
+        ServerLevel serverLevel = (ServerLevel) player.level();
         if(group == null) return;
         if(group.getPlayerUUID() == null || !group.getPlayerUUID().equals(player.getUUID())) return;
 
         RecruitsPlayerInfo newOwner = RecruitsPlayerInfo.getFromNBT(tag);
         group.setPlayer(newOwner);
 
-        List<AbstractRecruitEntity> list = player.getCommandSenderWorld().getEntitiesOfClass(
+        List<AbstractRecruitEntity> list = player.level().getEntitiesOfClass(
                 AbstractRecruitEntity.class,
                 player.getBoundingBox().inflate(100D)
         );
@@ -63,7 +63,7 @@ public class MessageAssignGroupToPlayer implements Message<MessageAssignGroupToP
 
         RecruitEvents.recruitsGroupsManager.save(serverLevel);
         RecruitEvents.recruitsGroupsManager.broadCastGroupsToPlayer(player);
-        RecruitEvents.recruitsGroupsManager.broadCastGroupsToPlayer((ServerLevel) player.getCommandSenderWorld(), newOwner.getUUID());
+        RecruitEvents.recruitsGroupsManager.broadCastGroupsToPlayer((ServerLevel) player.level(), newOwner.getUUID());
 
         FactionEvents.notifyPlayer(serverLevel, newOwner, 2, group.getName());
     }

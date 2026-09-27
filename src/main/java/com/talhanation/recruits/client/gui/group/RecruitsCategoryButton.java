@@ -1,5 +1,8 @@
 package com.talhanation.recruits.client.gui.group;
 
+import net.minecraft.client.input.MouseButtonEvent;
+import net.minecraft.client.input.MouseButtonInfo;
+
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.network.chat.Component;
@@ -22,19 +25,22 @@ public class RecruitsCategoryButton extends ExtendedButton {
     }
 
     @Override
-    public void render(GuiGraphics guiGraphics, int p_93658_, int p_93659_, float p_93660_) {
-        super.render(guiGraphics, p_93658_, p_93659_, p_93660_);
+    public void renderContents(GuiGraphics guiGraphics, int p_93658_, int p_93659_, float p_93660_) {
+        super.renderContents(guiGraphics, p_93658_, p_93659_, p_93660_);
         guiGraphics.renderFakeItem(renderItem, this.x, this.y);
     }
 
     @Override
-    public boolean mouseClicked(double p_93641_, double p_93642_, int p_93643_) {
+    public boolean mouseClicked(MouseButtonEvent event, boolean doubleClick) {
+        double p_93641_ = event.x();
+        double p_93642_ = event.y();
+        int p_93643_ = event.button();
         if (this.visible) {
-            if (this.isValidClickButton(p_93643_)) {
+            if (this.isValidClickButton(event.buttonInfo())) {
                 boolean flag = this.clicked(p_93641_, p_93642_);
                 if (flag) {
                     this.playDownSound(Minecraft.getInstance().getSoundManager());
-                    this.onClick(p_93641_, p_93642_);
+                    this.onClick(new MouseButtonEvent(p_93641_, p_93642_, new MouseButtonInfo(0, 0)), false);
                     return true;
                 }
             }

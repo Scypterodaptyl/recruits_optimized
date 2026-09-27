@@ -6,16 +6,16 @@ import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.client.gui.components.AbstractWidget;
 import net.minecraft.client.gui.narration.NarrationElementOutput;
 import net.minecraft.network.chat.Component;
-import net.minecraft.util.FastColor;
+import net.minecraft.util.ARGB;
 
 import java.awt.*;
 import java.util.List;
 import java.util.function.Consumer;
 
 public class ColorSelectionDropdownMatrix extends AbstractWidget {
-    protected static final int BG_FILL = FastColor.ARGB32.color(255, 60, 60, 60);
-    protected static final int BG_FILL_HOVERED = FastColor.ARGB32.color(255, 100, 100, 100);
-    protected static final int BG_FILL_SELECTED = FastColor.ARGB32.color(255, 10, 10, 10);
+    protected static final int BG_FILL = ARGB.color(255, 60, 60, 60);
+    protected static final int BG_FILL_HOVERED = ARGB.color(255, 100, 100, 100);
+    protected static final int BG_FILL_SELECTED = ARGB.color(255, 10, 10, 10);
     private final List<Color> options;
     private final Consumer<Color> onSelect;
     private final FactionEditScreen parent;
@@ -41,7 +41,7 @@ public class ColorSelectionDropdownMatrix extends AbstractWidget {
     public void renderWidget(GuiGraphics guiGraphics, int mouseX, int mouseY, float delta) {
         int margin = 2;
         guiGraphics.fill(this.getX(), this.getY(), this.getX() + this.width, this.getY() + this.height, BG_FILL_SELECTED);
-        guiGraphics.drawCenteredString(Minecraft.getInstance().font, name, this.getX() + this.width / 2, this.getY() + (this.height - 8) / 2, 0xFFFFFF);
+        guiGraphics.drawCenteredString(Minecraft.getInstance().font, name, this.getX() + this.width / 2, this.getY() + (this.height - 8) / 2, 0xFFFFFFFF);
 
 
         int selectedColor = selectedOption.getRGB();

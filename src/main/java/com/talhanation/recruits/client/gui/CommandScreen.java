@@ -1,5 +1,8 @@
 package com.talhanation.recruits.client.gui;
 
+import net.minecraft.client.input.MouseButtonEvent;
+import net.minecraft.client.input.KeyEvent;
+
 import com.talhanation.recruits.Main;
 import com.talhanation.recruits.client.ClientManager;
 import com.talhanation.recruits.client.events.ClientEvent;
@@ -10,7 +13,7 @@ import com.talhanation.recruits.config.RecruitsClientConfig;
 import com.talhanation.recruits.inventory.CommandMenu;
 import com.talhanation.recruits.network.*;
 import com.talhanation.recruits.world.RecruitsGroup;
-import de.maxhenkel.corelib.inventory.ScreenBase;
+import com.talhanation.recruits.corelib.ScreenBase;
 import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.client.gui.components.Renderable;
 import net.minecraft.client.gui.components.Tooltip;
@@ -20,7 +23,7 @@ import net.minecraft.core.BlockPos;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.network.chat.Component;
 import net.minecraft.network.chat.MutableComponent;
-import net.minecraft.resources.ResourceLocation;
+import net.minecraft.resources.Identifier;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.player.Inventory;
 import net.minecraft.world.entity.player.Player;
@@ -38,7 +41,7 @@ import java.util.*;
 @OnlyIn(Dist.CLIENT)
 public class CommandScreen extends ScreenBase<CommandMenu> {
 
-    private static final ResourceLocation RESOURCE_LOCATION = new ResourceLocation(Main.MOD_ID, "textures/gui/command_gui.png");
+    private static final Identifier RESOURCE_LOCATION = Identifier.fromNamespaceAndPath(Main.MOD_ID, "textures/gui/command_gui.png");
     private static final MutableComponent TEXT_EVERYONE = Component.translatable("gui.recruits.command.text.everyone");
     private static final int fontColor = 16250871;
     public final Player player;
@@ -55,8 +58,11 @@ public class CommandScreen extends ScreenBase<CommandMenu> {
         player = playerInventory.player;
     }
     @Override
-    public boolean keyReleased(int x, int y, int z) {
-        super.keyReleased(x, y, z);
+    public boolean keyReleased(KeyEvent event) {
+        int x = event.key();
+        int y = event.scancode();
+        int z = event.modifiers();
+        super.keyReleased(event);
         if(!RecruitsClientConfig.CommandScreenToggle.get()) this.onClose();
         return true;
     }
@@ -180,17 +186,17 @@ public class CommandScreen extends ScreenBase<CommandMenu> {
 
     private ICommandCategory getSelectionFromClient() {
         CompoundTag playerNBT = player.getPersistentData();
-        CompoundTag nbt = playerNBT.getCompound(Player.PERSISTED_NBT_TAG);
+        CompoundTag nbt = playerNBT.getCompoundOrEmpty("PlayerPersisted");
 
-        byte x = nbt.getByte("RecruitsCategory");
+        byte x = nbt.getByteOr("RecruitsCategory", (byte) 0);
         return CommandCategoryManager.getByIndex(x);
     }
     private void saveCategoryOnClient() {
         CompoundTag playerNBT = player.getPersistentData();
-        CompoundTag nbt = playerNBT.getCompound(Player.PERSISTED_NBT_TAG);
+        CompoundTag nbt = playerNBT.getCompoundOrEmpty("PlayerPersisted");
 
         nbt.putInt("RecruitsCategory", CommandCategoryManager.getCategories().indexOf(currentCategory));
-        playerNBT.put(Player.PERSISTED_NBT_TAG, nbt);
+        playerNBT.put("PlayerPersisted", nbt);
     }
 
     private void createCategoryButtons(int centerX, int centerY) {
@@ -243,39 +249,39 @@ public class CommandScreen extends ScreenBase<CommandMenu> {
         }
 
         switch (state) {
-            case 0 -> this.player.sendSystemMessage(TEXT_WANDER(group_string.toString()));
-            case 1 -> this.player.sendSystemMessage(TEXT_FOLLOW(group_string.toString()));
-            case 2 -> this.player.sendSystemMessage(TEXT_HOLD_POS(group_string.toString()));
-            case 3 -> this.player.sendSystemMessage(TEXT_BACK_TO_POS(group_string.toString()));
-            case 4 -> this.player.sendSystemMessage(TEXT_HOLD_MY_POS(group_string.toString()));
-            case 5 -> this.player.sendSystemMessage(TEXT_PROTECT(group_string.toString()));
-            case 6 -> this.player.sendSystemMessage(TEXT_MOVE(group_string.toString()));
-            case 7 -> this.player.sendSystemMessage(TEXT_FORWARD(group_string.toString()));
-            case 8 -> this.player.sendSystemMessage(TEXT_BACKWARD(group_string.toString()));
-            case 9 -> this.player.sendSystemMessage(TEXT_CLEAR_TARGETS(group_string.toString()));
+            case 0 -> this.player.displayClientMessage(TEXT_WANDER(group_string.toString()), false);
+            case 1 -> this.player.displayClientMessage(TEXT_FOLLOW(group_string.toString()), false);
+            case 2 -> this.player.displayClientMessage(TEXT_HOLD_POS(group_string.toString()), false);
+            case 3 -> this.player.displayClientMessage(TEXT_BACK_TO_POS(group_string.toString()), false);
+            case 4 -> this.player.displayClientMessage(TEXT_HOLD_MY_POS(group_string.toString()), false);
+            case 5 -> this.player.displayClientMessage(TEXT_PROTECT(group_string.toString()), false);
+            case 6 -> this.player.displayClientMessage(TEXT_MOVE(group_string.toString()), false);
+            case 7 -> this.player.displayClientMessage(TEXT_FORWARD(group_string.toString()), false);
+            case 8 -> this.player.displayClientMessage(TEXT_BACKWARD(group_string.toString()), false);
+            case 9 -> this.player.displayClientMessage(TEXT_CLEAR_TARGETS(group_string.toString()), false);
 
-            case 10 -> this.player.sendSystemMessage(TEXT_NEUTRAL(group_string.toString()));
-            case 11 -> this.player.sendSystemMessage(TEXT_AGGRESSIVE(group_string.toString()));
-            case 12 -> this.player.sendSystemMessage(TEXT_RAID(group_string.toString()));
-            case 13 -> this.player.sendSystemMessage(TEXT_PASSIVE(group_string.toString()));
+            case 10 -> this.player.displayClientMessage(TEXT_NEUTRAL(group_string.toString()), false);
+            case 11 -> this.player.displayClientMessage(TEXT_AGGRESSIVE(group_string.toString()), false);
+            case 12 -> this.player.displayClientMessage(TEXT_RAID(group_string.toString()), false);
+            case 13 -> this.player.displayClientMessage(TEXT_PASSIVE(group_string.toString()), false);
 
-            case 69 -> this.player.sendSystemMessage(TEXT_ATTACK(group_string.toString()));
-            case 70 -> this.player.sendSystemMessage(TEXT_FIRE_AT_WILL(group_string.toString()));
-            case 71 -> this.player.sendSystemMessage(TEXT_HOLD_FIRE(group_string.toString()));
-            case 72 -> this.player.sendSystemMessage(TEXT_STRATEGIC_FIRE(group_string.toString()));
-            case 73 -> this.player.sendSystemMessage(TEXT_STRATEGIC_FIRE_OFF(group_string.toString()));
-            case 74 -> this.player.sendSystemMessage(TEXT_SHIELDS(group_string.toString()));
-            case 75 -> this.player.sendSystemMessage(TEXT_SHIELDS_OFF(group_string.toString()));
+            case 69 -> this.player.displayClientMessage(TEXT_ATTACK(group_string.toString()), false);
+            case 70 -> this.player.displayClientMessage(TEXT_FIRE_AT_WILL(group_string.toString()), false);
+            case 71 -> this.player.displayClientMessage(TEXT_HOLD_FIRE(group_string.toString()), false);
+            case 72 -> this.player.displayClientMessage(TEXT_STRATEGIC_FIRE(group_string.toString()), false);
+            case 73 -> this.player.displayClientMessage(TEXT_STRATEGIC_FIRE_OFF(group_string.toString()), false);
+            case 74 -> this.player.displayClientMessage(TEXT_SHIELDS(group_string.toString()), false);
+            case 75 -> this.player.displayClientMessage(TEXT_SHIELDS_OFF(group_string.toString()), false);
 
-            case 88 -> this.player.sendSystemMessage(TEXT_REST(group_string.toString()));
-            case 91 -> this.player.sendSystemMessage(TEXT_BACK_TO_MOUNT(group_string.toString()));
-            case 92 -> this.player.sendSystemMessage(TEXT_UPKEEP(group_string.toString()));
-            case 93 -> this.player.sendSystemMessage(TEXT_CLEAR_UPKEEP(group_string.toString()));
+            case 88 -> this.player.displayClientMessage(TEXT_REST(group_string.toString()), false);
+            case 91 -> this.player.displayClientMessage(TEXT_BACK_TO_MOUNT(group_string.toString()), false);
+            case 92 -> this.player.displayClientMessage(TEXT_UPKEEP(group_string.toString()), false);
+            case 93 -> this.player.displayClientMessage(TEXT_CLEAR_UPKEEP(group_string.toString()), false);
 
-            case 98 -> this.player.sendSystemMessage(TEXT_DISMOUNT(group_string.toString()));
-            case 99 -> this.player.sendSystemMessage(TEXT_MOUNT(group_string.toString()));
+            case 98 -> this.player.displayClientMessage(TEXT_DISMOUNT(group_string.toString()), false);
+            case 99 -> this.player.displayClientMessage(TEXT_MOUNT(group_string.toString()), false);
 
-            case 100 -> this.player.sendSystemMessage(TEXT_FACE(group_string.toString()));
+            case 100 -> this.player.displayClientMessage(TEXT_FACE(group_string.toString()), false);
         }
     }
 
@@ -417,8 +423,8 @@ public class CommandScreen extends ScreenBase<CommandMenu> {
 
         String tipAllGroups = TEXT_SELECT_ALL_GROUPS().getString();
         String tipScroll = TEXT_SCROLL_CATEGORIES().getString();
-        guiGraphics.drawString(font, tipAllGroups, xTipPos, yTipPos, FONT_COLOR, false);
-        guiGraphics.drawString(font, tipScroll, xTipPos, yTipPos + 15, FONT_COLOR, false);
+        guiGraphics.drawString(font, tipAllGroups, xTipPos, yTipPos, com.talhanation.recruits.client.gui.util.GuiCompat.opaque(FONT_COLOR), false);
+        guiGraphics.drawString(font, tipScroll, xTipPos, yTipPos + 15, com.talhanation.recruits.client.gui.util.GuiCompat.opaque(FONT_COLOR), false);
 
     }
 
@@ -440,16 +446,19 @@ public class CommandScreen extends ScreenBase<CommandMenu> {
     }
 
     @Override
-    public boolean mouseClicked(double x, double y, int id) {
+    public boolean mouseClicked(MouseButtonEvent event, boolean doubleClick) {
+        double x = event.x();
+        double y = event.y();
+        int id = event.button();
         if(id == 1){
             this.invertGroups();
         }
 
-        return super.mouseClicked(x, y, id);
+        return super.mouseClicked(event, doubleClick);
     }
 
     @Override
-    public boolean mouseScrolled(double p_94686_, double p_94687_, double p_94688_) {
+    public boolean mouseScrolled(double p_94686_, double p_94687_, double scrollX, double p_94688_) {
         if(p_94688_ > 0){
             this.setCurrentCategory(CommandCategoryManager.getPrevious(currentCategory));
         }
@@ -457,7 +466,7 @@ public class CommandScreen extends ScreenBase<CommandMenu> {
             this.setCurrentCategory(CommandCategoryManager.getNext(currentCategory));
         }
 
-        return super.mouseScrolled(p_94686_, p_94687_, p_94688_);
+        return super.mouseScrolled(p_94686_, p_94687_, scrollX, p_94688_);
     }
 
     private void invertGroups() {

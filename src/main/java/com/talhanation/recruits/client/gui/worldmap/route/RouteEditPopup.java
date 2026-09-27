@@ -1,5 +1,10 @@
 package com.talhanation.recruits.client.gui.worldmap.route;
 
+import net.minecraft.client.input.MouseButtonEvent;
+import net.minecraft.client.input.MouseButtonInfo;
+import net.minecraft.client.input.KeyEvent;
+import net.minecraft.client.input.CharacterEvent;
+
 import com.talhanation.recruits.Main;
 import com.talhanation.recruits.client.ClientManager;
 import com.talhanation.recruits.client.gui.player.PlayersList;
@@ -113,7 +118,7 @@ public class RouteEditPopup {
     }
 
     public void tick() {
-        if (visible && nameField != null) nameField.tick();
+        
     }
 
     public void render(GuiGraphics guiGraphics, int mouseX, int mouseY) {
@@ -127,7 +132,7 @@ public class RouteEditPopup {
         guiGraphics.fill(px, py, px + WIDTH, py + HEIGHT, BG_COLOR);
         guiGraphics.renderOutline(px, py, WIDTH, HEIGHT, OUTLINE_COLOR);
 
-        guiGraphics.drawCenteredString(Minecraft.getInstance().font, TITLE, px + WIDTH / 2, py + 6, TEXT_COLOR);
+        guiGraphics.drawCenteredString(Minecraft.getInstance().font, TITLE, px + WIDTH / 2, py + 6, com.talhanation.recruits.client.gui.util.GuiCompat.opaque(TEXT_COLOR));
 
         // Name field
         int fieldY = py + 18;
@@ -154,7 +159,7 @@ public class RouteEditPopup {
                         : (hovered ? BTN_HOVERED_COLOR : BTN_COLOR);
         guiGraphics.fill(x, y, x + w, y + h, bg);
         guiGraphics.renderOutline(x, y, w, h, OUTLINE_COLOR);
-        guiGraphics.drawCenteredString(Minecraft.getInstance().font, label, x + w / 2, y + (h - 8) / 2, TEXT_COLOR);
+        guiGraphics.drawCenteredString(Minecraft.getInstance().font, label, x + w / 2, y + (h - 8) / 2, com.talhanation.recruits.client.gui.util.GuiCompat.opaque(TEXT_COLOR));
     }
 
     public boolean mouseClicked(double mouseX, double mouseY) {
@@ -170,7 +175,7 @@ public class RouteEditPopup {
         }
 
         // Forward to EditBox for cursor repositioning
-        if (nameField != null) nameField.mouseClicked(mouseX, mouseY, 0);
+        if (nameField != null) nameField.mouseClicked(new MouseButtonEvent(mouseX, mouseY, new MouseButtonInfo(0, 0)), false);
 
         int x = px + 8;
         int y = py + 18 + 18; // after name field
@@ -214,13 +219,15 @@ public class RouteEditPopup {
             return true;
         }
 
-        if (nameField != null) nameField.keyPressed(keyCode, 0, 0);
+        if (nameField != null) nameField.keyPressed(new KeyEvent(keyCode, 0, 0));
         return true;
     }
 
-    public boolean charTyped(char chr, int modifiers) {
+    public boolean charTyped(CharacterEvent event) {
+        char chr = (char) event.codepoint();
+        int modifiers = event.modifiers();
         if (!visible) return false;
-        if (nameField != null) nameField.charTyped(chr, modifiers);
+        if (nameField != null) nameField.charTyped(new CharacterEvent(chr, modifiers));
         return true;
     }
 }

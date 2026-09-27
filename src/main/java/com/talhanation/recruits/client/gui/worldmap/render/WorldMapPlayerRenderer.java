@@ -1,25 +1,18 @@
 package com.talhanation.recruits.client.gui.worldmap.render;
 
-import com.mojang.blaze3d.platform.Lighting;
-import com.mojang.blaze3d.systems.RenderSystem;
-import com.mojang.blaze3d.vertex.PoseStack;
-import com.mojang.blaze3d.vertex.VertexConsumer;
-import com.mojang.math.Axis;
 import com.talhanation.recruits.Main;
 import com.talhanation.recruits.compat.smallships.SmallShips;
 import net.minecraft.client.gui.Font;
+import org.joml.Matrix3x2fStack;
 import net.minecraft.client.gui.GuiGraphics;
-import net.minecraft.client.renderer.RenderType;
-import net.minecraft.client.renderer.texture.OverlayTexture;
-import net.minecraft.resources.ResourceLocation;
+import net.minecraft.resources.Identifier;
 import net.minecraft.world.entity.player.Player;
-import net.minecraft.world.entity.vehicle.Boat;
+import net.minecraft.world.entity.vehicle.boat.Boat;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.Items;
-import org.joml.Matrix4f;
 
 public final class WorldMapPlayerRenderer {
-    private static final ResourceLocation MAP_ICONS = new ResourceLocation("textures/map/map_icons.png");
+    private static final Identifier MAP_ICONS = Identifier.withDefaultNamespace("textures/map/decorations/player.png");
     private static final ItemStack BOAT_STACK = new ItemStack(Items.OAK_BOAT);
     private static final float PLAYER_ARROW_BASE_SCALE = 0.55F;
     private static final float PLAYER_ARROW_MIN_SCALE = 0.18F;
@@ -51,38 +44,35 @@ public final class WorldMapPlayerRenderer {
         double pixelX = offsetX + playerWorldX * scale;
         double pixelZ = offsetZ + playerWorldZ * scale;
 
-        PoseStack pose = guiGraphics.pose();
-        pose.pushPose();
-        pose.translate(pixelX, pixelZ, 0);
+        org.joml.Matrix3x2fStack pose = guiGraphics.pose();
+        pose.pushMatrix();
+        pose.translate((float) (pixelX), (float) (pixelZ));
         if (player.getVehicle() instanceof Boat) renderBoat(pose, guiGraphics, player);
         else renderIcon(pose, guiGraphics, player, scale, usePlayerArrow);
-        pose.popPose();
+        pose.popMatrix();
         renderNameTag(guiGraphics, font, player, pixelX, pixelZ, scale);
     }
 
-    private static void renderBoat(PoseStack pose, GuiGraphics guiGraphics, Player player) {
+    private static void renderBoat(Matrix3x2fStack pose, GuiGraphics guiGraphics, Player player) {
         float yaw = player.getYRot() % 360f;
         if (yaw < -180f) yaw += 360f;
         if (yaw >= 180f) yaw -= 360f;
         boolean flipX = yaw > 0;
-        pose.pushPose();
-        if (flipX) pose.scale(-1f, 1f, 1f);
-        pose.scale(1.5f, 1.5f, 1.5f);
-        Lighting.setupForFlatItems();
+        pose.pushMatrix();
+        if (flipX) pose.scale((float) (-1f), (float) (1f));
+        pose.scale((float) (1.5f), (float) (1.5f));
         ItemStack boat = BOAT_STACK;
         if (Main.isSmallShipsLoaded
                 && player.getVehicle() != null
                 && SmallShips.isSmallShip(player.getVehicle())) {
             boat = SmallShips.getSmallShipsItem();
         }
-        RenderSystem.disableCull();
         guiGraphics.renderItem(boat, -8, -8);
-        RenderSystem.enableCull();
-        pose.popPose();
+        pose.popMatrix();
     }
 
     private static void renderIcon(
-            PoseStack pose, GuiGraphics guiGraphics, Player player, double scale, boolean usePlayerArrow) {
+            Matrix3x2fStack pose, GuiGraphics guiGraphics, Player player, double scale, boolean usePlayerArrow) {
         if (usePlayerArrow) {
             renderPlayerArrowIcon(pose, guiGraphics, player, scale);
             return;
@@ -90,70 +80,29 @@ public final class WorldMapPlayerRenderer {
         renderVanillaIcon(pose, guiGraphics, player);
     }
 
-    private static void renderVanillaIcon(PoseStack pose, GuiGraphics guiGraphics, Player player) {
-        pose.mulPose(Axis.ZP.rotationDegrees(player.getYRot()));
-        pose.scale(5.0f, 5.0f, 5.0f);
-        int iconIndex = 0;
-        float u0 = (iconIndex % 16) / 16f;
-        float v0 = (iconIndex / 16) / 16f;
-        float u1 = u0 + 1f / 16f;
-        float v1 = v0 + 1f / 16f;
-        guiGraphics.flush();
-        VertexConsumer consumer = guiGraphics.bufferSource().getBuffer(RenderType.text(MAP_ICONS));
-        Matrix4f matrix = pose.last().pose();
-        int light = 0xF000F0;
-        int color = 0xFFFFFFFF;
-        consumer
-                .vertex(matrix, -1f, 1f, 0f)
-                .color((color >> 16) & 0xFF, (color >> 8) & 0xFF, color & 0xFF, (color >> 24) & 0xFF)
-                .uv(u0, v0)
-                .overlayCoords(OverlayTexture.NO_OVERLAY)
-                .uv2(light)
-                .normal(0, 0, 1)
-                .endVertex();
-        consumer
-                .vertex(matrix, 1f, 1f, 0f)
-                .color((color >> 16) & 0xFF, (color >> 8) & 0xFF, color & 0xFF, (color >> 24) & 0xFF)
-                .uv(u1, v0)
-                .overlayCoords(OverlayTexture.NO_OVERLAY)
-                .uv2(light)
-                .normal(0, 0, 1)
-                .endVertex();
-        consumer
-                .vertex(matrix, 1f, -1f, 0f)
-                .color((color >> 16) & 0xFF, (color >> 8) & 0xFF, color & 0xFF, (color >> 24) & 0xFF)
-                .uv(u1, v1)
-                .overlayCoords(OverlayTexture.NO_OVERLAY)
-                .uv2(light)
-                .normal(0, 0, 1)
-                .endVertex();
-        consumer
-                .vertex(matrix, -1f, -1f, 0f)
-                .color((color >> 16) & 0xFF, (color >> 8) & 0xFF, color & 0xFF, (color >> 24) & 0xFF)
-                .uv(u0, v1)
-                .overlayCoords(OverlayTexture.NO_OVERLAY)
-                .uv2(light)
-                .normal(0, 0, 1)
-                .endVertex();
+    private static void renderVanillaIcon(Matrix3x2fStack pose, GuiGraphics guiGraphics, Player player) {
+        pose.rotate((float) Math.toRadians(player.getYRot()));
+        pose.scale(5.0f, 5.0f);
+        // the player decoration is a single sprite file now instead of a 16x16 icon sheet
+        MapRenderUtil.texturedQuad(guiGraphics, MAP_ICONS, -1f, -1f, 1f, 1f, 0f, 1f, 1f, 0f, 0xFFFFFFFF);
     }
 
     private static void renderPlayerArrowIcon(
-            PoseStack pose, GuiGraphics guiGraphics, Player player, double mapScale) {
+            Matrix3x2fStack pose, GuiGraphics guiGraphics, Player player, double mapScale) {
         float arrowScale = getPlayerArrowScale(mapScale);
 
-        pose.pushPose();
-        pose.translate(0, 2.0F * arrowScale, 0);
-        pose.mulPose(Axis.ZP.rotationDegrees(player.getYRot()));
-        pose.scale(arrowScale, arrowScale, 1.0F);
+        pose.pushMatrix();
+        pose.translate((float) (0), (float) (2.0F * arrowScale));
+        pose.rotate((float) Math.toRadians(player.getYRot()));
+        pose.scale((float) (arrowScale), (float) (arrowScale));
         renderPlayerArrowMask(guiGraphics, 0xE0000000);
-        pose.popPose();
+        pose.popMatrix();
 
-        pose.pushPose();
-        pose.mulPose(Axis.ZP.rotationDegrees(player.getYRot()));
-        pose.scale(arrowScale, arrowScale, 1.0F);
+        pose.pushMatrix();
+        pose.rotate((float) Math.toRadians(player.getYRot()));
+        pose.scale((float) (arrowScale), (float) (arrowScale));
         renderPlayerArrowMask(guiGraphics, 0xFF2BEA68);
-        pose.popPose();
-        guiGraphics.flush();
+        pose.popMatrix();
     }
 
     private static float getPlayerArrowScale(double mapScale) {
@@ -186,15 +135,14 @@ public final class WorldMapPlayerRenderer {
         float textScale = (float) Math.min(1.0, scale / 1.25);
         int textWidth = font.width(playerName);
         int textHeight = font.lineHeight;
-        guiGraphics.pose().pushPose();
+        guiGraphics.pose().pushMatrix();
         guiGraphics
                 .pose()
                 .translate(
-                        pixelX - (textWidth * textScale) / 2.0,
-                        pixelZ - (textHeight * textScale) / 2.0 - 10,
-                        0);
-        guiGraphics.pose().scale(textScale, textScale, 1.0f);
-        guiGraphics.drawString(font, playerName, 0, 0, 0xFFFFFF, false);
-        guiGraphics.pose().popPose();
+                        (float) (pixelX - (textWidth * textScale) / 2.0),
+                        (float) (pixelZ - (textHeight * textScale) / 2.0 - 10));
+        guiGraphics.pose().scale((float) (textScale), (float) (textScale));
+        guiGraphics.drawString(font, playerName, 0, 0, 0xFFFFFFFF, false);
+        guiGraphics.pose().popMatrix();
     }
 }

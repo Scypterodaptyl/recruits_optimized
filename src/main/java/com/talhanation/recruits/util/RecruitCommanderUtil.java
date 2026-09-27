@@ -156,7 +156,7 @@ public class RecruitCommanderUtil {
         for (AbstractRecruitEntity recruit : recruits) {
             if (recruit != null && recruit.isAlive()) {
                 recruit.reachedMovePos = false;
-                Vec3 pos = FormationUtils.calculateLineBlockPosition(target, linePos, recruits.size(), recruits.indexOf(recruit), recruit.getCommandSenderWorld());
+                Vec3 pos = FormationUtils.calculateLineBlockPosition(target, linePos, recruits.size(), recruits.indexOf(recruit), recruit.level());
                 recruit.setFollowState(0); // Needs to be above setShouldMovePos
                 recruit.setShouldMovePos(true);
             }
@@ -346,7 +346,7 @@ public class RecruitCommanderUtil {
         for (AbstractRecruitEntity recruit : recruits) {
             Vec3 pos = recruit.position().add(direction.scale(20));
             BlockPos blockPos = FormationUtils.getPositionOrSurface(
-                    recruit.getCommandSenderWorld(),
+                    recruit.level(),
                     new BlockPos((int) Math.round(pos.x), (int) Math.round(pos.y), (int) Math.round(pos.z))
             );
 

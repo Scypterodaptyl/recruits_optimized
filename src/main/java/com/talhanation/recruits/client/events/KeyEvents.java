@@ -1,5 +1,6 @@
 package com.talhanation.recruits.client.events;
 
+
 import com.talhanation.recruits.CommandEvents;
 import com.talhanation.recruits.Main;
 import com.talhanation.recruits.client.gui.worldmap.WorldMapScreen;
@@ -14,7 +15,7 @@ import net.minecraft.world.level.Level;
 import net.minecraftforge.api.distmarker.Dist;
 import net.minecraftforge.api.distmarker.OnlyIn;
 import net.minecraftforge.client.event.InputEvent;
-import net.minecraftforge.eventbus.api.SubscribeEvent;
+import net.minecraftforge.eventbus.api.listener.SubscribeEvent;
 
 @OnlyIn(Dist.CLIENT)
 
@@ -42,20 +43,21 @@ public class KeyEvents {
     }
 
     @SubscribeEvent
-    public void onPlayerPick(InputEvent.InteractionKeyMappingTriggered event){
+    public boolean onPlayerPick(InputEvent.InteractionKeyMappingTriggered event){
         if(event.isPickBlock()){
             Minecraft minecraft = Minecraft.getInstance();
             LocalPlayer clientPlayerEntity = minecraft.player;
             if (clientPlayerEntity == null || !clientPlayerEntity.isCreative())
-                return;
+                return false;
             
 
             Entity target = ClientEvent.getEntityByLooking();
             if(target instanceof AbstractRecruitEntity recruitEntity){
                 Main.SIMPLE_CHANNEL.sendToServer(new MessageWriteSpawnEgg(recruitEntity.getUUID()));
-                event.setCanceled(true);
+                return true;
             }
         }
+        return false;
     }
 
 }

@@ -5,14 +5,16 @@ import com.talhanation.recruits.world.RecruitsClaim;
 import net.minecraft.client.gui.GuiGraphics;
 import net.minecraftforge.api.distmarker.Dist;
 import net.minecraftforge.api.distmarker.OnlyIn;
-import net.minecraftforge.eventbus.api.Cancelable;
-import net.minecraftforge.eventbus.api.Event;
+import net.minecraftforge.eventbus.api.bus.CancellableEventBus;
+import net.minecraftforge.eventbus.api.bus.EventBus;
+import net.minecraftforge.eventbus.api.event.MutableEvent;
+import net.minecraftforge.eventbus.api.event.characteristic.Cancellable;
 
 import javax.annotation.Nullable;
 
 
 @OnlyIn(Dist.CLIENT)
-public abstract class ClientOverlayEvent extends Event {
+public abstract class ClientOverlayEvent extends MutableEvent {
 
     @Nullable
     private final RecruitsClaim claim;
@@ -33,8 +35,8 @@ public abstract class ClientOverlayEvent extends Event {
     public float getAlpha() { return alpha; }
 
 
-    @Cancelable
-    public static class RenderPre extends ClientOverlayEvent {
+        public static class RenderPre extends ClientOverlayEvent implements Cancellable {
+        public static final CancellableEventBus<ClientOverlayEvent.RenderPre> BUS = CancellableEventBus.create(ClientOverlayEvent.RenderPre.class);
         private final GuiGraphics guiGraphics;
 
         public RenderPre(GuiGraphics guiGraphics,
@@ -50,6 +52,7 @@ public abstract class ClientOverlayEvent extends Event {
 
 
     public static class RenderPost extends ClientOverlayEvent {
+        public static final EventBus<ClientOverlayEvent.RenderPost> BUS = EventBus.create(ClientOverlayEvent.RenderPost.class);
         private final GuiGraphics guiGraphics;
 
         public RenderPost(GuiGraphics guiGraphics, @Nullable RecruitsClaim claim, ClaimOverlayManager.OverlayState state, float alpha) {
@@ -62,8 +65,8 @@ public abstract class ClientOverlayEvent extends Event {
         }
     }
 
-    @Cancelable
-    public static class StateChanged extends ClientOverlayEvent {
+        public static class StateChanged extends ClientOverlayEvent implements Cancellable {
+        public static final CancellableEventBus<ClientOverlayEvent.StateChanged> BUS = CancellableEventBus.create(ClientOverlayEvent.StateChanged.class);
         private final ClaimOverlayManager.OverlayState previousState;
 
         public StateChanged(@Nullable RecruitsClaim claim, ClaimOverlayManager.OverlayState previousState, ClaimOverlayManager.OverlayState newState, float alpha) {

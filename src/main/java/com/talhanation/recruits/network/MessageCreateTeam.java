@@ -1,14 +1,14 @@
 package com.talhanation.recruits.network;
 
 import com.talhanation.recruits.FactionEvents;
-import de.maxhenkel.corelib.net.Message;
+import com.talhanation.recruits.network.Message;
 import net.minecraft.ChatFormatting;
 import net.minecraft.network.FriendlyByteBuf;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.item.ItemStack;
 import net.minecraftforge.api.distmarker.Dist;
-import net.minecraftforge.network.NetworkEvent;
+import net.minecraftforge.event.network.CustomPayloadEvent;
 
 public class MessageCreateTeam implements Message<MessageCreateTeam> {
 
@@ -33,16 +33,16 @@ public class MessageCreateTeam implements Message<MessageCreateTeam> {
         return Dist.DEDICATED_SERVER;
     }
 
-    public void executeServerSide(NetworkEvent.Context context) {
+    public void executeServerSide(CustomPayloadEvent.Context context) {
         ServerPlayer player = context.getSender();
-        ServerLevel world = player.serverLevel();
+        ServerLevel world = player.level();
         FactionEvents.createTeam(true, context.getSender(), world, this.teamName, this.displayName, player.getName().getString(), this.banner, this.color, (byte) index);
     }
 
     public MessageCreateTeam fromBytes(FriendlyByteBuf buf) {
         this.teamName = buf.readUtf();
         this.displayName = buf.readUtf();
-        this.banner = buf.readItem();
+        this.banner = com.talhanation.recruits.util.NbtCompat.loadItem(buf.readNbt());
         this.color = ChatFormatting.getById(buf.readInt());
         this.index = buf.readInt();
         return this;
@@ -51,7 +51,7 @@ public class MessageCreateTeam implements Message<MessageCreateTeam> {
     public void toBytes(FriendlyByteBuf buf) {
         buf.writeUtf(this.teamName);
         buf.writeUtf(this.displayName);
-        buf.writeItemStack(this.banner, false);
+        buf.writeNbt(com.talhanation.recruits.util.NbtCompat.saveItem(this.banner));
         buf.writeInt(this.color.getId());
         buf.writeInt(this.index);
     }

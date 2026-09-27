@@ -50,10 +50,10 @@ public class ScoutEntity extends BowmanEntity implements ICompanion {
     public ScoutEntity(EntityType<? extends AbstractRecruitEntity> entityType, Level world) {
         super(entityType, world);
     }
-    protected void defineSynchedData() {
-        super.defineSynchedData();
-        this.entityData.define(OWNER_NAME, "");
-        this.entityData.define(TASK_STATE, (byte) 0);
+    protected void defineSynchedData(SynchedEntityData.Builder builder) {
+        super.defineSynchedData(builder);
+        builder.define(OWNER_NAME, "");
+        builder.define(TASK_STATE, (byte) 0);
     }
     @Override
     protected void registerGoals() {
@@ -61,19 +61,19 @@ public class ScoutEntity extends BowmanEntity implements ICompanion {
         this.goalSelector.addGoal(2, new UseShield(this));
     }
 
-    public void addAdditionalSaveData(CompoundTag nbt) {
-        super.addAdditionalSaveData(nbt);
+    public void saveRecruitData(CompoundTag nbt) {
+        super.saveRecruitData(nbt);
         nbt.putString("OwnerName", this.getOwnerName());
         nbt.putInt("taskState", this.state.getIndex());
         nbt.putInt("timerScouting", this.timerScouting);
     }
 
-    public void readAdditionalSaveData(CompoundTag nbt) {
-        super.readAdditionalSaveData(nbt);
-        this.setOwnerName(nbt.getString("OwnerName"));
+    public void loadRecruitData(CompoundTag nbt) {
+        super.loadRecruitData(nbt);
+        this.setOwnerName(nbt.getStringOr("OwnerName", ""));
 
-        this.setTaskState(State.fromIndex(nbt.getInt("taskState")));
-        this.timerScouting = nbt.getInt("timerScouting");
+        this.setTaskState(State.fromIndex(nbt.getIntOr("taskState", 0)));
+        this.timerScouting = nbt.getIntOr("timerScouting", 0);
     }
 
     //ATTRIBUTES
@@ -81,18 +81,18 @@ public class ScoutEntity extends BowmanEntity implements ICompanion {
         return Mob.createMobAttributes()
                 .add(Attributes.MAX_HEALTH, 20.0D)
                 .add(Attributes.MOVEMENT_SPEED, 0.3D)
-                .add(ForgeMod.SWIM_SPEED.get(), 0.3D)
+                .add(ForgeMod.SWIM_SPEED.getHolder().get(), 0.3D)
                 .add(Attributes.KNOCKBACK_RESISTANCE, 0.1D)
                 .add(Attributes.ATTACK_DAMAGE, 0.5D)
                 .add(Attributes.FOLLOW_RANGE, 128.0D)
-                .add(ForgeMod.ENTITY_REACH.get(), 0D)
+                .add(Attributes.ENTITY_INTERACTION_RANGE, 0D)
                 .add(Attributes.ATTACK_SPEED);
     }
 
 
     @Nullable
-    public SpawnGroupData finalizeSpawn(ServerLevelAccessor world, DifficultyInstance difficultyInstance, MobSpawnType reason, @Nullable SpawnGroupData data, @Nullable CompoundTag nbt) {
-        SpawnGroupData ilivingentitydata = super.finalizeSpawn(world, difficultyInstance, reason, data, nbt);
+    public SpawnGroupData finalizeSpawn(ServerLevelAccessor world, DifficultyInstance difficultyInstance, EntitySpawnReason reason, @Nullable SpawnGroupData data) {
+        SpawnGroupData ilivingentitydata = super.finalizeSpawn(world, difficultyInstance, reason, data);
         ((AsyncGroundPathNavigation)this.getNavigation()).setCanOpenDoors(true);
 
         this.initSpawn();
@@ -112,7 +112,7 @@ public class ScoutEntity extends BowmanEntity implements ICompanion {
 
     @Override
     public boolean wantsToPickUp(ItemStack itemStack) {
-        if((itemStack.getItem() instanceof SwordItem && this.getMatchingItem(item -> item.getItem() instanceof SwordItem) == null) ||
+        if((com.talhanation.recruits.util.ItemCompat.isSword(itemStack) && this.getMatchingItem(item -> com.talhanation.recruits.util.ItemCompat.isSword(item)) == null) ||
                 (itemStack.getItem() instanceof BowItem && this.getMatchingItem(item -> item.getItem() instanceof BowItem) == null) ||
                 (itemStack.getItem() instanceof ShieldItem) && this.getMatchingItem(item -> item.getItem() instanceof ShieldItem) == null)
             return true;
@@ -212,7 +212,7 @@ public class ScoutEntity extends BowmanEntity implements ICompanion {
     private void sendMessageToOwner(Component message) {
         if (getOwner() != null) {
             MutableComponent prefix = Component.literal(this.getName().getString() + ": ").withStyle(ChatFormatting.GOLD);
-            this.getOwner().sendSystemMessage(prefix.append(message));
+            this.getOwner().displayClientMessage(prefix.append(message), false);
         }
     }
 
@@ -220,12 +220,12 @@ public class ScoutEntity extends BowmanEntity implements ICompanion {
     List<AbstractRecruitEntity> potentialRecruitTargets;
     public void findNonFriendlyEntities() {
         if (getOwner() == null) return;
-        if (this.getCommandSenderWorld().isClientSide()) return;
+        if (this.level().isClientSide()) return;
 
         potentialPlayerTargets = new ArrayList<>();
         potentialRecruitTargets = new ArrayList<>();
 
-        if (this.getCommandSenderWorld() instanceof ServerLevel serverLevel) {
+        if (this.level() instanceof ServerLevel serverLevel) {
             AABB scanBox = this.getBoundingBox().inflate(SEARCH_RADIUS);
             for (LivingEntity candidate : NearbyEntityCache.livingEntities(serverLevel)) {
                 if (!scanBox.contains(candidate.getX(), candidate.getY(), candidate.getZ())) continue;
@@ -260,7 +260,7 @@ public class ScoutEntity extends BowmanEntity implements ICompanion {
                 for (Map.Entry<String, List<LivingEntity>> entry : teamedRecruitsMap.entrySet()) {
                     String teamName = entry.getKey();
                     int recruitCount = entry.getValue().size();
-                    Vec3 vec = FormationUtils.getCenterOfPositions(entry.getValue(), (ServerLevel) this.getCommandSenderWorld());
+                    Vec3 vec = FormationUtils.getCenterOfPositions(entry.getValue(), (ServerLevel) this.level());
                     int distance = (int) Math.sqrt(this.blockPosition().distSqr(new BlockPos((int) vec.x, (int) vec.y, (int) vec.z)));
                     String direction = getHorizontalDirection(this.blockPosition(), new BlockPos((int) vec.x, (int) vec.y, (int) vec.z));
 

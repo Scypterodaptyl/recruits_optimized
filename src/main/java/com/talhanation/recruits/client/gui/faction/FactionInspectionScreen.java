@@ -1,14 +1,14 @@
 package com.talhanation.recruits.client.gui.faction;
 
-import com.mojang.blaze3d.platform.Lighting;
-import com.mojang.blaze3d.systems.RenderSystem;
+import net.minecraft.client.input.KeyEvent;
+import net.minecraft.client.renderer.RenderPipelines;
+
 import com.talhanation.recruits.Main;
 import com.talhanation.recruits.client.ClientManager;
 import com.talhanation.recruits.client.gui.worldmap.WorldMapScreen;
 import com.talhanation.recruits.network.MessageLeaveTeam;
 import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.client.gui.components.Button;
-import net.minecraft.client.renderer.GameRenderer;
 import com.talhanation.recruits.client.gui.component.BannerRenderer;
 import com.talhanation.recruits.client.gui.diplomacy.DiplomacyTeamListScreen;
 import com.talhanation.recruits.client.gui.player.IPlayerSelection;
@@ -24,7 +24,7 @@ import com.talhanation.recruits.world.RecruitsFaction;
 import net.minecraft.ChatFormatting;
 import net.minecraft.client.gui.screens.Screen;
 import net.minecraft.network.chat.Component;
-import net.minecraft.resources.ResourceLocation;
+import net.minecraft.resources.Identifier;
 import net.minecraft.util.Mth;
 import net.minecraft.world.entity.player.Player;
 import net.minecraftforge.api.distmarker.Dist;
@@ -34,8 +34,8 @@ import net.minecraftforge.client.gui.widget.ExtendedButton;
 @OnlyIn(Dist.CLIENT)
 public class FactionInspectionScreen extends ListScreenBase implements IPlayerSelection {
 
-    protected static final ResourceLocation TEXTURE = new ResourceLocation(Main.MOD_ID, "textures/gui/team/team_inspect.png");
-    protected static final ResourceLocation LEADER_CROWN = new ResourceLocation(Main.MOD_ID, "textures/gui/image/leader_crown.png");
+    protected static final Identifier TEXTURE = Identifier.fromNamespaceAndPath(Main.MOD_ID, "textures/gui/team/team_inspect.png");
+    protected static final Identifier LEADER_CROWN = Identifier.fromNamespaceAndPath(Main.MOD_ID, "textures/gui/image/leader_crown.png");
     private static final Component CLAIM_BUTTON = Component.translatable("gui.recruits.team.claim");
     private static final Component LEAVE_BUTTON = Component.translatable("gui.recruits.team.leave");
     private static final Component DELETE_BUTTON = Component.translatable("gui.recruits.team.delete_team");
@@ -186,13 +186,15 @@ public class FactionInspectionScreen extends ListScreenBase implements IPlayerSe
         if(ClientManager.ownFaction != null && !postInit){
             this.postInit();
         }
-        Lighting.setupFor3DItems();
 
     }
 
     @Override
-    public boolean keyPressed(int p_96552_, int p_96553_, int p_96554_) {
-        boolean flag = super.keyPressed(p_96552_, p_96553_, p_96554_);
+    public boolean keyPressed(KeyEvent event) {
+        int p_96552_ = event.key();
+        int p_96553_ = event.scancode();
+        int p_96554_ = event.modifiers();
+        boolean flag = super.keyPressed(event);
         this.selected = null;
         this.playerList.setFocused(null);
         return flag;
@@ -210,14 +212,13 @@ public class FactionInspectionScreen extends ListScreenBase implements IPlayerSe
         if(bannerRenderer != null) bannerRenderer.renderBanner(guiGraphics, this.guiLeft + x1, guiTop + y1, this.width, this.height, 60);
     }
     @Override
-    public void renderBackground(GuiGraphics guiGraphics, int mouseX, int mouseY, float delta) {
-        RenderSystem.setShaderTexture(0, TEXTURE);
-        guiGraphics.blit(TEXTURE, guiLeft, guiTop, 0, 0, xSize, HEADER_SIZE);
+    public void renderRecruitsBackground(GuiGraphics guiGraphics, int mouseX, int mouseY, float delta) {
+        guiGraphics.blit(RenderPipelines.GUI_TEXTURED, TEXTURE, guiLeft, guiTop, (float) (0), (float) (0), xSize, HEADER_SIZE, 256, 256);
         for (int i = 0; i < units; i++) {
-            guiGraphics.blit(TEXTURE, guiLeft, guiTop + HEADER_SIZE + UNIT_SIZE * i, 0, HEADER_SIZE, xSize, UNIT_SIZE);
+            guiGraphics.blit(RenderPipelines.GUI_TEXTURED, TEXTURE, guiLeft, guiTop + HEADER_SIZE + UNIT_SIZE * i, (float) (0), (float) (HEADER_SIZE), xSize, UNIT_SIZE, 256, 256);
         }
-        guiGraphics.blit(TEXTURE, guiLeft, guiTop + HEADER_SIZE + UNIT_SIZE * units, 0, HEADER_SIZE + UNIT_SIZE, xSize, FOOTER_SIZE);
-        guiGraphics.blit(TEXTURE, guiLeft + 10, guiTop + HEADER_SIZE + 6 - 2, xSize, 0, 12, 12);
+        guiGraphics.blit(RenderPipelines.GUI_TEXTURED, TEXTURE, guiLeft, guiTop + HEADER_SIZE + UNIT_SIZE * units, (float) (0), (float) (HEADER_SIZE + UNIT_SIZE), xSize, FOOTER_SIZE, 256, 256);
+        guiGraphics.blit(RenderPipelines.GUI_TEXTURED, TEXTURE, guiLeft + 10, guiTop + HEADER_SIZE + 6 - 2, (float) (xSize), (float) (0), 12, 12, 256, 256);
     }
 
     @Override
@@ -239,23 +240,20 @@ public class FactionInspectionScreen extends ListScreenBase implements IPlayerSe
             if(ClientManager.ownFaction.maxNPCs > 0) npcs = npcs + "/" + ClientManager.ownFaction.maxNPCs;
             if(ClientManager.ownFaction.maxPlayers > 0) players = players + "/" + ClientManager.ownFaction.maxPlayers;
 
-            guiGraphics.drawString(font, this.getTitle().getString(), width / 2F - font.width(getTitle()) / 2F, guiTop + 5, 0xFF000000 | ChatFormatting.getById(ClientManager.ownFaction.getTeamColor()).getColor(), false);
+            guiGraphics.drawString(font, this.getTitle().getString(), (int) (width / 2F - font.width(getTitle()) / 2F), (int) (guiTop + 5), com.talhanation.recruits.client.gui.util.GuiCompat.opaque(0xFF000000 | ChatFormatting.getById(ClientManager.ownFaction.getTeamColor()).getColor()), false);
 
-            RenderSystem.setShader(GameRenderer::getPositionTexShader);
-            RenderSystem.setShaderColor(1F, 1F, 1F, 1F);
-            RenderSystem.setShaderTexture(0, LEADER_CROWN);
-            guiGraphics.blit(LEADER_CROWN, crownX, crownY, 0, 0, 16, 16, 16, 16);
+            guiGraphics.blit(RenderPipelines.GUI_TEXTURED, LEADER_CROWN, crownX, crownY, (float) (0), (float) (0), 16, 16, 16, 16);
 
-            guiGraphics.drawString(font, LEADER_TEXT.getString(), textX, textY, 4210752, false);
+            guiGraphics.drawString(font, LEADER_TEXT.getString(), textX, textY, 0xFF404040, false);
 
-            guiGraphics.drawString(font, MEMBERS_TEXT.getString(), textX, textY + 25, 4210752, false);
-            guiGraphics.drawString(font, "" + members, textX + numbersX, textY + 25, 4210752, false);
+            guiGraphics.drawString(font, MEMBERS_TEXT.getString(), textX, textY + 25, 0xFF404040, false);
+            guiGraphics.drawString(font, "" + members, textX + numbersX, textY + 25, 0xFF404040, false);
 
-            guiGraphics.drawString(font, PLAYERS_TEXT.getString(), textX, textY + 40, 4210752, false);
-            guiGraphics.drawString(font, players, textX + numbersX, textY + 40, 4210752, false);
+            guiGraphics.drawString(font, PLAYERS_TEXT.getString(), textX, textY + 40, 0xFF404040, false);
+            guiGraphics.drawString(font, players, textX + numbersX, textY + 40, 0xFF404040, false);
 
-            guiGraphics.drawString(font, NPCS_TEXT.getString(), textX, textY + 55, 4210752, false);
-            guiGraphics.drawString(font, npcs, textX + numbersX, textY + 55, 4210752, false);
+            guiGraphics.drawString(font, NPCS_TEXT.getString(), textX, textY + 55, 0xFF404040, false);
+            guiGraphics.drawString(font, npcs, textX + numbersX, textY + 55, 0xFF404040, false);
         }
     }
 

@@ -23,6 +23,7 @@
   "block.recruits.horseman_block": "騎兵の作業台",
   "block.recruits.crossbowman_block": "クロスボウ兵の作業台",
   "category.recruits": "兵士",
+  "key.category.recruits.main": "兵士",
   "key.recruits.command_screen_key": "指令画面を開く",
   "key.recruits.team_screen_key": "勢力画面を開く",
   "key.recruits.map_screen_key": "クレームマップ画面を開く",

@@ -2,12 +2,12 @@ package com.talhanation.recruits.network;
 
 import com.talhanation.recruits.client.ClientManager;
 import com.talhanation.recruits.world.RecruitsFaction;
-import de.maxhenkel.corelib.net.Message;
+import com.talhanation.recruits.network.Message;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.network.FriendlyByteBuf;
 import net.minecraft.world.item.ItemStack;
 import net.minecraftforge.api.distmarker.Dist;
-import net.minecraftforge.network.NetworkEvent;
+import net.minecraftforge.event.network.CustomPayloadEvent;
 
 import java.util.List;
 
@@ -38,7 +38,7 @@ public class MessageToClientUpdateFactions implements Message<MessageToClientUpd
     }
 
     @Override
-    public void executeClientSide(NetworkEvent.Context context) {
+    public void executeClientSide(CustomPayloadEvent.Context context) {
         ClientManager.factions = RecruitsFaction.getListFromNBT(nbt);
         ClientManager.isFactionEditingAllowed = editing;
         ClientManager.isFactionManagingAllowed = managing;
@@ -52,7 +52,7 @@ public class MessageToClientUpdateFactions implements Message<MessageToClientUpd
         this.nbt = buf.readNbt();
         this.editing = buf.readBoolean();
         this.managing = buf.readBoolean();
-        this.currency = buf.readItem();
+        this.currency = com.talhanation.recruits.util.NbtCompat.loadItem(buf.readNbt());
         this.factionCreationPrice = buf.readInt();
         this.factionMaxRecruitsPerPlayerConfigSetting = buf.readInt();
         return this;
@@ -63,7 +63,7 @@ public class MessageToClientUpdateFactions implements Message<MessageToClientUpd
         buf.writeNbt(this.nbt);
         buf.writeBoolean(this.editing);
         buf.writeBoolean(this.managing);
-        buf.writeItem(this.currency);
+        buf.writeNbt(com.talhanation.recruits.util.NbtCompat.saveItem(this.currency));
         buf.writeInt(this.factionCreationPrice);
         buf.writeInt(this.factionMaxRecruitsPerPlayerConfigSetting);
     }

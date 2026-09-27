@@ -1,5 +1,6 @@
 package com.talhanation.recruits;
 
+import net.minecraft.core.UUIDUtil;
 import com.talhanation.recruits.config.RecruitsServerConfig;
 import com.talhanation.recruits.entities.ai.controller.SmallShipsController;
 import com.talhanation.recruits.entities.ai.controller.siegeengineer.SiegeWeaponCatapultController;
@@ -16,7 +17,7 @@ import net.minecraft.nbt.ListTag;
 import net.minecraft.nbt.Tag;
 import net.minecraft.network.chat.Component;
 import net.minecraft.network.chat.MutableComponent;
-import net.minecraft.resources.ResourceLocation;
+import net.minecraft.resources.Identifier;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.MenuProvider;
@@ -28,8 +29,7 @@ import net.minecraft.world.item.*;
 import net.minecraft.world.phys.*;
 import net.minecraftforge.event.TickEvent;
 import net.minecraftforge.event.entity.player.PlayerEvent;
-import net.minecraftforge.eventbus.api.SubscribeEvent;
-import net.minecraftforge.network.NetworkHooks;
+import net.minecraftforge.eventbus.api.listener.SubscribeEvent;
 import net.minecraftforge.registries.ForgeRegistries;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -57,7 +57,7 @@ public class CommandEvents {
 
             switch (movementState){
                case 2 -> {//hold your position
-                   targetPos = FormationUtils.getGeometricMedian(recruits, (ServerLevel) player.getCommandSenderWorld());
+                   targetPos = FormationUtils.getGeometricMedian(recruits, (ServerLevel) player.level());
                }
 
                case 4 -> {//hold my position
@@ -71,11 +71,11 @@ public class CommandEvents {
 
                case 7 -> {//forward
                    Vec3 center = getSavedFormationCenter(player);
-                   if(center == null) center = FormationUtils.getGeometricMedian(recruits, (ServerLevel) player.getCommandSenderWorld());
+                   if(center == null) center = FormationUtils.getGeometricMedian(recruits, (ServerLevel) player.level());
                    Vec3 forward = player.getForward();
                    Vec3 pos = center.add(forward.scale(getForwardScale(recruits)));
                    BlockPos blockPos = FormationUtils.getPositionOrSurface(
-                           player.getCommandSenderWorld(),
+                           player.level(),
                            new BlockPos((int) pos.x, (int) pos.y, (int) pos.z)
                    );
 
@@ -84,11 +84,11 @@ public class CommandEvents {
 
                case 8 -> {//backward
                    Vec3 center = getSavedFormationCenter(player);
-                   if(center == null) center = FormationUtils.getGeometricMedian(recruits, (ServerLevel) player.getCommandSenderWorld());
+                   if(center == null) center = FormationUtils.getGeometricMedian(recruits, (ServerLevel) player.level());
                    Vec3 forward = player.getForward();
                    Vec3 pos = center.add(forward.scale(-getForwardScale(recruits)));
                    BlockPos blockPos = FormationUtils.getPositionOrSurface(
-                           player.getCommandSenderWorld(),
+                           player.level(),
                            new BlockPos((int) pos.x, (int) pos.y, (int) pos.z)
                    );
 
@@ -142,7 +142,7 @@ public class CommandEvents {
                             // on top of each other at the destination.
                             Vec3 offset = recruit.position().subtract(moveGroupCenter);
                             BlockPos spreadPos = blockpos.offset((int) Math.round(offset.x), 0, (int) Math.round(offset.z));
-                            BlockPos targetBlockPos = FormationUtils.getPositionOrSurface(player.getCommandSenderWorld(), spreadPos);
+                            BlockPos targetBlockPos = FormationUtils.getPositionOrSurface(player.level(), spreadPos);
 
                             recruit.setMovePos(targetBlockPos);// needs to be above setFollowState
 
@@ -156,7 +156,7 @@ public class CommandEvents {
                         Vec3 forward = player.getForward();
                         Vec3 pos = recruit.position().add(forward.scale(getForwardScale(recruit)));
                         BlockPos blockPos = FormationUtils.getPositionOrSurface(
-                                player.getCommandSenderWorld(),
+                                player.level(),
                                 new BlockPos((int) pos.x, (int) pos.y, (int) pos.z)
                         );
 
@@ -171,7 +171,7 @@ public class CommandEvents {
                         Vec3 forward = player.getForward();
                         Vec3 pos = recruit.position().add(forward.scale(-getForwardScale(recruit)));
                         BlockPos blockPos = FormationUtils.getPositionOrSurface(
-                                player.getCommandSenderWorld(),
+                                player.level(),
                                 new BlockPos((int) pos.x, (int) pos.y, (int) pos.z)
                         );
 
@@ -260,7 +260,7 @@ public class CommandEvents {
 
         if(formation != 0) {
             Vec3 targetPos = getSavedFormationCenter(player);
-            if(targetPos == null) targetPos = FormationUtils.getGeometricMedian(recruits, (ServerLevel) player.getCommandSenderWorld());
+            if(targetPos == null) targetPos = FormationUtils.getGeometricMedian(recruits, (ServerLevel) player.level());
             applyFormation(formation, recruits, player, targetPos, tight, hold);
         } else {
             // Without formation: hold current position
@@ -384,7 +384,7 @@ public class CommandEvents {
 
         list.removeIf(recruit -> !recruit.isEffectedByCommand(player_uuid, group));
 
-        List<LivingEntity> validTargets = player.getCommandSenderWorld()
+        List<LivingEntity> validTargets = player.level()
                 .getEntitiesOfClass(LivingEntity.class, aabb);
 
         if (list.isEmpty() || validTargets.isEmpty()) return;
@@ -456,7 +456,7 @@ public class CommandEvents {
 
     public static void openCommandScreen(Player player) {
         if (player instanceof ServerPlayer) {
-            NetworkHooks.openScreen((ServerPlayer) player, new MenuProvider() {
+            ((ServerPlayer) player).openMenu(new MenuProvider() {
 
                 @Override
                 public @NotNull Component getDisplayName() {
@@ -473,8 +473,17 @@ public class CommandEvents {
         }
     }
     @SubscribeEvent
-    public void onServerPlayerTick(TickEvent.PlayerTickEvent event){
-        if(event.player instanceof ServerPlayer serverPlayer && serverPlayer.tickCount % 20 == 0){
+    public void onServerPlayerTickPre(TickEvent.PlayerTickEvent.Pre event) {
+        this.onServerPlayerTick(event.player());
+    }
+
+    @SubscribeEvent
+    public void onServerPlayerTickPost(TickEvent.PlayerTickEvent.Post event) {
+        this.onServerPlayerTick(event.player());
+    }
+
+    public void onServerPlayerTick(Player tickingPlayer){
+        if(tickingPlayer instanceof ServerPlayer serverPlayer && serverPlayer.tickCount % 20 == 0){
             int formation = getSavedFormation(serverPlayer);
 
             if(formation > 0){
@@ -490,7 +499,7 @@ public class CommandEvents {
 
                 if(targetPosition.distanceToSqr(oldPos) > 50){
 
-                    List<AbstractRecruitEntity> recruits = Objects.requireNonNull(serverPlayer).getCommandSenderWorld().getEntitiesOfClass(
+                    List<AbstractRecruitEntity> recruits = Objects.requireNonNull(serverPlayer).level().getEntitiesOfClass(
                                     AbstractRecruitEntity.class,
                                     serverPlayer.getBoundingBox().inflate(200)
                             );
@@ -511,10 +520,9 @@ public class CommandEvents {
         }
     }
 
-    @SubscribeEvent
     public static void onPlayerLoggedIn(PlayerEvent.PlayerLoggedInEvent event) {
         CompoundTag playerData = event.getEntity().getPersistentData();
-        CompoundTag data = playerData.getCompound(Player.PERSISTED_NBT_TAG);
+        CompoundTag data = playerData.getCompoundOrEmpty("PlayerPersisted");
             if (!data.contains("MaxRecruits")) data.putInt("MaxRecruits", RecruitsServerConfig.MaxRecruitsForPlayer.get());
             if (!data.contains("CommandingGroup")) data.putInt("CommandingGroup", 0);
             if (!data.contains("TotalRecruits")) data.putInt("TotalRecruits", 0);
@@ -522,52 +530,52 @@ public class CommandEvents {
             if (!data.contains("Formation")) data.putInt("Formation", 0);
             if (!data.contains("FormationPos")) data.putIntArray("FormationPos", new int[]{(int) event.getEntity().getX(), (int) event.getEntity().getZ()});
 
-        playerData.put(Player.PERSISTED_NBT_TAG, data);
+        playerData.put("PlayerPersisted", data);
     }
 
     public static int getSavedFormation(Player player) {
         CompoundTag playerNBT = player.getPersistentData();
-        CompoundTag nbt = playerNBT.getCompound(Player.PERSISTED_NBT_TAG);
+        CompoundTag nbt = playerNBT.getCompoundOrEmpty("PlayerPersisted");
 
-        return nbt.getInt("Formation");
+        return nbt.getIntOr("Formation", 0);
     }
 
     public static void saveFormation(Player player, int formation) {
         CompoundTag playerNBT = player.getPersistentData();
-        CompoundTag nbt = playerNBT.getCompound(Player.PERSISTED_NBT_TAG);
+        CompoundTag nbt = playerNBT.getCompoundOrEmpty("PlayerPersisted");
 
         nbt.putInt( "Formation", formation);
-        playerNBT.put(Player.PERSISTED_NBT_TAG, nbt);
+        playerNBT.put("PlayerPersisted", nbt);
     }
 
 
     public static void saveUUIDList(Player player, String key, Collection<UUID> uuids) {
         CompoundTag playerNBT = player.getPersistentData();
-        CompoundTag persisted = playerNBT.getCompound(Player.PERSISTED_NBT_TAG);
+        CompoundTag persisted = playerNBT.getCompoundOrEmpty("PlayerPersisted");
 
         ListTag list = new ListTag();
         for (UUID uuid : uuids) {
             CompoundTag tag = new CompoundTag();
-            tag.putUUID("UUID", uuid);
+            tag.store("UUID", UUIDUtil.CODEC, uuid);
             list.add(tag);
         }
 
         persisted.put(key, list);
-        playerNBT.put(Player.PERSISTED_NBT_TAG, persisted);
+        playerNBT.put("PlayerPersisted", persisted);
     }
 
     public static List<UUID> getSavedUUIDList(Player player, String key) {
         CompoundTag playerNBT = player.getPersistentData();
-        CompoundTag persisted = playerNBT.getCompound(Player.PERSISTED_NBT_TAG);
+        CompoundTag persisted = playerNBT.getCompoundOrEmpty("PlayerPersisted");
 
         List<UUID> result = new ArrayList<>();
-        if (!persisted.contains(key, Tag.TAG_LIST)) return result;
+        if (!persisted.contains(key)) return result;
 
-        ListTag list = persisted.getList(key, Tag.TAG_COMPOUND);
+        ListTag list = persisted.getListOrEmpty(key);
         for (Tag t : list) {
             CompoundTag tag = (CompoundTag) t;
-            if (tag.hasUUID("UUID")) {
-                result.add(tag.getUUID("UUID"));
+            if (tag.read("UUID", UUIDUtil.CODEC).isPresent()) {
+                result.add(tag.read("UUID", UUIDUtil.CODEC).orElse(null));
             }
         }
 
@@ -576,40 +584,40 @@ public class CommandEvents {
 
     public static int[] getSavedFormationPos(Player player) {
         CompoundTag playerNBT = player.getPersistentData();
-        CompoundTag nbt = playerNBT.getCompound(Player.PERSISTED_NBT_TAG);
+        CompoundTag nbt = playerNBT.getCompoundOrEmpty("PlayerPersisted");
 
-        return nbt.getIntArray("FormationPos");
+        return nbt.getIntArray("FormationPos").orElse(new int[0]);
     }
 
     public static void saveFormationPos(Player player, int[] pos) {
         CompoundTag playerNBT = player.getPersistentData();
-        CompoundTag nbt = playerNBT.getCompound(Player.PERSISTED_NBT_TAG);
+        CompoundTag nbt = playerNBT.getCompoundOrEmpty("PlayerPersisted");
 
         nbt.putIntArray( "FormationPos", pos);
-        playerNBT.put(Player.PERSISTED_NBT_TAG, nbt);
+        playerNBT.put("PlayerPersisted", nbt);
     }
 
     public static void saveFormationCenter(Player player, Vec3 center) {
         CompoundTag playerNBT = player.getPersistentData();
-        CompoundTag nbt = playerNBT.getCompound(Player.PERSISTED_NBT_TAG);
+        CompoundTag nbt = playerNBT.getCompoundOrEmpty("PlayerPersisted");
 
         nbt.putDouble("FormationCenterX", center.x);
         nbt.putDouble("FormationCenterY", center.y);
         nbt.putDouble("FormationCenterZ", center.z);
-        playerNBT.put(Player.PERSISTED_NBT_TAG, nbt);
+        playerNBT.put("PlayerPersisted", nbt);
     }
 
     @Nullable
     public static Vec3 getSavedFormationCenter(Player player) {
         CompoundTag playerNBT = player.getPersistentData();
-        CompoundTag nbt = playerNBT.getCompound(Player.PERSISTED_NBT_TAG);
+        CompoundTag nbt = playerNBT.getCompoundOrEmpty("PlayerPersisted");
 
         if(!nbt.contains("FormationCenterX")) return null;
 
         return new Vec3(
-                nbt.getDouble("FormationCenterX"),
-                nbt.getDouble("FormationCenterY"),
-                nbt.getDouble("FormationCenterZ")
+                nbt.getDoubleOr("FormationCenterX", 0.0D),
+                nbt.getDoubleOr("FormationCenterY", 0.0D),
+                nbt.getDoubleOr("FormationCenterZ", 0.0D)
         );
     }
 
@@ -620,7 +628,7 @@ public class CommandEvents {
         int playerEmeralds = 0;
 
         String str = RecruitsServerConfig.RecruitCurrency.get();
-        Optional<Holder<Item>> holder = ForgeRegistries.ITEMS.getHolder(ResourceLocation.tryParse(str));
+        Optional<Holder<Item>> holder = ForgeRegistries.ITEMS.getHolder(Identifier.tryParse(str));
 
         ItemStack currencyItemStack = holder.map(itemHolder -> itemHolder.value().getDefaultInstance()).orElseGet(Items.EMERALD::getDefaultInstance);
 
@@ -662,12 +670,12 @@ public class CommandEvents {
 
 
                 if(player.getTeam() != null){
-                    if(player.getCommandSenderWorld().isClientSide){
+                    if(player.level().isClientSide()){
                         Main.SIMPLE_CHANNEL.sendToServer(new MessageAddRecruitToTeam(player.getTeam().getName(), 1));
                     }
                     else {
                         ServerPlayer serverPlayer = (ServerPlayer) player;
-                        FactionEvents.addNPCToData(serverPlayer.serverLevel(), player.getTeam().getName(), 1);
+                        FactionEvents.addNPCToData(serverPlayer.level(), player.getTeam().getName(), 1);
                     }
                 }
 
@@ -675,7 +683,7 @@ public class CommandEvents {
             }
         }
         else
-            player.sendSystemMessage(TEXT_HIRE_COSTS(name, sollPrice, currency));
+            player.displayClientMessage(TEXT_HIRE_COSTS(name, sollPrice, currency), false);
 
         return false;
     }
@@ -708,7 +716,7 @@ public class CommandEvents {
         if (recruit.isEffectedByCommand(player_uuid, group)){
             //Main.LOGGER.debug("event: clear");
             recruit.setTarget(null);
-            recruit.setLastHurtByPlayer(null);
+            recruit.clearLastHurtByPlayer();
             recruit.setLastHurtMob(null);
             recruit.setLastHurtByMob(null);
         }
@@ -753,7 +761,7 @@ public class CommandEvents {
                 if(recruit instanceof BowmanEntity) recruit.switchMainHandItem(itemStack -> itemStack.getItem() instanceof BowItem);
             }
             else{
-                recruit.switchMainHandItem(itemStack -> itemStack.getItem() instanceof SwordItem);
+                recruit.switchMainHandItem(itemStack -> com.talhanation.recruits.util.ItemCompat.isSword(itemStack));
             }
         }
     }
@@ -766,6 +774,6 @@ public class CommandEvents {
     }
 
     private static MutableComponent TEXT_HIRE_COSTS(String name, int sollPrice, Item item) {
-        return Component.translatable("chat.recruits.text.hire_costs", name, String.valueOf(sollPrice), item.getDescription().getString());
+        return Component.translatable("chat.recruits.text.hire_costs", name, String.valueOf(sollPrice), item.getName().getString());
     }
 }

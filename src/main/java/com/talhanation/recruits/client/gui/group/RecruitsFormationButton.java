@@ -1,14 +1,13 @@
 package com.talhanation.recruits.client.gui.group;
 
-import com.mojang.blaze3d.systems.RenderSystem;
+import net.minecraft.client.renderer.RenderPipelines;
+
 import com.talhanation.recruits.Main;
 import com.talhanation.recruits.client.gui.CommandScreen;
-import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.GuiGraphics;
 import com.talhanation.recruits.client.gui.component.ActivateableButton;
-import net.minecraft.client.renderer.GameRenderer;
 import net.minecraft.network.chat.Component;
-import net.minecraft.resources.ResourceLocation;
+import net.minecraft.resources.Identifier;
 import net.minecraftforge.api.distmarker.Dist;
 import net.minecraftforge.api.distmarker.OnlyIn;
 
@@ -23,26 +22,24 @@ public class RecruitsFormationButton extends ActivateableButton {
     }
 
     @Override
-    public void renderWidget(GuiGraphics guiGraphics, int mouseX, int mouseY, float f) {
-        super.renderWidget(guiGraphics, mouseX, mouseY, f);
+    public void renderContents(GuiGraphics guiGraphics, int mouseX, int mouseY, float f) {
+        super.renderContents(guiGraphics, mouseX, mouseY, f);
 
-        RenderSystem.setShader(GameRenderer::getPositionTexShader);
-        RenderSystem.setShaderColor(1F, 1F, 1F, 1F);
-        guiGraphics.blit(getTextureLocation(), getX(), getY(), 0, 0, 21, 21, 21, 21);
+        guiGraphics.blit(RenderPipelines.GUI_TEXTURED, getTextureLocation(), getX(), getY(), (float) (0), (float) (0), 21, 21, 21, 21);
     }
 
-    private ResourceLocation getTextureLocation() {
-        ResourceLocation location;
+    private Identifier getTextureLocation() {
+        Identifier location;
         switch (this.formation.getIndex()){
-            default -> location = new ResourceLocation(Main.MOD_ID, "textures/gui/image/none.png");
-            case 1 ->  location = new ResourceLocation(Main.MOD_ID, "textures/gui/image/line.png");
-            case 2 ->  location = new ResourceLocation(Main.MOD_ID, "textures/gui/image/square.png");
-            case 3 ->  location = new ResourceLocation(Main.MOD_ID, "textures/gui/image/triangle.png");
-            case 4 ->  location = new ResourceLocation(Main.MOD_ID, "textures/gui/image/hcircle.png");
-            case 5 ->  location = new ResourceLocation(Main.MOD_ID, "textures/gui/image/hsquare.png");
-            case 6 ->  location = new ResourceLocation(Main.MOD_ID, "textures/gui/image/vform.png");
-            case 7 ->  location = new ResourceLocation(Main.MOD_ID, "textures/gui/image/circle.png");
-            case 8 ->  location = new ResourceLocation(Main.MOD_ID, "textures/gui/image/movement.png");
+            default -> location = Identifier.fromNamespaceAndPath(Main.MOD_ID, "textures/gui/image/none.png");
+            case 1 ->  location = Identifier.fromNamespaceAndPath(Main.MOD_ID, "textures/gui/image/line.png");
+            case 2 ->  location = Identifier.fromNamespaceAndPath(Main.MOD_ID, "textures/gui/image/square.png");
+            case 3 ->  location = Identifier.fromNamespaceAndPath(Main.MOD_ID, "textures/gui/image/triangle.png");
+            case 4 ->  location = Identifier.fromNamespaceAndPath(Main.MOD_ID, "textures/gui/image/hcircle.png");
+            case 5 ->  location = Identifier.fromNamespaceAndPath(Main.MOD_ID, "textures/gui/image/hsquare.png");
+            case 6 ->  location = Identifier.fromNamespaceAndPath(Main.MOD_ID, "textures/gui/image/vform.png");
+            case 7 ->  location = Identifier.fromNamespaceAndPath(Main.MOD_ID, "textures/gui/image/circle.png");
+            case 8 ->  location = Identifier.fromNamespaceAndPath(Main.MOD_ID, "textures/gui/image/movement.png");
         }
         return location;
     }

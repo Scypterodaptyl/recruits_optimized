@@ -29,7 +29,7 @@ public class AssassinEvents {
                     assassin.setPersistenceRequired();
                     assassin.setCanPickUpLoot(true);
                     assassin.setTarget(target);
-                    target.getCommandSenderWorld().addFreshEntity(assassin);
+                    target.level().addFreshEntity(assassin);
                 }
             }
         }
@@ -41,14 +41,14 @@ public class AssassinEvents {
 
 
         for(int i = 0; i < 10; ++i) {
-            int d0 = (int) (target.getX() + (target.getCommandSenderWorld().random.nextInt(16) + 32));
-            int d2 = (int) (target.getZ() + (target.getCommandSenderWorld().random.nextInt(16) + 32));
-            int d1 = target.getCommandSenderWorld().getHeight(Heightmap.Types.WORLD_SURFACE, d0, d2);
+            int d0 = (int) (target.getX() + (target.level().random.nextInt(16) + 32));
+            int d2 = (int) (target.getZ() + (target.level().random.nextInt(16) + 32));
+            int d1 = target.level().getHeight(Heightmap.Types.WORLD_SURFACE, d0, d2);
 
 
             BlockPos blockpos1 = new BlockPos(d0, d1, d2);
 
-            if (NaturalSpawner.isSpawnPositionOk(SpawnPlacements.Type.ON_GROUND, target.level, blockpos1, ModEntityTypes.ASSASSIN.get())) {
+            if (net.minecraft.world.entity.SpawnPlacementTypes.ON_GROUND.isSpawnPositionOk(target.level(), blockpos1, ModEntityTypes.ASSASSIN.get())) {
                 blockPos = blockpos1;
                 break;
             }
@@ -71,7 +71,7 @@ public class AssassinEvents {
         int playerEmeralds = 0;
         String str = RecruitsModConfig.RecruitCurrency.get();
         ItemStack currencyItemStack;
-        Optional<Holder<Item>> holder = ForgeRegistries.ITEMS.getHolder(ResourceLocation.tryParse(str));
+        Optional<Holder<Item>> holder = ForgeRegistries.ITEMS.getHolder(Identifier.tryParse(str));
 
         if (holder.isPresent()){
             currencyItemStack = holder.get().value().getDefaultInstance();

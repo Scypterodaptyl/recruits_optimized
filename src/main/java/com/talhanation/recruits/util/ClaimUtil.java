@@ -28,7 +28,7 @@ public class ClaimUtil {
 
         Set<ChunkPos> claimedSet = new HashSet<>(claimedChunks);
         int minY = -64;
-        int maxY = level.getMaxBuildHeight();
+        int maxY = level.getMaxY();
         AABB box = new AABB(
                 new ChunkPos(minChunkX, minChunkZ).getMinBlockX(), minY, new ChunkPos(minChunkX, minChunkZ).getMinBlockZ(),
                 new ChunkPos(maxChunkX, maxChunkZ).getMaxBlockX() + 1, maxY, new ChunkPos(maxChunkX, maxChunkZ).getMaxBlockZ() + 1
@@ -44,7 +44,7 @@ public class ClaimUtil {
         int maxX = chunkPos.getMaxBlockX();
         int maxZ = chunkPos.getMaxBlockZ();
         int minY = -64;
-        int maxY = level.getMaxBuildHeight();
+        int maxY = level.getMaxY();
         AABB box = new AABB(minX, minY, minZ, maxX + 1, maxY, maxZ + 1);
         return level.getEntitiesOfClass(LivingEntity.class, box, filter);
     }

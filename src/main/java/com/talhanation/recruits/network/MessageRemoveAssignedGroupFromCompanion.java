@@ -7,11 +7,11 @@ import com.talhanation.recruits.entities.AbstractRecruitEntity;
 import com.talhanation.recruits.entities.ICompanion;
 import com.talhanation.recruits.util.RecruitCommanderUtil;
 import com.talhanation.recruits.world.RecruitsGroup;
-import de.maxhenkel.corelib.net.Message;
+import com.talhanation.recruits.network.Message;
 import net.minecraft.network.FriendlyByteBuf;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraftforge.api.distmarker.Dist;
-import net.minecraftforge.network.NetworkEvent;
+import net.minecraftforge.event.network.CustomPayloadEvent;
 import net.minecraftforge.network.PacketDistributor;
 
 import java.util.*;
@@ -33,9 +33,9 @@ public class MessageRemoveAssignedGroupFromCompanion implements Message<MessageR
         return Dist.DEDICATED_SERVER;
     }
 
-    public void executeServerSide(NetworkEvent.Context context) {
+    public void executeServerSide(CustomPayloadEvent.Context context) {
         ServerPlayer serverPlayer = context.getSender();
-        serverPlayer.serverLevel().getEntitiesOfClass(AbstractLeaderEntity.class,
+        serverPlayer.level().getEntitiesOfClass(AbstractLeaderEntity.class,
                 context.getSender().getBoundingBox().inflate(100D),
                 (leader) -> leader.getUUID().equals(this.companion)
         ).forEach((companionEntity) -> {
@@ -57,7 +57,7 @@ public class MessageRemoveAssignedGroupFromCompanion implements Message<MessageR
             companionEntity.army = null;
             RecruitEvents.recruitsGroupsManager.broadCastGroupsToPlayer(serverPlayer);
 
-            Main.SIMPLE_CHANNEL.send(PacketDistributor.PLAYER.with(context::getSender), new MessageToClientUpdateLeaderScreen(companionEntity.WAYPOINTS, companionEntity.WAYPOINT_ITEMS, companionEntity.getArmySize()));
+            Main.SIMPLE_CHANNEL.send(PacketDistributor.PLAYER.with(context.getSender()), new MessageToClientUpdateLeaderScreen(companionEntity.WAYPOINTS, companionEntity.WAYPOINT_ITEMS, companionEntity.getArmySize()));
         });
     }
 

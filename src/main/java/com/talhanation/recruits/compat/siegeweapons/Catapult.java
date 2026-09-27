@@ -199,7 +199,7 @@ public class Catapult extends SiegeWeapon {
             ItemStack stack = inventory.getItem(i);
             if(stack.isEmpty()) continue;
 
-            String name = stack.getDescriptionId();
+            String name = stack.getItem().getDescriptionId();
             boolean isSiegeAmmo = name.contains("siegeweapons");
 
             if(isSiegeAmmo && name.contains("fire_pot_item")){

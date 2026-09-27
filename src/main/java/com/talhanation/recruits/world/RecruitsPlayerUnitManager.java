@@ -124,7 +124,7 @@ public class RecruitsPlayerUnitManager {
             factionID = player.getTeam().getName();
         }
 
-        Main.SIMPLE_CHANNEL.send(PacketDistributor.PLAYER.with(()-> (ServerPlayer) player),
+        Main.SIMPLE_CHANNEL.send(PacketDistributor.PLAYER.with((ServerPlayer) player),
                 new MessageToClientUpdateUnitInfo(
                         RecruitsServerConfig.NobleVillagerNeedsVillagers.get(),
                         getRemainingRecruitSlots(factionID, player.getUUID())

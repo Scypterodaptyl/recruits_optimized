@@ -2,9 +2,8 @@ package com.talhanation.recruits.compat.musketmod;
 import com.talhanation.recruits.entities.AbstractRecruitEntity;
 import net.minecraft.sounds.SoundEvent;
 import net.minecraft.world.entity.LivingEntity;
-import net.minecraft.world.entity.projectile.AbstractArrow;
-import net.minecraft.world.entity.projectile.AbstractHurtingProjectile;
-import net.minecraft.world.entity.projectile.Arrow;
+import net.minecraft.world.entity.projectile.arrow.AbstractArrow;
+import net.minecraft.world.entity.projectile.hurtingprojectile.AbstractHurtingProjectile;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
 
@@ -28,12 +27,12 @@ public interface IWeapon {
     void performRangedAttackIWeapon(AbstractRecruitEntity shooter, double x, double y, double z, float projectileSpeed);
 
     static boolean isMusketModWeapon(ItemStack stack){
-        return stack.getDescriptionId().equals("item.musketmod.musket") ||
-                stack.getDescriptionId().equals("item.musketmod.musket_with_bayonet") ||
-                stack.getDescriptionId().equals("item.musketmod.musket_with_scope") ||
-                stack.getDescriptionId().equals("item.musketmod.blunderbuss") ||
-                stack.getDescriptionId().equals("item.musketmod.cartridge") ||
-                stack.getDescriptionId().equals("item.musketmod.pistol");
+        return stack.getItem().getDescriptionId().equals("item.musketmod.musket") ||
+                stack.getItem().getDescriptionId().equals("item.musketmod.musket_with_bayonet") ||
+                stack.getItem().getDescriptionId().equals("item.musketmod.musket_with_scope") ||
+                stack.getItem().getDescriptionId().equals("item.musketmod.blunderbuss") ||
+                stack.getItem().getDescriptionId().equals("item.musketmod.cartridge") ||
+                stack.getItem().getDescriptionId().equals("item.musketmod.pistol");
     }
 
     boolean isLoaded(ItemStack stack);

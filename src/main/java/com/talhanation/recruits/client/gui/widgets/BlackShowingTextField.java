@@ -1,15 +1,14 @@
 package com.talhanation.recruits.client.gui.widgets;
 
-import com.mojang.blaze3d.vertex.PoseStack;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.client.gui.components.AbstractWidget;
 import net.minecraft.client.gui.narration.NarrationElementOutput;
 import net.minecraft.network.chat.Component;
-import net.minecraft.util.FastColor;
+import net.minecraft.util.ARGB;
 
 public class BlackShowingTextField extends AbstractWidget {
-    protected static final int BG_FILL_SELECTED = FastColor.ARGB32.color(255, 10, 10, 10);
+    protected static final int BG_FILL_SELECTED = ARGB.color(255, 10, 10, 10);
     private final String text;
     private final int textXOffset;
     private final int textYOffset;
@@ -25,7 +24,7 @@ public class BlackShowingTextField extends AbstractWidget {
     }
     public void renderWidget(GuiGraphics guiGraphics, int mouseX, int mouseY, float delta) {
         guiGraphics.fill(this.getX(), this.getY(), this.getX() + this.width, this.getY() + this.height, BG_FILL_SELECTED);
-        guiGraphics.drawString(Minecraft.getInstance().font, text, this.getX() + textXOffset, this.getY() + textYOffset + (this.height - 8) / 2, 0xFFFFFF, false);
+        guiGraphics.drawString(Minecraft.getInstance().font, text, this.getX() + textXOffset, this.getY() + textYOffset + (this.height - 8) / 2, 0xFFFFFFFF, false);
     }
 
     @Override

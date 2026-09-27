@@ -1,6 +1,10 @@
 package com.talhanation.recruits.client.gui.player;
 
-import com.mojang.blaze3d.systems.RenderSystem;
+import net.minecraft.client.input.MouseButtonEvent;
+import net.minecraft.client.input.MouseButtonInfo;
+import net.minecraft.client.input.KeyEvent;
+import net.minecraft.client.renderer.RenderPipelines;
+
 import com.talhanation.recruits.Main;
 import com.talhanation.recruits.client.ClientManager;
 import com.talhanation.recruits.client.gui.widgets.ListScreenBase;
@@ -11,7 +15,7 @@ import net.minecraft.client.gui.components.Button;
 import net.minecraft.client.gui.components.EditBox;
 import net.minecraft.client.gui.screens.Screen;
 import net.minecraft.network.chat.Component;
-import net.minecraft.resources.ResourceLocation;
+import net.minecraft.resources.Identifier;
 import net.minecraft.util.Mth;
 import net.minecraft.world.entity.player.Player;
 import net.minecraftforge.client.gui.widget.ExtendedButton;
@@ -21,7 +25,7 @@ import java.util.function.Consumer;
 
 public class SelectPlayerScreen extends ListScreenBase implements IPlayerSelection{
 
-    protected static final ResourceLocation TEXTURE = new ResourceLocation(Main.MOD_ID, "textures/gui/select_player.png");
+    protected static final Identifier TEXTURE = Identifier.fromNamespaceAndPath(Main.MOD_ID, "textures/gui/select_player.png");
     public static final Component TITLE = Component.translatable("gui.recruits.select_player_screen.title");
     public static final Component BUTTON_SELECT = Component.translatable("gui.recruits.select_player_screen.selectPlayer");
     public static final Component BUTTON_SELECT_TOOLTIP = Component.translatable("gui.recruits.select_player_screen.selectPlayerTooltip");
@@ -118,13 +122,16 @@ public class SelectPlayerScreen extends ListScreenBase implements IPlayerSelecti
     @Override
     public void tick() {
         super.tick();
-        if (searchBox != null)  searchBox.tick();
+        
         if (playerList != null) playerList.tick();
     }
 
     @Override
-    public boolean keyPressed(int p_96552_, int p_96553_, int p_96554_) {
-        boolean flag = super.keyPressed(p_96552_, p_96553_, p_96554_);
+    public boolean keyPressed(KeyEvent event) {
+        int p_96552_ = event.key();
+        int p_96553_ = event.scancode();
+        int p_96554_ = event.modifiers();
+        boolean flag = super.keyPressed(event);
         this.selected = null;
         this.playerList.setFocused(null);
         this.actionButton.active = false;
@@ -137,19 +144,18 @@ public class SelectPlayerScreen extends ListScreenBase implements IPlayerSelecti
     }
 
     @Override
-    public void renderBackground(GuiGraphics guiGraphics, int mouseX, int mouseY, float delta) {
-        RenderSystem.setShaderTexture(0, TEXTURE);
-        guiGraphics.blit(TEXTURE, guiLeft, guiTop, 0, 0, xSize, HEADER_SIZE);
+    public void renderRecruitsBackground(GuiGraphics guiGraphics, int mouseX, int mouseY, float delta) {
+        guiGraphics.blit(RenderPipelines.GUI_TEXTURED, TEXTURE, guiLeft, guiTop, (float) (0), (float) (0), xSize, HEADER_SIZE, 256, 256);
         for (int i = 0; i < units; i++) {
-            guiGraphics.blit(TEXTURE, guiLeft, guiTop + HEADER_SIZE + UNIT_SIZE * i, 0, HEADER_SIZE, xSize, UNIT_SIZE);
+            guiGraphics.blit(RenderPipelines.GUI_TEXTURED, TEXTURE, guiLeft, guiTop + HEADER_SIZE + UNIT_SIZE * i, (float) (0), (float) (HEADER_SIZE), xSize, UNIT_SIZE, 256, 256);
         }
-        guiGraphics.blit(TEXTURE, guiLeft, guiTop + HEADER_SIZE + UNIT_SIZE * units, 0, HEADER_SIZE + UNIT_SIZE, xSize, FOOTER_SIZE);
-        guiGraphics.blit(TEXTURE, guiLeft + 10, guiTop + HEADER_SIZE + 6 - 2, xSize, 0, 12, 12);
+        guiGraphics.blit(RenderPipelines.GUI_TEXTURED, TEXTURE, guiLeft, guiTop + HEADER_SIZE + UNIT_SIZE * units, (float) (0), (float) (HEADER_SIZE + UNIT_SIZE), xSize, FOOTER_SIZE, 256, 256);
+        guiGraphics.blit(RenderPipelines.GUI_TEXTURED, TEXTURE, guiLeft + 10, guiTop + HEADER_SIZE + 6 - 2, (float) (xSize), (float) (0), 12, 12, 256, 256);
     }
 
     @Override
     public void renderForeground(GuiGraphics guiGraphics, int mouseX, int mouseY, float delta) {
-        guiGraphics.drawString(font, this.getTitle(), width / 2 - font.width(this.getTitle()) / 2, guiTop + 5, 4210752, false);
+        guiGraphics.drawString(font, this.getTitle(), width / 2 - font.width(this.getTitle()) / 2, guiTop + 5, 0xFF404040, false);
 
         if (!playerList.isEmpty()) {
             playerList.render(guiGraphics, mouseX, mouseY, delta);
@@ -170,9 +176,12 @@ public class SelectPlayerScreen extends ListScreenBase implements IPlayerSelecti
     }
 
     @Override
-    public boolean mouseClicked(double x, double y, int z) {
-        if(playerList != null) playerList.mouseClicked(x,y,z);
-        boolean flag = super.mouseClicked(x, y, z);
+    public boolean mouseClicked(MouseButtonEvent event, boolean doubleClick) {
+        double x = event.x();
+        double y = event.y();
+        int z = event.button();
+        if(playerList != null) playerList.mouseClicked(new MouseButtonEvent(x, y, new MouseButtonInfo(z, 0)), false);
+        boolean flag = super.mouseClicked(event, doubleClick);
         if(this.playerList.getFocused() != null){
             this.selected = this.playerList.getFocused().getPlayerInfo();
             this.actionButton.active = true;

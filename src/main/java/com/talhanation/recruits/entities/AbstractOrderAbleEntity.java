@@ -1,5 +1,7 @@
 package com.talhanation.recruits.entities;
 
+import net.minecraft.world.entity.monster.illager.AbstractIllager;
+import net.minecraft.world.item.enchantment.EnchantmentHelper;
 import com.talhanation.recruits.entities.ai.FleeFire;
 import com.talhanation.recruits.entities.ai.FleeTNT;
 import com.talhanation.recruits.entities.ai.FleeTarget;
@@ -24,11 +26,10 @@ import net.minecraft.world.entity.ai.attributes.AttributeModifier;
 import net.minecraft.world.entity.ai.attributes.Attributes;
 import net.minecraft.world.entity.ai.goal.*;
 import net.minecraft.world.entity.ai.goal.target.NearestAttackableTargetGoal;
-import net.minecraft.world.entity.animal.horse.AbstractHorse;
+import net.minecraft.world.entity.animal.equine.AbstractHorse;
 import net.minecraft.world.entity.monster.*;
 import net.minecraft.world.entity.player.Player;
-import net.minecraft.world.entity.projectile.AbstractArrow;
-import net.minecraft.world.item.ArmorItem;
+import net.minecraft.world.entity.projectile.arrow.AbstractArrow;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.ShieldItem;
@@ -86,13 +87,13 @@ public abstract class AbstractOrderAbleEntity extends AbstractInventoryEntity{
     }
 
     @Nullable
-    public SpawnGroupData finalizeSpawn(ServerLevelAccessor world, DifficultyInstance diff, MobSpawnType reason, @Nullable SpawnGroupData spawnData, @Nullable CompoundTag nbt) {
+    public SpawnGroupData finalizeSpawn(ServerLevelAccessor world, DifficultyInstance diff, EntitySpawnReason reason, @Nullable SpawnGroupData spawnData) {
         return spawnData;
     }
 
 
     public void setDropEquipment(){
-        this.dropEquipment();
+        if (this.level() instanceof ServerLevel serverLevel) this.dropEquipment(serverLevel);
     }
 
     ////////////////////////////////////REGISTER////////////////////////////////////
@@ -118,27 +119,27 @@ public abstract class AbstractOrderAbleEntity extends AbstractInventoryEntity{
 
 
          */
-        this.targetSelector.addGoal(5, new NearestAttackableTargetGoal<>(this, AbstractIllager.class, false));
+        this.targetSelector.addGoal(5, new NearestAttackableTargetGoal<>(this, net.minecraft.world.entity.monster.illager.AbstractIllager.class, false));
         this.targetSelector.addGoal(5, new NearestAttackableTargetGoal<>(this, Monster.class, false));
     }
 
-    protected void defineSynchedData() {
-        super.defineSynchedData();
-        this.entityData.define(DATA_REMAINING_ANGER_TIME, 0);
-        this.entityData.define(FLEEING, false);
-        this.entityData.define(XP, 0);
-        this.entityData.define(KILLS, 0);
-        this.entityData.define(LEVEL, 1);
-        this.entityData.define(isEating, true);
-        this.entityData.define(isInOrder,false);
+    protected void defineSynchedData(SynchedEntityData.Builder builder) {
+        super.defineSynchedData(builder);
+        builder.define(DATA_REMAINING_ANGER_TIME, 0);
+        builder.define(FLEEING, false);
+        builder.define(XP, 0);
+        builder.define(KILLS, 0);
+        builder.define(LEVEL, 1);
+        builder.define(isEating, true);
+        builder.define(isInOrder,false);
         //IS IN ORDER
         //IS LEADER
         //UUID OPFER optional
 
     }
     @Override
-    public void addAdditionalSaveData(CompoundTag nbt) {
-        super.addAdditionalSaveData(nbt);
+    public void saveRecruitData(CompoundTag nbt) {
+        super.saveRecruitData(nbt);
         nbt.putBoolean("isInOrder", this.getIsInOrder());
         nbt.putBoolean("Fleeing", this.getFleeing());
         nbt.putBoolean("isEating", this.getIsEating());
@@ -149,14 +150,14 @@ public abstract class AbstractOrderAbleEntity extends AbstractInventoryEntity{
     }
 
     @Override
-    public void readAdditionalSaveData(CompoundTag nbt) {
-        super.readAdditionalSaveData(nbt);
-        this.setIsInOrder(nbt.getBoolean("isInOrder"));
-        this.setXpLevel(nbt.getInt("Level"));
-        this.setFleeing(nbt.getBoolean("Fleeing"));
-        this.setIsEating(nbt.getBoolean("isEating"));
-        this.setXp(nbt.getInt("Xp"));
-        this.setKills(nbt.getInt("Kills"));
+    public void loadRecruitData(CompoundTag nbt) {
+        super.loadRecruitData(nbt);
+        this.setIsInOrder(nbt.getBooleanOr("isInOrder", false));
+        this.setXpLevel(nbt.getIntOr("Level", 0));
+        this.setFleeing(nbt.getBooleanOr("Fleeing", false));
+        this.setIsEating(nbt.getBooleanOr("isEating", false));
+        this.setXp(nbt.getIntOr("Xp", 0));
+        this.setKills(nbt.getIntOr("Kills", 0));
     }
 
 
@@ -193,7 +194,7 @@ public abstract class AbstractOrderAbleEntity extends AbstractInventoryEntity{
 
     public SoundEvent getHurtSound(DamageSource ds) {
         if (this.isBlocking())
-            return SoundEvents.SHIELD_BLOCK;
+            return SoundEvents.SHIELD_BLOCK.value();
         return SoundEvents.VILLAGER_HURT;
     }
 
@@ -205,9 +206,6 @@ public abstract class AbstractOrderAbleEntity extends AbstractInventoryEntity{
         return 0.4F;
     }
 
-    protected float getStandingEyeHeight(Pose pos, EntityDimensions size) {
-        return size.height * 0.9F;
-    }
 
     public int getMaxHeadXRot() {
         return super.getMaxHeadXRot();
@@ -268,8 +266,9 @@ public abstract class AbstractOrderAbleEntity extends AbstractInventoryEntity{
 
     ////////////////////////////////////ATTACK FUNCTIONS////////////////////////////////////
 
-    public boolean hurt(DamageSource dmg, float amt) {
-        if (this.isInvulnerableTo(dmg)) {
+    @Override
+    public boolean hurtServer(ServerLevel serverLevel, DamageSource dmg, float amt) {
+        if (this.isInvulnerableTo(serverLevel, dmg)) {
             return false;
         } else {
             Entity entity = dmg.getEntity();
@@ -279,14 +278,20 @@ public abstract class AbstractOrderAbleEntity extends AbstractInventoryEntity{
             this.addXp(1);
             this.checkLevel();
 
-            return super.hurt(dmg, amt);
+            return super.hurtServer(serverLevel, dmg, amt);
         }
     }
 
     public boolean doHurtTarget(Entity entity) {
-        boolean flag = entity.hurt(this.damageSources().mobAttack(this), (float)((int)this.getAttributeValue(Attributes.ATTACK_DAMAGE)));
+        return this.level() instanceof ServerLevel serverLevel && this.doHurtTarget(serverLevel, entity);
+    }
+
+    @Override
+    public boolean doHurtTarget(ServerLevel serverLevel, Entity entity) {
+        DamageSource damageSource = this.damageSources().mobAttack(this);
+        boolean flag = entity.hurtServer(serverLevel, damageSource, (float)((int)this.getAttributeValue(Attributes.ATTACK_DAMAGE)));
         if (flag) {
-            this.doEnchantDamageEffects(this, entity);
+            EnchantmentHelper.doPostAttackEffects(serverLevel, entity, damageSource);
         }
         this.addXp(2);
         this.checkLevel();
@@ -297,13 +302,13 @@ public abstract class AbstractOrderAbleEntity extends AbstractInventoryEntity{
     public void addLevelBuffs(){
         int level = getXpLevel();
         if(level <= 10){
-            getAttribute(Attributes.MAX_HEALTH).addPermanentModifier(new AttributeModifier("heath_bonus_level", 3D, AttributeModifier.Operation.ADDITION));
-            getAttribute(Attributes.ATTACK_DAMAGE).addPermanentModifier(new AttributeModifier("attack_bonus_level", 0.15D, AttributeModifier.Operation.ADDITION));
-            getAttribute(Attributes.KNOCKBACK_RESISTANCE).addPermanentModifier(new AttributeModifier("knockback_bonus_level", 0.01D, AttributeModifier.Operation.ADDITION));
-            getAttribute(Attributes.MOVEMENT_SPEED).addPermanentModifier(new AttributeModifier("speed_bonus_level", 0.01D, AttributeModifier.Operation.ADDITION));
+            getAttribute(Attributes.MAX_HEALTH).addPermanentModifier(new AttributeModifier(com.talhanation.recruits.util.AttributeUtil.uniqueId("heath_bonus_level"), 3D, AttributeModifier.Operation.ADD_VALUE));
+            getAttribute(Attributes.ATTACK_DAMAGE).addPermanentModifier(new AttributeModifier(com.talhanation.recruits.util.AttributeUtil.uniqueId("attack_bonus_level"), 0.15D, AttributeModifier.Operation.ADD_VALUE));
+            getAttribute(Attributes.KNOCKBACK_RESISTANCE).addPermanentModifier(new AttributeModifier(com.talhanation.recruits.util.AttributeUtil.uniqueId("knockback_bonus_level"), 0.01D, AttributeModifier.Operation.ADD_VALUE));
+            getAttribute(Attributes.MOVEMENT_SPEED).addPermanentModifier(new AttributeModifier(com.talhanation.recruits.util.AttributeUtil.uniqueId("speed_bonus_level"), 0.01D, AttributeModifier.Operation.ADD_VALUE));
         }
         if(level > 10){
-            getAttribute(Attributes.MAX_HEALTH).addPermanentModifier(new AttributeModifier("heath_bonus_level", 2D, AttributeModifier.Operation.ADDITION));
+            getAttribute(Attributes.MAX_HEALTH).addPermanentModifier(new AttributeModifier(com.talhanation.recruits.util.AttributeUtil.uniqueId("heath_bonus_level"), 2D, AttributeModifier.Operation.ADD_VALUE));
         }
     }
 
@@ -344,12 +349,12 @@ public abstract class AbstractOrderAbleEntity extends AbstractInventoryEntity{
     }
 
     public void makelevelUpSound() {
-        this.getCommandSenderWorld().playSound(null, this.getX(), this.getY() + 4 , this.getZ(), SoundEvents.VILLAGER_YES, this.getSoundSource(), 15.0F, 0.8F + 0.4F * this.random.nextFloat());
-        this.getCommandSenderWorld().playSound(null, this.getX(), this.getY() + 4 , this.getZ(), SoundEvents.PLAYER_LEVELUP, this.getSoundSource(), 15.0F, 0.8F + 0.4F * this.random.nextFloat());
+        this.level().playSound(null, this.getX(), this.getY() + 4 , this.getZ(), SoundEvents.VILLAGER_YES, this.getSoundSource(), 15.0F, 0.8F + 0.4F * this.random.nextFloat());
+        this.level().playSound(null, this.getX(), this.getY() + 4 , this.getZ(), SoundEvents.PLAYER_LEVELUP, this.getSoundSource(), 15.0F, 0.8F + 0.4F * this.random.nextFloat());
     }
 
     @Override
-    public boolean canBeLeashed(Player player) {
+    public boolean canBeLeashed() {
         return false;
     }
 
@@ -363,7 +368,7 @@ public abstract class AbstractOrderAbleEntity extends AbstractInventoryEntity{
             }
             for (int i = 11; i < 15; ++i) {//11,12,13,14 = armor
                 ItemStack itemstack = this.inventory.getItem(i);
-                if ((!(damageSource.is(DamageTypes.IN_FIRE) && (damageSource.is(DamageTypes.ON_FIRE))) || !itemstack.getItem().isFireResistant()) && itemstack.getItem() instanceof ArmorItem) {
+                if ((!(damageSource.is(DamageTypes.IN_FIRE) && (damageSource.is(DamageTypes.ON_FIRE))) || !itemstack.has(net.minecraft.core.component.DataComponents.DAMAGE_RESISTANT)) && com.talhanation.recruits.util.ItemCompat.isArmor(itemstack)) {
                     itemstack.setDamageValue((int) damage);
                 }
             }
@@ -372,24 +377,23 @@ public abstract class AbstractOrderAbleEntity extends AbstractInventoryEntity{
 
     protected void damageMainHandItem() {
         ItemStack itemstack = this.inventory.getItem(9);// 10 = hoffhand slot
-        if (itemstack.getItem().isDamageable(itemstack)) {
+        if (itemstack.isDamageableItem()) {
             itemstack.setDamageValue(1);
         }
     }
 
     @Override
-    public boolean killedEntity(ServerLevel p_241847_1_, LivingEntity p_241847_2_) {
+    public boolean killedEntity(ServerLevel p_241847_1_, LivingEntity p_241847_2_, DamageSource damageSource) {
         this.addXp(2);
         this.setKills(this.getKills() + 1);
-        return super.killedEntity(p_241847_1_, p_241847_2_);
+        return super.killedEntity(p_241847_1_, p_241847_2_, damageSource);
     }
 
-    @Override
     protected void hurtCurrentlyUsedShield(float damage) {
         if (this.useItem.getItem() instanceof ShieldItem) {
             int i = 1 + Mth.floor(damage);
             InteractionHand hand = this.getUsedItemHand();
-            this.useItem.hurtAndBreak(i, this, (entity) -> entity.broadcastBreakEvent(hand));
+            this.useItem.hurtAndBreak(i, this, hand.asEquipmentSlot());
             if (this.useItem.isEmpty()) {
                 if (hand == InteractionHand.MAIN_HAND) {
                     this.setItemSlot(EquipmentSlot.MAINHAND, ItemStack.EMPTY);
@@ -401,7 +405,7 @@ public abstract class AbstractOrderAbleEntity extends AbstractInventoryEntity{
                 this.useItem = ItemStack.EMPTY;
                 this.setItemSlot(EquipmentSlot.OFFHAND, ItemStack.EMPTY);
                 this.getSlot(10).set(ItemStack.EMPTY);
-                this.playSound(SoundEvents.SHIELD_BREAK, 0.8F, 0.8F + this.getCommandSenderWorld().random.nextFloat() * 0.4F);
+                this.playSound(SoundEvents.SHIELD_BREAK.value(), 0.8F, 0.8F + this.level().random.nextFloat() * 0.4F);
             }
 
             ItemStack itemstack = this.inventory.getItem(10);// 10 = hoffhand slot
@@ -417,7 +421,7 @@ public abstract class AbstractOrderAbleEntity extends AbstractInventoryEntity{
     public InteractionResult mobInteract(Player player, InteractionHand hand) {
         ItemStack itemstack = player.getItemInHand(hand);
         Item item = itemstack.getItem();
-        if (this.getCommandSenderWorld().isClientSide) {
+        if (this.level().isClientSide()) {
             boolean flag = false; //this.isOwnedBy(player) || this.isOwned() || item == Items.BONE && !this.isOwned();
             return flag ? InteractionResult.CONSUME : InteractionResult.PASS;
         } else {
@@ -429,13 +433,13 @@ public abstract class AbstractOrderAbleEntity extends AbstractInventoryEntity{
                     int i = this.random.nextInt(5);
                     switch (i) {
                         case 0:
-                            player.sendSystemMessage(Component.literal(this.getName().getString() + ": " + " Hello my Friend."));
+                            player.displayClientMessage(Component.literal(this.getName().getString() + ": " + " Hello my Friend."), false);
                             break;
                         case 1:
-                            player.sendSystemMessage(Component.literal(this.getName().getString() + ": " +"Life is only worth as much as emeralds..."));
+                            player.displayClientMessage(Component.literal(this.getName().getString() + ": " +"Life is only worth as much as emeralds..."), false);
                             break;
                         default:
-                            player.sendSystemMessage(Component.literal(this.getName().getString() + ": " +"Pay me I'll get rid of your headache!"));
+                            player.displayClientMessage(Component.literal(this.getName().getString() + ": " +"Pay me I'll get rid of your headache!"), false);
                             break;
                     }
                     return InteractionResult.SUCCESS;

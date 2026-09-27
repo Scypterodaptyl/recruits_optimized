@@ -4,9 +4,7 @@ import com.talhanation.recruits.entities.AbstractRecruitEntity;
 import net.minecraft.world.entity.ai.goal.Goal;
 import net.minecraft.world.SimpleContainer;
 import net.minecraft.world.item.ItemStack;
-import net.minecraft.world.effect.MobEffectCategory;
 import net.minecraft.world.item.Items;
-import net.minecraft.world.item.alchemy.PotionUtils;
 import net.minecraft.world.InteractionHand;
 
 import javax.annotation.Nullable;
@@ -56,7 +54,7 @@ public class RecruitQuaffGoal extends Goal {
 
         for(int i = 0; i < inventory.getContainerSize(); i++){
             ItemStack itemStack = inventory.getItem(i);
-            if (PotionUtils.getMobEffects(itemStack).size() > 0 && PotionUtils.getMobEffects(itemStack).stream().noneMatch(instance -> instance.getEffect().getCategory().equals(MobEffectCategory.HARMFUL))) {
+            if (com.talhanation.recruits.util.ItemCompat.hasOnlyBeneficialEffects(itemStack)) {
                 return true;
             }
         }
@@ -69,7 +67,7 @@ public class RecruitQuaffGoal extends Goal {
         ItemStack itemStack = null;
         for(int i = 0; i < inventory.getContainerSize(); i++){
             itemStack = inventory.getItem(i);
-            if (PotionUtils.getMobEffects(itemStack).size() > 0 && PotionUtils.getMobEffects(itemStack).stream().noneMatch(instance -> instance.getEffect().getCategory().equals(MobEffectCategory.HARMFUL))) {
+            if (com.talhanation.recruits.util.ItemCompat.hasOnlyBeneficialEffects(itemStack)) {
                 slotID = i;
                 recruit.inventory.removeItemNoUpdate(i);
                 return itemStack;

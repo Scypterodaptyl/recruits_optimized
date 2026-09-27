@@ -3,11 +3,11 @@ package com.talhanation.recruits.network;
 import com.talhanation.recruits.RecruitEvents;
 import com.talhanation.recruits.entities.AbstractRecruitEntity;
 import com.talhanation.recruits.world.RecruitsGroup;
-import de.maxhenkel.corelib.net.Message;
+import com.talhanation.recruits.network.Message;
 import net.minecraft.network.FriendlyByteBuf;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraftforge.api.distmarker.Dist;
-import net.minecraftforge.network.NetworkEvent;
+import net.minecraftforge.event.network.CustomPayloadEvent;
 
 import java.util.List;
 import java.util.Objects;
@@ -32,7 +32,7 @@ public class MessageDisbandGroup implements Message<MessageDisbandGroup> {
         return Dist.DEDICATED_SERVER;
     }
 
-    public void executeServerSide(NetworkEvent.Context context) {
+    public void executeServerSide(CustomPayloadEvent.Context context) {
         ServerPlayer player = Objects.requireNonNull(context.getSender());
         RecruitsGroup group = RecruitEvents.recruitsGroupsManager.getGroup(groupUUID);
         if(group == null) return;
@@ -41,7 +41,7 @@ public class MessageDisbandGroup implements Message<MessageDisbandGroup> {
 
         RecruitEvents.recruitsGroupsManager.broadCastGroupsToPlayer(player);
 
-        List<AbstractRecruitEntity> list = player.getCommandSenderWorld().getEntitiesOfClass(
+        List<AbstractRecruitEntity> list = player.level().getEntitiesOfClass(
                 AbstractRecruitEntity.class,
                 player.getBoundingBox().inflate(100D)
         );

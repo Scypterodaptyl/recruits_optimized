@@ -17,17 +17,16 @@ public class RecruitsTreatySaveData extends SavedData {
     }
 
     public static RecruitsTreatySaveData get(ServerLevel level) {
-        return level.getDataStorage().computeIfAbsent(RecruitsTreatySaveData::load, RecruitsTreatySaveData::new, DATA_NAME);
+        return level.getDataStorage().computeIfAbsent(TYPE);
     }
 
     public static RecruitsTreatySaveData load(CompoundTag nbt) {
         RecruitsTreatySaveData data = new RecruitsTreatySaveData();
-        data.treaties = RecruitsTreatyManager.mapFromNbt(nbt.getCompound("treaties"));
+        data.treaties = RecruitsTreatyManager.mapFromNbt(nbt.getCompoundOrEmpty("treaties"));
         return data;
     }
 
-    @Override
-    public CompoundTag save(CompoundTag nbt) {
+        public CompoundTag save(CompoundTag nbt) {
         nbt.put("treaties", RecruitsTreatyManager.mapToNbt(treaties));
         return nbt;
     }
@@ -40,4 +39,6 @@ public class RecruitsTreatySaveData extends SavedData {
         this.treaties = new HashMap<>(treaties);
         this.setDirty();
     }
+
+    public static final net.minecraft.world.level.saveddata.SavedDataType<RecruitsTreatySaveData> TYPE = com.talhanation.recruits.util.SavedDataUtil.type(DATA_NAME, RecruitsTreatySaveData::new, RecruitsTreatySaveData::load, data -> data.save(new CompoundTag()));
 }

@@ -2,8 +2,10 @@ package com.talhanation.recruits;
 
 import com.talhanation.recruits.entities.AbstractRecruitEntity;
 import net.minecraft.world.entity.player.Player;
-import net.minecraftforge.eventbus.api.Cancelable;
-import net.minecraftforge.eventbus.api.Event;
+import net.minecraftforge.eventbus.api.bus.CancellableEventBus;
+import net.minecraftforge.eventbus.api.bus.EventBus;
+import net.minecraftforge.eventbus.api.event.MutableEvent;
+import net.minecraftforge.eventbus.api.event.characteristic.Cancellable;
 
 import javax.annotation.Nullable;
 
@@ -19,7 +21,7 @@ import javax.annotation.Nullable;
  *   }
  * </pre>
  */
-public abstract class RecruitEvent extends Event {
+public abstract class RecruitEvent extends MutableEvent {
 
     private final AbstractRecruitEntity recruit;
 
@@ -39,8 +41,8 @@ public abstract class RecruitEvent extends Event {
      * <p>Cancelable: {@code setCanceled(true)} verhindert das Anheuern.</p>
      * <p>Der zugehörige Spieler ist immer gesetzt.</p>
      */
-    @Cancelable
-    public static class Hired extends RecruitEvent {
+        public static class Hired extends RecruitEvent implements Cancellable {
+        public static final CancellableEventBus<RecruitEvent.Hired> BUS = CancellableEventBus.create(RecruitEvent.Hired.class);
         private final Player player;
 
         public Hired(AbstractRecruitEntity recruit, Player player) {
@@ -60,8 +62,8 @@ public abstract class RecruitEvent extends Event {
      *
      * @see AbstractRecruitEntity#disband(Player, boolean, boolean)
      */
-    @Cancelable
-    public static class Dismissed extends RecruitEvent {
+        public static class Dismissed extends RecruitEvent implements Cancellable {
+        public static final CancellableEventBus<RecruitEvent.Dismissed> BUS = CancellableEventBus.create(RecruitEvent.Dismissed.class);
 
         @Nullable
         private final Player player;
@@ -95,6 +97,7 @@ public abstract class RecruitEvent extends Event {
      * @see AbstractRecruitEntity#checkLevel()
      */
     public static class LevelUp extends RecruitEvent {
+        public static final EventBus<RecruitEvent.LevelUp> BUS = EventBus.create(RecruitEvent.LevelUp.class);
         private final int newLevel;
 
         public LevelUp(AbstractRecruitEntity recruit, int newLevel) {
@@ -114,8 +117,8 @@ public abstract class RecruitEvent extends Event {
      *
      * @see RecruitEvents#promoteRecruit(AbstractRecruitEntity, int, String, net.minecraft.server.level.ServerPlayer)
      */
-    @Cancelable
-    public static class Promoted extends RecruitEvent {
+        public static class Promoted extends RecruitEvent implements Cancellable {
+        public static final CancellableEventBus<RecruitEvent.Promoted> BUS = CancellableEventBus.create(RecruitEvent.Promoted.class);
         private final int newProfession;
         private final String newName;
         private final net.minecraft.server.level.ServerPlayer promotingPlayer;

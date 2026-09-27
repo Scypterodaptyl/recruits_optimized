@@ -3,14 +3,16 @@ package com.talhanation.recruits.client.api;
 import com.talhanation.recruits.world.RecruitsClaim;
 import net.minecraftforge.api.distmarker.Dist;
 import net.minecraftforge.api.distmarker.OnlyIn;
-import net.minecraftforge.eventbus.api.Cancelable;
-import net.minecraftforge.eventbus.api.Event;
+import net.minecraftforge.eventbus.api.bus.CancellableEventBus;
+import net.minecraftforge.eventbus.api.bus.EventBus;
+import net.minecraftforge.eventbus.api.event.MutableEvent;
+import net.minecraftforge.eventbus.api.event.characteristic.Cancellable;
 
 import javax.annotation.Nullable;
 
 
 @OnlyIn(Dist.CLIENT)
-public abstract class ClientClaimEvent extends Event {
+public abstract class ClientClaimEvent extends MutableEvent {
 
     private final RecruitsClaim claim;
 
@@ -24,6 +26,7 @@ public abstract class ClientClaimEvent extends Event {
 
 
     public static class Enter extends ClientClaimEvent {
+        public static final EventBus<ClientClaimEvent.Enter> BUS = EventBus.create(ClientClaimEvent.Enter.class);
 
         @Nullable
         private final RecruitsClaim previousClaim;
@@ -40,6 +43,7 @@ public abstract class ClientClaimEvent extends Event {
     }
 
     public static class Leave extends ClientClaimEvent {
+        public static final EventBus<ClientClaimEvent.Leave> BUS = EventBus.create(ClientClaimEvent.Leave.class);
         @Nullable
         private final RecruitsClaim nextClaim;
 
@@ -55,6 +59,7 @@ public abstract class ClientClaimEvent extends Event {
     }
 
     public static class DataUpdated extends ClientClaimEvent {
+        public static final EventBus<ClientClaimEvent.DataUpdated> BUS = EventBus.create(ClientClaimEvent.DataUpdated.class);
 
         private final boolean isCurrentClaim;
 
@@ -68,14 +73,15 @@ public abstract class ClientClaimEvent extends Event {
         }
     }
 
-    @Cancelable
-    public static class SiegeStarted extends ClientClaimEvent {
+        public static class SiegeStarted extends ClientClaimEvent implements Cancellable {
+        public static final CancellableEventBus<ClientClaimEvent.SiegeStarted> BUS = CancellableEventBus.create(ClientClaimEvent.SiegeStarted.class);
         public SiegeStarted(RecruitsClaim claim) {
             super(claim);
         }
     }
 
     public static class SiegeEnded extends ClientClaimEvent {
+        public static final EventBus<ClientClaimEvent.SiegeEnded> BUS = EventBus.create(ClientClaimEvent.SiegeEnded.class);
         private final boolean wasConquered;
 
         public SiegeEnded(RecruitsClaim claim, boolean wasConquered) {
@@ -89,6 +95,7 @@ public abstract class ClientClaimEvent extends Event {
     }
 
     public static class HealthChanged extends ClientClaimEvent {
+        public static final EventBus<ClientClaimEvent.HealthChanged> BUS = EventBus.create(ClientClaimEvent.HealthChanged.class);
         private final int previousHealth;
         private final int newHealth;
 

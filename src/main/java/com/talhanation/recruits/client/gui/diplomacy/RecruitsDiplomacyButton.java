@@ -1,14 +1,16 @@
 package com.talhanation.recruits.client.gui.diplomacy;
 
-import com.mojang.blaze3d.systems.RenderSystem;
+import net.minecraft.client.input.MouseButtonEvent;
+import net.minecraft.client.input.MouseButtonInfo;
+import net.minecraft.client.renderer.RenderPipelines;
+
 import com.talhanation.recruits.Main;
 import com.talhanation.recruits.world.RecruitsDiplomacyManager;
 import com.talhanation.recruits.world.RecruitsGroup;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.GuiGraphics;
-import net.minecraft.client.renderer.GameRenderer;
 import net.minecraft.network.chat.Component;
-import net.minecraft.resources.ResourceLocation;
+import net.minecraft.resources.Identifier;
 import net.minecraftforge.api.distmarker.Dist;
 import net.minecraftforge.api.distmarker.OnlyIn;
 import net.minecraftforge.client.gui.widget.ExtendedButton;
@@ -28,13 +30,16 @@ public class RecruitsDiplomacyButton extends ExtendedButton {
     }
 
     @Override
-    public boolean mouseClicked(double p_93641_, double p_93642_, int p_93643_) {
+    public boolean mouseClicked(MouseButtonEvent event, boolean doubleClick) {
+        double p_93641_ = event.x();
+        double p_93642_ = event.y();
+        int p_93643_ = event.button();
         if (this.visible) {
-            if (this.isValidClickButton(p_93643_)) {
+            if (this.isValidClickButton(event.buttonInfo())) {
                 boolean flag = this.clicked(p_93641_, p_93642_);
                 if (flag) {
                     this.playDownSound(Minecraft.getInstance().getSoundManager());
-                    this.onClick(p_93641_, p_93642_);
+                    this.onClick(new MouseButtonEvent(p_93641_, p_93642_, new MouseButtonInfo(0, 0)), false);
                     return true;
                 }
             }
@@ -50,22 +55,19 @@ public class RecruitsDiplomacyButton extends ExtendedButton {
     }
 
     @Override
-    public void renderWidget(GuiGraphics guiGraphics, int mouseX, int mouseY, float f) {
-        super.renderWidget(guiGraphics, mouseX, mouseY, f);
+    public void renderContents(GuiGraphics guiGraphics, int mouseX, int mouseY, float f) {
+        super.renderContents(guiGraphics, mouseX, mouseY, f);
 
-        RenderSystem.setShader(GameRenderer::getPositionTexShader);
-        RenderSystem.setShaderColor(1F, 1F, 1F, 1F);
-        RenderSystem.setShaderTexture(0, getTextureLocation());
-        guiGraphics.blit(getTextureLocation(), this.getX(), this.getY(), 0, 0, 21, 21, 21, 21);
+        guiGraphics.blit(RenderPipelines.GUI_TEXTURED, getTextureLocation(), this.getX(), this.getY(), (float) (0), (float) (0), 21, 21, 21, 21);
     }
 
-    private ResourceLocation getTextureLocation() {
-        ResourceLocation location;
+    private Identifier getTextureLocation() {
+        Identifier location;
 
         switch (this.status){
-            default -> location = new ResourceLocation(Main.MOD_ID, "textures/gui/image/neutral.png");
-            case ALLY ->  location = new ResourceLocation(Main.MOD_ID, "textures/gui/image/ally.png");
-            case ENEMY ->  location = new ResourceLocation(Main.MOD_ID, "textures/gui/image/enemy.png");
+            default -> location = Identifier.fromNamespaceAndPath(Main.MOD_ID, "textures/gui/image/neutral.png");
+            case ALLY ->  location = Identifier.fromNamespaceAndPath(Main.MOD_ID, "textures/gui/image/ally.png");
+            case ENEMY ->  location = Identifier.fromNamespaceAndPath(Main.MOD_ID, "textures/gui/image/enemy.png");
         }
         return location;
     }

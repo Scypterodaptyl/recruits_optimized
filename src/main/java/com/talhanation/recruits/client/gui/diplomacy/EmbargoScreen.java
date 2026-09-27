@@ -1,11 +1,12 @@
 package com.talhanation.recruits.client.gui.diplomacy;
 
+import net.minecraft.client.input.MouseButtonEvent;
+
 import com.talhanation.recruits.Main;
 import com.talhanation.recruits.client.ClientManager;
 import com.talhanation.recruits.client.gui.player.PlayersList;
 import com.talhanation.recruits.client.gui.player.SelectPlayerScreen;
 import com.talhanation.recruits.network.MessageRemoveEmbargo;
-import net.minecraft.client.gui.components.Button;
 import net.minecraft.client.gui.components.Tooltip;
 import net.minecraft.client.gui.screens.Screen;
 import net.minecraft.network.chat.Component;
@@ -61,8 +62,11 @@ public class EmbargoScreen extends SelectPlayerScreen {
     }
 
     @Override
-    public boolean mouseClicked(double x, double y, int z) {
-        boolean flag = super.mouseClicked(x, y, z);
+    public boolean mouseClicked(MouseButtonEvent event, boolean doubleClick) {
+        double x = event.x();
+        double y = event.y();
+        int z = event.button();
+        boolean flag = super.mouseClicked(event, doubleClick);
         updateButtonState();
         return flag;
     }

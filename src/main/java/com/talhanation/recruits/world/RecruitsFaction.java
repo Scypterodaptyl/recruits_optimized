@@ -1,5 +1,6 @@
 package com.talhanation.recruits.world;
 
+import net.minecraft.core.UUIDUtil;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.nbt.ListTag;
 import net.minecraft.nbt.StringTag;
@@ -187,7 +188,7 @@ public class RecruitsFaction {
         CompoundTag nbt = new CompoundTag();
         nbt.putString("teamName", this.stringID);
         nbt.putString("teamDisplayName", this.teamDisplayName);
-        nbt.putUUID("teamLeaderID", this.teamLeaderID);
+        nbt.store("teamLeaderID", UUIDUtil.CODEC, this.teamLeaderID);
         nbt.putString("teamLeaderName", this.teamLeaderName);
         nbt.put("banner", this.banner);
 
@@ -220,38 +221,38 @@ public class RecruitsFaction {
             return null;
         }
         RecruitsFaction team = new RecruitsFaction();
-        team.setStringID(nbt.getString("teamName"));
+        team.setStringID(nbt.getStringOr("teamName", ""));
         if(nbt.getString("teamDisplayName").isEmpty()){
             team.setTeamDisplayName(team.getStringID());
         }
         else
-            team.setTeamDisplayName(nbt.getString("teamDisplayName"));
+            team.setTeamDisplayName(nbt.getStringOr("teamDisplayName", ""));
 
-        team.setTeamLeaderID(nbt.getUUID("teamLeaderID"));
-        team.setTeamLeaderName(nbt.getString("teamLeaderName"));
-        team.setBanner(nbt.getCompound("banner"));
+        team.setTeamLeaderID(nbt.read("teamLeaderID", UUIDUtil.CODEC).orElse(null));
+        team.setTeamLeaderName(nbt.getStringOr("teamLeaderName", ""));
+        team.setBanner(nbt.getCompoundOrEmpty("banner"));
 
-        ListTag joinRequestsTag = nbt.getList("joinRequests", 8);
+        ListTag joinRequestsTag = nbt.getListOrEmpty("joinRequests");
         for (int i = 0; i < joinRequestsTag.size(); i++) {
-            team.addPlayerAsJoinRequest(joinRequestsTag.getString(i));
+            team.addPlayerAsJoinRequest(joinRequestsTag.getStringOr(i, ""));
         }
 
-        ListTag membersTag = nbt.getList("members", 10);
+        ListTag membersTag = nbt.getListOrEmpty("members");
         for (int i = 0; i < membersTag.size(); i++) {
-            RecruitsPlayerInfo member = RecruitsPlayerInfo.getFromNBT(membersTag.getCompound(i));
+            RecruitsPlayerInfo member = RecruitsPlayerInfo.getFromNBT(membersTag.getCompoundOrEmpty(i));
             if (member != null) {
                 team.members.add(member);
             }
         }
 
-        team.setPlayers(nbt.getInt("players"));
-        team.setNPCs(nbt.getInt("npcs"));
-        team.setMaxPlayers(nbt.getInt("maxPlayers"));
-        team.setMaxNPCs(nbt.getInt("maxNpcs"));
-        team.setUnitColor(nbt.getByte("unitColor"));
-        team.setTeamColor(nbt.getInt("teamColor"));
-        team.biome = nbt.getInt("biome");
-        team.setMaxNPCsPerPlayer(nbt.getInt("maxNPCsPerPlayer"));
+        team.setPlayers(nbt.getIntOr("players", 0));
+        team.setNPCs(nbt.getIntOr("npcs", 0));
+        team.setMaxPlayers(nbt.getIntOr("maxPlayers", 0));
+        team.setMaxNPCs(nbt.getIntOr("maxNpcs", 0));
+        team.setUnitColor(nbt.getByteOr("unitColor", (byte) 0));
+        team.setTeamColor(nbt.getIntOr("teamColor", 0));
+        team.biome = nbt.getIntOr("biome", 0);
+        team.setMaxNPCsPerPlayer(nbt.getIntOr("maxNPCsPerPlayer", 0));
         return team;
     }
 
@@ -269,10 +270,10 @@ public class RecruitsFaction {
 
     public static List<RecruitsFaction> getListFromNBT(CompoundTag nbt) {
         List<RecruitsFaction> list = new ArrayList<>();
-        ListTag teamList = nbt.getList("Teams", 10);
+        ListTag teamList = nbt.getListOrEmpty("Teams");
 
         for (int i = 0; i < teamList.size(); i++) {
-            CompoundTag teamTag = teamList.getCompound(i);
+            CompoundTag teamTag = teamList.getCompoundOrEmpty(i);
             list.add(RecruitsFaction.fromNBT(teamTag));
         }
 

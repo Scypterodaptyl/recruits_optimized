@@ -18,10 +18,10 @@ import net.minecraft.server.level.ServerLevel;
 import net.minecraft.util.RandomSource;
 import net.minecraft.world.entity.*;
 import net.minecraft.world.entity.ai.memory.MemoryModuleType;
-import net.minecraft.world.entity.animal.IronGolem;
-import net.minecraft.world.entity.npc.Villager;
-import net.minecraft.world.entity.npc.VillagerProfession;
-import net.minecraft.world.entity.npc.VillagerTrades;
+import net.minecraft.world.entity.animal.golem.IronGolem;
+import net.minecraft.world.entity.npc.villager.Villager;
+import net.minecraft.world.entity.npc.villager.VillagerProfession;
+import net.minecraft.world.entity.npc.villager.VillagerTrades;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
@@ -35,7 +35,7 @@ import net.minecraftforge.event.entity.living.LivingEvent;
 import net.minecraftforge.event.entity.player.PlayerInteractEvent;
 import net.minecraftforge.event.server.ServerStartingEvent;
 import net.minecraftforge.event.village.VillagerTradesEvent;
-import net.minecraftforge.eventbus.api.SubscribeEvent;
+import net.minecraftforge.eventbus.api.listener.SubscribeEvent;
 
 
 import java.util.*;
@@ -95,7 +95,7 @@ public class VillagerEvents {
     public void onVillagerLivingUpdate(LivingEvent.LivingTickEvent event) {
         Entity entity = event.getEntity();
         if (entity instanceof Villager villager) {
-            VillagerProfession profession = villager.getVillagerData().getProfession();
+            VillagerProfession profession = villager.getVillagerData().profession().value();
 
             if(entitiesByProfession.containsKey(profession)) {
                 EntityType<? extends AbstractRecruitEntity> recruitType = entitiesByProfession.get(profession);
@@ -106,7 +106,7 @@ public class VillagerEvents {
         if (entity instanceof IronGolem ironGolemEntity) {
 
             if (!ironGolemEntity.isPlayerCreated() && RecruitsServerConfig.OverrideIronGolemSpawn.get() && ironGolemEntity.tickCount % 20 == 0){
-                List<AbstractRecruitEntity> list1 = entity.getCommandSenderWorld().getEntitiesOfClass(
+                List<AbstractRecruitEntity> list1 = entity.level().getEntitiesOfClass(
                         AbstractRecruitEntity.class,
                         ironGolemEntity.getBoundingBox().inflate(32)
                 );
@@ -127,11 +127,11 @@ public class VillagerEvents {
     }
 
     @SubscribeEvent
-    public void onPlayerInteractEntity(PlayerInteractEvent.EntityInteract event) {
+    public boolean onPlayerInteractEntity(PlayerInteractEvent.EntityInteract event) {
         Player player = event.getEntity();
         Entity target = event.getTarget();
 
-        if(player == null || target == null) return;
+        if(player == null || target == null) return false;
 
         Team targetTeam = target.getTeam();
         String teamID = null;
@@ -143,29 +143,28 @@ public class VillagerEvents {
             teamID = targetTeam.getName();
         }
 
-        if (teamID == null || teamID.isEmpty()) return;
+        if (teamID == null || teamID.isEmpty()) return false;
 
         if (event.getLevel().isClientSide()) {
 
             String embargoed = ClientManager.embargoMap.getOrDefault(player.getUUID(), "");
 
             if (embargoed.contains(teamID)) {
-                event.setCanceled(true);
+                return true;
             }
         }
         else {
             // Server-side: gegen die authoritative Map prüfen
             if (FactionEvents.recruitsDiplomacyManager.hasEmbargo(player.getUUID(), teamID)) {
-                event.setCanceled(true);
-                player.sendSystemMessage(
-                        Component.translatable("chat.recruits.text.embargoBlocked", target.getName().getString())
-                );
+                player.displayClientMessage(Component.translatable("chat.recruits.text.embargoBlocked", target.getName().getString()), false);
+                return true;
             }
         }
+        return false;
     }
 
     private static void createRecruit(Villager villager, EntityType<? extends AbstractRecruitEntity> recruitType){
-        AbstractRecruitEntity abstractRecruit = recruitType.create(villager.getCommandSenderWorld());
+        AbstractRecruitEntity abstractRecruit = recruitType.create(villager.level(), net.minecraft.world.entity.EntitySpawnReason.CONVERSION);
         if (abstractRecruit != null) {
             abstractRecruit.copyPosition(villager);
 
@@ -182,7 +181,7 @@ public class VillagerEvents {
                 }
             }
 
-            villager.getCommandSenderWorld().addFreshEntity(abstractRecruit);
+            villager.level().addFreshEntity(abstractRecruit);
             Component name = villager.getCustomName();
             if(name  != null) abstractRecruit.setCustomName(name);
 
@@ -194,8 +193,8 @@ public class VillagerEvents {
     }
 
     public static void createNobleVillager(Villager villager){
-        Level level = villager.getCommandSenderWorld();
-        VillagerNobleEntity nobleEntity = ModEntityTypes.VILLAGER_NOBLE.get().create(level);
+        Level level = villager.level();
+        VillagerNobleEntity nobleEntity = ModEntityTypes.VILLAGER_NOBLE.get().create(level, net.minecraft.world.entity.EntitySpawnReason.CONVERSION);
 
         if (nobleEntity != null && !level.isClientSide()){
             nobleEntity.copyPosition(villager);
@@ -224,7 +223,7 @@ public class VillagerEvents {
 
             }
 
-            villager.getCommandSenderWorld().addFreshEntity(nobleEntity);
+            villager.level().addFreshEntity(nobleEntity);
             if(RecruitsServerConfig.RecruitTablesPOIReleasing.get()) villager.releasePoi(MemoryModuleType.JOB_SITE);
             villager.releasePoi(MemoryModuleType.HOME);
             villager.releasePoi(MemoryModuleType.MEETING_POINT);
@@ -233,7 +232,7 @@ public class VillagerEvents {
     }
 
     public static void createHiredRecruitFromVillager(ServerLevel serverLevel, Villager villager, EntityType<? extends AbstractRecruitEntity> recruitType, Player player, RecruitsGroup group){
-        AbstractRecruitEntity abstractRecruit = recruitType.create(villager.getCommandSenderWorld());
+        AbstractRecruitEntity abstractRecruit = recruitType.create(villager.level(), net.minecraft.world.entity.EntitySpawnReason.CONVERSION);
         if(abstractRecruit == null) return;
 
         abstractRecruit.initSpawn();
@@ -254,7 +253,7 @@ public class VillagerEvents {
 
             abstractRecruit.setGroupUUID(group.getUUID());
 
-            villager.getCommandSenderWorld().addFreshEntity(abstractRecruit);
+            villager.level().addFreshEntity(abstractRecruit);
 
             if(abstractRecruit instanceof ICompanion companion){
                 for(int i = 0; i < 4; i++){
@@ -271,7 +270,7 @@ public class VillagerEvents {
     }
 
     public static void spawnHiredRecruit(ServerLevel serverLevel, EntityType<? extends AbstractRecruitEntity> recruitType, Player player, RecruitsGroup group){
-        AbstractRecruitEntity abstractRecruit = recruitType.create(player.getCommandSenderWorld());
+        AbstractRecruitEntity abstractRecruit = recruitType.create(player.level(), net.minecraft.world.entity.EntitySpawnReason.CONVERSION);
         if(abstractRecruit == null) return;
 
         abstractRecruit.initSpawn();
@@ -282,7 +281,7 @@ public class VillagerEvents {
             abstractRecruit.setFollowState(1);
             abstractRecruit.setGroupUUID(group.getUUID());
 
-            player.getCommandSenderWorld().addFreshEntity(abstractRecruit);
+            player.level().addFreshEntity(abstractRecruit);
 
             if(abstractRecruit instanceof ICompanion companion){
                 for(int i = 0; i < 4; i++){
@@ -340,7 +339,7 @@ public class VillagerEvents {
     }
 
     private static void createRecruitIronGolem(LivingEntity entity){
-        RecruitEntity recruit = ModEntityTypes.RECRUIT.get().create(entity.getCommandSenderWorld());
+        RecruitEntity recruit = ModEntityTypes.RECRUIT.get().create(entity.level(), net.minecraft.world.entity.EntitySpawnReason.CONVERSION);
         IronGolem villager = (IronGolem) entity;
         recruit.copyPosition(villager);
 
@@ -349,11 +348,11 @@ public class VillagerEvents {
         villager.remove(Entity.RemovalReason.DISCARDED);
         recruit.getInventory().setItem(8, Items.BREAD.getDefaultInstance());
         villager.remove(Entity.RemovalReason.DISCARDED);
-        villager.getCommandSenderWorld().addFreshEntity(recruit);
+        villager.level().addFreshEntity(recruit);
     }
 
     private void createRecruitShieldmanIronGolem(LivingEntity entity){
-        RecruitShieldmanEntity recruitShieldman = ModEntityTypes.RECRUIT_SHIELDMAN.get().create(entity.getCommandSenderWorld());
+        RecruitShieldmanEntity recruitShieldman = ModEntityTypes.RECRUIT_SHIELDMAN.get().create(entity.level(), net.minecraft.world.entity.EntitySpawnReason.CONVERSION);
         IronGolem villager = (IronGolem) entity;
         recruitShieldman.copyPosition(villager);
 
@@ -361,11 +360,11 @@ public class VillagerEvents {
 
         recruitShieldman.getInventory().setItem(8, Items.BREAD.getDefaultInstance());
         villager.remove(Entity.RemovalReason.DISCARDED);
-        villager.getCommandSenderWorld().addFreshEntity(recruitShieldman);
+        villager.level().addFreshEntity(recruitShieldman);
     }
 
     private static void createBowmanIronGolem(LivingEntity entity){
-        BowmanEntity bowman = ModEntityTypes.BOWMAN.get().create(entity.getCommandSenderWorld());
+        BowmanEntity bowman = ModEntityTypes.BOWMAN.get().create(entity.level(), net.minecraft.world.entity.EntitySpawnReason.CONVERSION);
         IronGolem villager = (IronGolem) entity;
         bowman.copyPosition(villager);
 
@@ -373,11 +372,11 @@ public class VillagerEvents {
 
         bowman.getInventory().setItem(8, Items.BREAD.getDefaultInstance());
         villager.remove(Entity.RemovalReason.DISCARDED);
-        villager.getCommandSenderWorld().addFreshEntity(bowman);
+        villager.level().addFreshEntity(bowman);
     }
 
     private static void createCrossbowmanIronGolem(LivingEntity entity){
-        CrossBowmanEntity crossBowmanEntity = ModEntityTypes.CROSSBOWMAN.get().create(entity.getCommandSenderWorld());
+        CrossBowmanEntity crossBowmanEntity = ModEntityTypes.CROSSBOWMAN.get().create(entity.level(), net.minecraft.world.entity.EntitySpawnReason.CONVERSION);
         IronGolem villager = (IronGolem) entity;
         crossBowmanEntity.copyPosition(villager);
 
@@ -385,7 +384,7 @@ public class VillagerEvents {
 
         crossBowmanEntity.getInventory().setItem(8, Items.BREAD.getDefaultInstance());
         villager.remove(Entity.RemovalReason.DISCARDED);
-        villager.getCommandSenderWorld().addFreshEntity(crossBowmanEntity);
+        villager.level().addFreshEntity(crossBowmanEntity);
     }
 
     private static void spawnSmallGuardRecruits(BlockPos upPos, ServerLevel world, Random random) {
@@ -434,9 +433,9 @@ public class VillagerEvents {
     }
 
     public static RecruitEntity createGuardLeader(BlockPos upPos, String name, ServerLevel world, Random random){
-        RecruitEntity patrolLeader = ModEntityTypes.RECRUIT.get().create(world);
-        patrolLeader.moveTo(upPos.getX() + 0.5D, upPos.getY() + 0.5D, upPos.getZ() + 0.5D, random.nextFloat() * 360 - 180F, 0);
-        patrolLeader.finalizeSpawn(world, world.getCurrentDifficultyAt(upPos), MobSpawnType.PATROL, null, null);
+        RecruitEntity patrolLeader = ModEntityTypes.RECRUIT.get().create(world, net.minecraft.world.entity.EntitySpawnReason.CONVERSION);
+        patrolLeader.snapTo(upPos.getX() + 0.5D, upPos.getY() + 0.5D, upPos.getZ() + 0.5D, random.nextFloat() * 360 - 180F, 0);
+        patrolLeader.finalizeSpawn(world, world.getCurrentDifficultyAt(upPos), EntitySpawnReason.PATROL, null);
         setGuardLeaderEquipment(patrolLeader);
         patrolLeader.setPersistenceRequired();
 
@@ -483,9 +482,9 @@ public class VillagerEvents {
     }
 
     private static void createGuardRecruit(BlockPos upPos, RecruitEntity patrolLeader, String name, ServerLevel world, Random random) {
-        RecruitEntity recruitEntity = ModEntityTypes.RECRUIT.get().create(world);
-        recruitEntity.moveTo(upPos.getX() + 0.5D, upPos.getY() + 0.5D, upPos.getZ() + 0.5D, random.nextFloat() * 360 - 180F, 0);
-        recruitEntity.finalizeSpawn(world, world.getCurrentDifficultyAt(upPos), MobSpawnType.PATROL, null, null);
+        RecruitEntity recruitEntity = ModEntityTypes.RECRUIT.get().create(world, net.minecraft.world.entity.EntitySpawnReason.CONVERSION);
+        recruitEntity.snapTo(upPos.getX() + 0.5D, upPos.getY() + 0.5D, upPos.getZ() + 0.5D, random.nextFloat() * 360 - 180F, 0);
+        recruitEntity.finalizeSpawn(world, world.getCurrentDifficultyAt(upPos), EntitySpawnReason.PATROL, null);
         recruitEntity.setPersistenceRequired();
         recruitEntity.setEquipment();
         recruitEntity.setXpLevel(1 + random.nextInt(2));
@@ -505,9 +504,9 @@ public class VillagerEvents {
     }
 
     private static void createGuardBowman(BlockPos upPos, RecruitEntity patrolLeader, ServerLevel world, Random random) {
-        BowmanEntity bowman = ModEntityTypes.BOWMAN.get().create(world);
-        bowman.moveTo(upPos.getX() + 0.5D, upPos.getY() + 0.5D, upPos.getZ() + 0.5D, random.nextFloat() * 360 - 180F, 0);
-        bowman.finalizeSpawn(world, world.getCurrentDifficultyAt(upPos), MobSpawnType.PATROL, null, null);
+        BowmanEntity bowman = ModEntityTypes.BOWMAN.get().create(world, net.minecraft.world.entity.EntitySpawnReason.CONVERSION);
+        bowman.snapTo(upPos.getX() + 0.5D, upPos.getY() + 0.5D, upPos.getZ() + 0.5D, random.nextFloat() * 360 - 180F, 0);
+        bowman.finalizeSpawn(world, world.getCurrentDifficultyAt(upPos), EntitySpawnReason.PATROL, null);
         bowman.setEquipment();
         bowman.setPersistenceRequired();
 
@@ -526,9 +525,9 @@ public class VillagerEvents {
     }
 
     private static void createGuardShieldman(BlockPos upPos, RecruitEntity patrolLeader, String name, ServerLevel world, Random random) {
-        RecruitShieldmanEntity shieldmanEntity = ModEntityTypes.RECRUIT_SHIELDMAN.get().create(world);
-        shieldmanEntity.moveTo(upPos.getX() + 0.5D, upPos.getY() + 0.5D, upPos.getZ() + 0.5D, random.nextFloat() * 360 - 180F, 0);
-        shieldmanEntity.finalizeSpawn(world, world.getCurrentDifficultyAt(upPos), MobSpawnType.PATROL, null, null);
+        RecruitShieldmanEntity shieldmanEntity = ModEntityTypes.RECRUIT_SHIELDMAN.get().create(world, net.minecraft.world.entity.EntitySpawnReason.CONVERSION);
+        shieldmanEntity.snapTo(upPos.getX() + 0.5D, upPos.getY() + 0.5D, upPos.getZ() + 0.5D, random.nextFloat() * 360 - 180F, 0);
+        shieldmanEntity.finalizeSpawn(world, world.getCurrentDifficultyAt(upPos), EntitySpawnReason.PATROL, null);
         shieldmanEntity.setEquipment();
         shieldmanEntity.setPersistenceRequired();
 
@@ -547,9 +546,9 @@ public class VillagerEvents {
     }
 
     private static void createGuardHorseman(BlockPos upPos, RecruitEntity patrolLeader, String name, ServerLevel world, Random random) {
-        HorsemanEntity horseman = ModEntityTypes.HORSEMAN.get().create(world);
-        horseman.moveTo(upPos.getX() + 0.5D, upPos.getY() + 0.5D, upPos.getZ() + 0.5D, random.nextFloat() * 360 - 180F, 0);
-        horseman.finalizeSpawn(world, world.getCurrentDifficultyAt(upPos), MobSpawnType.PATROL, null, null);
+        HorsemanEntity horseman = ModEntityTypes.HORSEMAN.get().create(world, net.minecraft.world.entity.EntitySpawnReason.CONVERSION);
+        horseman.snapTo(upPos.getX() + 0.5D, upPos.getY() + 0.5D, upPos.getZ() + 0.5D, random.nextFloat() * 360 - 180F, 0);
+        horseman.finalizeSpawn(world, world.getCurrentDifficultyAt(upPos), EntitySpawnReason.PATROL, null);
         horseman.setEquipment();
         horseman.setPersistenceRequired();
 
@@ -568,9 +567,9 @@ public class VillagerEvents {
     }
 
     private static void createGuardNomad(BlockPos upPos, RecruitEntity patrolLeader, String name, ServerLevel world, Random random) {
-        NomadEntity nomad = ModEntityTypes.NOMAD.get().create(world);
-        nomad.moveTo(upPos.getX() + 0.5D, upPos.getY() + 0.5D, upPos.getZ() + 0.5D, random.nextFloat() * 360 - 180F, 0);
-        nomad.finalizeSpawn(world, world.getCurrentDifficultyAt(upPos), MobSpawnType.PATROL, null, null);
+        NomadEntity nomad = ModEntityTypes.NOMAD.get().create(world, net.minecraft.world.entity.EntitySpawnReason.CONVERSION);
+        nomad.snapTo(upPos.getX() + 0.5D, upPos.getY() + 0.5D, upPos.getZ() + 0.5D, random.nextFloat() * 360 - 180F, 0);
+        nomad.finalizeSpawn(world, world.getCurrentDifficultyAt(upPos), EntitySpawnReason.PATROL, null);
         nomad.setEquipment();
         nomad.setPersistenceRequired();
 
@@ -589,9 +588,9 @@ public class VillagerEvents {
     }
 
     private static void createPatrolCrossbowman(BlockPos upPos, RecruitEntity patrolLeader, ServerLevel world, Random random) {
-        CrossBowmanEntity crossBowman = ModEntityTypes.CROSSBOWMAN.get().create(world);
-        crossBowman.moveTo(upPos.getX() + 0.5D, upPos.getY() + 0.5D, upPos.getZ() + 0.5D, random.nextFloat() * 360 - 180F, 0);
-        crossBowman.finalizeSpawn(world, world.getCurrentDifficultyAt(upPos), MobSpawnType.PATROL, null, null);
+        CrossBowmanEntity crossBowman = ModEntityTypes.CROSSBOWMAN.get().create(world, net.minecraft.world.entity.EntitySpawnReason.CONVERSION);
+        crossBowman.snapTo(upPos.getX() + 0.5D, upPos.getY() + 0.5D, upPos.getZ() + 0.5D, random.nextFloat() * 360 - 180F, 0);
+        crossBowman.finalizeSpawn(world, world.getCurrentDifficultyAt(upPos), EntitySpawnReason.PATROL, null);
         crossBowman.setEquipment();
         crossBowman.setPersistenceRequired();
 
@@ -629,8 +628,8 @@ public class VillagerEvents {
         }
 
         @Override
-        public MerchantOffer getOffer(Entity entity, RandomSource random) {
-            return new MerchantOffer(new ItemStack(this.buyingItem, this.buyingAmount), new ItemStack(sellingItem, sellingAmount), maxUses, givenExp, priceMultiplier);
+        public MerchantOffer getOffer(net.minecraft.server.level.ServerLevel level, Entity entity, RandomSource random) {
+            return new MerchantOffer(new net.minecraft.world.item.trading.ItemCost(this.buyingItem, this.buyingAmount), new ItemStack(sellingItem, sellingAmount), maxUses, givenExp, priceMultiplier);
         }
     }
 }

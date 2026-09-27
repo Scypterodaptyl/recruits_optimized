@@ -7,16 +7,16 @@ import com.talhanation.recruits.entities.AbstractRecruitEntity;
 import com.talhanation.recruits.entities.VillagerNobleEntity;
 import com.talhanation.recruits.world.RecruitsGroup;
 import com.talhanation.recruits.world.RecruitsHireTrade;
-import de.maxhenkel.corelib.net.Message;
+import com.talhanation.recruits.network.Message;
 import net.minecraft.network.FriendlyByteBuf;
-import net.minecraft.resources.ResourceLocation;
+import net.minecraft.resources.Identifier;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.entity.EntityType;
-import net.minecraft.world.entity.npc.Villager;
+import net.minecraft.world.entity.npc.villager.Villager;
 import net.minecraft.world.entity.player.Player;
 import net.minecraftforge.api.distmarker.Dist;
-import net.minecraftforge.network.NetworkEvent;
+import net.minecraftforge.event.network.CustomPayloadEvent;
 import net.minecraftforge.network.PacketDistributor;
 
 import java.util.Objects;
@@ -29,7 +29,7 @@ public class MessageHireFromNobleVillager implements Message<MessageHireFromNobl
     private int cost;
     private boolean needsVillager;
     private boolean closing;
-    private ResourceLocation resource;
+    private Identifier resource;
     private UUID groupUUID;
     public MessageHireFromNobleVillager() {
     }
@@ -44,7 +44,7 @@ public class MessageHireFromNobleVillager implements Message<MessageHireFromNobl
         }
         else{
             this.cost = 0;
-            this.resource = new ResourceLocation("","");
+            this.resource = Identifier.fromNamespaceAndPath("","");
         }
 
         this.needsVillager = needsVillager;
@@ -55,10 +55,10 @@ public class MessageHireFromNobleVillager implements Message<MessageHireFromNobl
         return Dist.DEDICATED_SERVER;
     }
 
-    public void executeServerSide(NetworkEvent.Context context) {
+    public void executeServerSide(CustomPayloadEvent.Context context) {
         ServerPlayer player = Objects.requireNonNull(context.getSender());
-        ServerLevel serverLevel = player.serverLevel();
-        Optional<VillagerNobleEntity> villagerNobleOptional = player.getCommandSenderWorld().getEntitiesOfClass(
+        ServerLevel serverLevel = player.level();
+        Optional<VillagerNobleEntity> villagerNobleOptional = player.level().getEntitiesOfClass(
                 VillagerNobleEntity.class,
                 player.getBoundingBox().inflate(32.0D),
                 noble -> noble.getUUID().equals(this.nobleUUID) && noble.isAlive()
@@ -74,7 +74,7 @@ public class MessageHireFromNobleVillager implements Message<MessageHireFromNobl
         RecruitsGroup group = RecruitEvents.recruitsGroupsManager.getGroup(groupUUID);
 
         if(this.needsVillager){
-            player.getCommandSenderWorld().getEntitiesOfClass(
+            player.level().getEntitiesOfClass(
                     Villager.class,
                     player.getBoundingBox().inflate(32.0D),
                     villager -> villager.getUUID().equals(this.villagerUUID) && villager.isAlive()
@@ -90,7 +90,7 @@ public class MessageHireFromNobleVillager implements Message<MessageHireFromNobl
 
         String stringID = player.getTeam() != null ? player.getTeam().getName() : "";
         boolean canHire = RecruitEvents.recruitsPlayerUnitManager.canPlayerRecruit(stringID, player.getUUID());
-        Main.SIMPLE_CHANNEL.send(PacketDistributor.PLAYER.with(()-> player), new MessageToClientUpdateHireState(canHire));
+        Main.SIMPLE_CHANNEL.send(PacketDistributor.PLAYER.with(player), new MessageToClientUpdateHireState(canHire));
     }
     public void createRecruit(ServerLevel serverLevel, Villager villager, VillagerNobleEntity villagerNoble, Player player, RecruitsGroup group){
         String string = resource.toString();
@@ -107,7 +107,7 @@ public class MessageHireFromNobleVillager implements Message<MessageHireFromNobl
         this.nobleUUID = buf.readUUID();
         this.villagerUUID = buf.readUUID();
         this.cost = buf.readInt();
-        this.resource = buf.readResourceLocation();
+        this.resource = buf.readIdentifier();
         this.needsVillager = buf.readBoolean();
         this.closing = buf.readBoolean();
         this.groupUUID = buf.readUUID();
@@ -118,7 +118,7 @@ public class MessageHireFromNobleVillager implements Message<MessageHireFromNobl
         buf.writeUUID(this.nobleUUID);
         buf.writeUUID(this.villagerUUID);
         buf.writeInt(this.cost);
-        buf.writeResourceLocation(resource);
+        buf.writeIdentifier(resource);
         buf.writeBoolean(needsVillager);
         buf.writeBoolean(closing);
         buf.writeUUID(this.groupUUID);

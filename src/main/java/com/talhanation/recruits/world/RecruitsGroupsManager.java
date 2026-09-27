@@ -165,7 +165,7 @@ public class RecruitsGroupsManager {
     public void broadCastGroupsToPlayer(Player player) {
         if (player == null) return;
 
-        Main.SIMPLE_CHANNEL.send(PacketDistributor.PLAYER.with(()-> (ServerPlayer) player),
+        Main.SIMPLE_CHANNEL.send(PacketDistributor.PLAYER.with((ServerPlayer) player),
                 new MessageToClientUpdateGroups(
                         RecruitsGroup.listToNbt(getPlayerGroupsForClient(player))
                 ));

@@ -45,7 +45,7 @@ public final class WorldMapSettingsPanel {
         int hoveredRow = getHoveredRow(mouseX, mouseY, screenWidth, screenHeight);
         guiGraphics.fill(panelX, PANEL_TOP, panelX + PANEL_WIDTH, PANEL_TOP + panelHeight, BG_COLOR);
         guiGraphics.renderOutline(panelX, PANEL_TOP, PANEL_WIDTH, panelHeight, OUTLINE_COLOR);
-        guiGraphics.drawString(font, TITLE, panelX + 8, PANEL_TOP + 7, TEXT_COLOR, false);
+        guiGraphics.drawString(font, TITLE, panelX + 8, PANEL_TOP + 7, com.talhanation.recruits.client.gui.util.GuiCompat.opaque(TEXT_COLOR), false);
 
         renderCheckBox(
                 guiGraphics,
@@ -157,7 +157,7 @@ public final class WorldMapSettingsPanel {
         int color = hovered || open ? BUTTON_HOVERED_COLOR : BUTTON_COLOR;
         guiGraphics.fill(x, MARGIN, x + BUTTON_SIZE, MARGIN + BUTTON_SIZE, color);
         guiGraphics.renderOutline(x, MARGIN, BUTTON_SIZE, BUTTON_SIZE, OUTLINE_COLOR);
-        guiGraphics.drawString(font, open ? CLOSE_ICON : SETTINGS_ICON, open ? cachedCloseIconX : cachedSettingsIconX, MARGIN + 6, TEXT_COLOR);
+        guiGraphics.drawString(font, open ? CLOSE_ICON : SETTINGS_ICON, open ? cachedCloseIconX : cachedSettingsIconX, MARGIN + 6, com.talhanation.recruits.client.gui.util.GuiCompat.opaque(TEXT_COLOR));
     }
 
     private void renderCheckBox(
@@ -174,7 +174,7 @@ public final class WorldMapSettingsPanel {
             guiGraphics.fill(boxX + 2, boxY + 2, boxX + CHECKBOX_SIZE - 2, boxY + CHECKBOX_SIZE - 2, SELECTED_COLOR);
         }
 
-        guiGraphics.drawString(font, label, boxX + CHECKBOX_SIZE + 7, rowY + 4, TEXT_COLOR, false);
+        guiGraphics.drawString(font, label, boxX + CHECKBOX_SIZE + 7, rowY + 4, com.talhanation.recruits.client.gui.util.GuiCompat.opaque(TEXT_COLOR), false);
     }
 
     private static boolean isToggleButtonHovered(double mouseX, double mouseY, int screenWidth) {

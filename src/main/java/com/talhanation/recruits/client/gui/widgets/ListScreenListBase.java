@@ -1,24 +1,20 @@
 package com.talhanation.recruits.client.gui.widgets;
 
 
-import com.mojang.blaze3d.systems.RenderSystem;
-import com.mojang.blaze3d.vertex.PoseStack;
 import net.minecraft.client.Minecraft;
-import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.client.gui.components.ContainerObjectSelectionList;
 
 public abstract class ListScreenListBase<T extends ListScreenEntryBase<T>> extends ContainerObjectSelectionList<T> {
 
-    public ListScreenListBase(int width, int height, int x, int y, int size) {
-        super(Minecraft.getInstance(), width, height, x, y, size);
+    public ListScreenListBase(int width, int height, int top, int bottom, int size) {
+        super(Minecraft.getInstance(), width, Math.max(0, bottom - top), top, size);
     }
 
-    @Override
-    public void render(GuiGraphics guiGraphics, int x, int y, float partialTicks) {
-        double scale = minecraft.getWindow().getGuiScale();
-        RenderSystem.enableScissor((int) ((double) getRowLeft() * scale), (int) ((double) (height - y1) * scale), (int) ((double) (getScrollbarPosition() + 6) * scale), (int) ((double) (height - (height - y1) - y0 - 4) * scale));
-        super.render(guiGraphics, x, y, partialTicks);
-        RenderSystem.disableScissor();
+    /**
+     * Old list API: the list is placed between top and bottom.
+     */
+    public void updateSize(int width, int height, int top, int bottom) {
+        this.updateSizeAndPosition(width, Math.max(0, bottom - top), top);
     }
 
 }

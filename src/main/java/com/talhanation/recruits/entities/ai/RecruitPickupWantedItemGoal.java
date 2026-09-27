@@ -54,7 +54,7 @@ public class RecruitPickupWantedItemGoal extends Goal {
         scanDelay = 10 + recruit.getRandom().nextInt(5);
 
         itemEntityList.clear();
-        if (!(recruit.getCommandSenderWorld() instanceof ServerLevel serverLevel)) return;
+        if (!(recruit.level() instanceof ServerLevel serverLevel)) return;
 
         AABB aabb = recruit.getBoundingBox().inflate(16.0D, 3.0D, 16.0D);
         for (Entity nearby : NearbyEntityCache.allEntities(serverLevel)) {
@@ -63,7 +63,7 @@ public class RecruitPickupWantedItemGoal extends Goal {
             if (!aabb.contains(item.getX(), item.getY(), item.getZ())) continue;
             if (!recruit.getAllowedItems().test(item)) continue;
             if (recruit.distanceTo(item) >= 25) continue;
-            boolean wantedForFood = item.getItem().isEdible() && recruit.getHunger() < 30;
+            boolean wantedForFood = com.talhanation.recruits.util.ItemCompat.isEdible(item.getItem()) && recruit.getHunger() < 30;
             if (wantedForFood || recruit.wantsToPickUp(item.getItem())) {
                 itemEntityList.add(item);
             }
@@ -111,10 +111,10 @@ public class RecruitPickupWantedItemGoal extends Goal {
             case MOVE -> {
                 if (itemEntity != null && itemEntity.isAlive()) {
                     recruit.getNavigation().moveTo(itemEntity, 1F);
-                    recruit.setMaxUpStep(1.25F);
+                    java.util.Objects.requireNonNull(recruit.getAttribute(net.minecraft.world.entity.ai.attributes.Attributes.STEP_HEIGHT)).setBaseValue(1.25F);
                     if (recruit.distanceTo(itemEntity) < 3F) {
                         state = PICKUP;
-                        recruit.setMaxUpStep(1F);
+                        java.util.Objects.requireNonNull(recruit.getAttribute(net.minecraft.world.entity.ai.attributes.Attributes.STEP_HEIGHT)).setBaseValue(1F);
                     }
                 } else state = SELECT;
             }

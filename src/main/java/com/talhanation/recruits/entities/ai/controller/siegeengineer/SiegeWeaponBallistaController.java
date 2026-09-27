@@ -115,7 +115,7 @@ public class SiegeWeaponBallistaController implements ISiegeController {
             this.forward = false;
             this.left = false;
             this.right = false;
-            if(DEBUG && siegeEngineer.getOwner() != null) this.siegeEngineer.getOwner().sendSystemMessage(Component.literal(siegeEngineer.getName().getString() + ": REACHED POS"));
+            if(DEBUG && siegeEngineer.getOwner() != null) this.siegeEngineer.getOwner().displayClientMessage(Component.literal(siegeEngineer.getName().getString() + ": REACHED POS"), false);
             return;
         }
 
@@ -125,7 +125,7 @@ public class SiegeWeaponBallistaController implements ISiegeController {
             Vec3 toTarget = target.subtract(ballista.getEntity().position()).normalize();
 
             double phi = Kalkuel.horizontalAngleBetweenVectors(forward, toTarget);
-            if (DEBUG && siegeEngineer.getOwner() != null) this.siegeEngineer.getOwner().sendSystemMessage(Component.literal("phi: " + phi));
+            if (DEBUG && siegeEngineer.getOwner() != null) this.siegeEngineer.getOwner().displayClientMessage(Component.literal("phi: " + phi), false);
 
             double ref = 90;
             double tolerance = 2.0;
@@ -134,7 +134,7 @@ public class SiegeWeaponBallistaController implements ISiegeController {
             right = phi > (ref + tolerance);
 
             if (DEBUG && siegeEngineer.getOwner() != null)
-                this.siegeEngineer.getOwner().sendSystemMessage(Component.literal(siegeEngineer.getName().getString() + ": ROTATING"));
+                this.siegeEngineer.getOwner().displayClientMessage(Component.literal(siegeEngineer.getName().getString() + ": ROTATING"), false);
 
             if(phi > (ref + 20) || phi < (ref - 20)){
                 this.forward = false;
@@ -152,7 +152,7 @@ public class SiegeWeaponBallistaController implements ISiegeController {
 
             this.path = pathNavigation.createPath(this.movementPos.x, this.movementPos.y, this.movementPos.z, 0);
             if(DEBUG && siegeEngineer.getOwner() != null)
-                this.siegeEngineer.getOwner().sendSystemMessage(Component.literal(siegeEngineer.getName().getString() + ": CREATING PATH"));
+                this.siegeEngineer.getOwner().displayClientMessage(Component.literal(siegeEngineer.getName().getString() + ": CREATING PATH"), false);
 
             if(path != null && (!(path instanceof AsyncPath ap) || ap.isProcessed())){
                 try {
@@ -179,7 +179,7 @@ public class SiegeWeaponBallistaController implements ISiegeController {
                 }
             }
 
-            if(DEBUG && siegeEngineer.getOwner() != null) this.siegeEngineer.getOwner().sendSystemMessage(Component.literal(siegeEngineer.getName().getString() + ": FOLLOWING PATH"));
+            if(DEBUG && siegeEngineer.getOwner() != null) this.siegeEngineer.getOwner().displayClientMessage(Component.literal(siegeEngineer.getName().getString() + ": FOLLOWING PATH"), false);
         }
     }
 
@@ -339,9 +339,7 @@ public class SiegeWeaponBallistaController implements ISiegeController {
                 if (!noAmmoMessage) {
                     noAmmoMessage = true;
                     if (siegeEngineer.getOwner() != null) {
-                        siegeEngineer.getOwner().sendSystemMessage(
-                                Component.literal(siegeEngineer.getName().getString() + ": I have no Ammo for the ballista.")
-                        );
+                        siegeEngineer.getOwner().displayClientMessage(Component.literal(siegeEngineer.getName().getString() + ": I have no Ammo for the ballista."), false);
                     }
                 }
                 ballista.setPitchUp(false);
@@ -373,8 +371,8 @@ public class SiegeWeaponBallistaController implements ISiegeController {
             ballista.trigger(true);
             this.setTargetPos(null);
             if(DEBUG && siegeEngineer.getOwner() != null){
-                siegeEngineer.getOwner().sendSystemMessage(Component.literal(
-                        siegeEngineer.getName().getString() + ": FIRING ballista!"));
+                siegeEngineer.getOwner().displayClientMessage(Component.literal(
+                        siegeEngineer.getName().getString() + ": FIRING ballista!"), false);
             }
 
             return true;
@@ -425,8 +423,8 @@ public class SiegeWeaponBallistaController implements ISiegeController {
         ballista.repairSiegeWeapon(siegeEngineer);
 
         if(DEBUG && siegeEngineer.getOwner() != null){
-            siegeEngineer.getOwner().sendSystemMessage(Component.literal(
-                    siegeEngineer.getName().getString() + ": Repairing ballista. Health: " + String.format("%.0f", ballista.getHealth())));
+            siegeEngineer.getOwner().displayClientMessage(Component.literal(
+                    siegeEngineer.getName().getString() + ": Repairing ballista. Health: " + String.format("%.0f", ballista.getHealth())), false);
         }
     }
 

@@ -1,12 +1,13 @@
 package com.talhanation.recruits.client.gui.widgets;
 
-import com.mojang.blaze3d.systems.RenderSystem;
+import net.minecraft.client.input.MouseButtonEvent;
+
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.client.gui.components.AbstractWidget;
 import net.minecraft.client.gui.narration.NarrationElementOutput;
 import net.minecraft.network.chat.Component;
-import net.minecraft.util.FastColor;
+import net.minecraft.util.ARGB;
 
 import java.util.List;
 import java.util.function.Consumer;
@@ -14,13 +15,13 @@ import java.util.function.Function;
 
 
 public class ScrollDropDownMenu<T> extends AbstractWidget {
-    private int bgFill = FastColor.ARGB32.color(255, 60, 60, 60);
-    private int bgFillHovered = FastColor.ARGB32.color(255, 100, 100, 100);
-    private int bgFillSelected = FastColor.ARGB32.color(255, 10, 10, 10);
-    private int displayColor = FastColor.ARGB32.color(255, 255, 255, 255);
-    private int optionTextColor = FastColor.ARGB32.color(255, 255, 255, 255);
-    private int scrollbarColor = FastColor.ARGB32.color(255, 100, 100, 100);
-    private int scrollbarHandleColor = FastColor.ARGB32.color(255, 150, 150, 150);
+    private int bgFill = ARGB.color(255, 60, 60, 60);
+    private int bgFillHovered = ARGB.color(255, 100, 100, 100);
+    private int bgFillSelected = ARGB.color(255, 10, 10, 10);
+    private int displayColor = ARGB.color(255, 255, 255, 255);
+    private int optionTextColor = ARGB.color(255, 255, 255, 255);
+    private int scrollbarColor = ARGB.color(255, 100, 100, 100);
+    private int scrollbarHandleColor = ARGB.color(255, 150, 150, 150);
 
     private final List<T> options;
     private final Consumer<T> onSelect;
@@ -57,7 +58,7 @@ public class ScrollDropDownMenu<T> extends AbstractWidget {
             guiGraphics.fill(this.getX(), this.getY(), this.getX() + this.width, this.getY() + this.height, bgFillSelected);
         }
 
-        guiGraphics.drawCenteredString(Minecraft.getInstance().font, getSelectedText(), this.getX() + this.width / 2, this.getY() + (this.height - 8) / 2, displayColor);
+        guiGraphics.drawCenteredString(Minecraft.getInstance().font, getSelectedText(), this.getX() + this.width / 2, this.getY() + (this.height - 8) / 2, com.talhanation.recruits.client.gui.util.GuiCompat.opaque(displayColor));
 
         DropDownMenu.renderArrow(guiGraphics, this.getX() + this.width - 10, this.getY() + this.height / 2, isOpen, displayColor);
 
@@ -65,12 +66,9 @@ public class ScrollDropDownMenu<T> extends AbstractWidget {
             int dropdownHeight = maxVisibleOptions * optionHeight;
             guiGraphics.fill(this.getX(), this.getY() + this.height, this.getX() + this.width, this.getY() + this.height + dropdownHeight, bgFill);
 
-            guiGraphics.pose().pushPose();
-            guiGraphics.pose().translate(0, 0, 500); // Ensure the dropdown renders above other elements
-            RenderSystem.enableScissor((int) (this.getX() * Minecraft.getInstance().getWindow().getGuiScale()),
-                    (int) (Minecraft.getInstance().getWindow().getHeight() - (this.getY() + this.height + dropdownHeight) * Minecraft.getInstance().getWindow().getGuiScale()),
-                    (int) (this.width * Minecraft.getInstance().getWindow().getGuiScale()),
-                    (int) (dropdownHeight * Minecraft.getInstance().getWindow().getGuiScale()));
+            guiGraphics.pose().pushMatrix();
+            guiGraphics.nextStratum(); // Ensure the dropdown renders above other elements
+            guiGraphics.enableScissor(this.getX(), this.getY() + this.height, this.getX() + this.width, this.getY() + this.height + dropdownHeight);
 
             for (int i = 0; i < options.size(); i++) {
                 int optionY = this.getY() + this.height + (i - scrollOffset) * optionHeight;
@@ -82,10 +80,10 @@ public class ScrollDropDownMenu<T> extends AbstractWidget {
                 }
 
                 String text = optionTextGetter.apply(options.get(i));
-                guiGraphics.drawCenteredString(Minecraft.getInstance().font, text, this.getX() + this.width / 2, optionY + (optionHeight - 8) / 2, optionTextColor);
+                guiGraphics.drawCenteredString(Minecraft.getInstance().font, text, this.getX() + this.width / 2, optionY + (optionHeight - 8) / 2, com.talhanation.recruits.client.gui.util.GuiCompat.opaque(optionTextColor));
             }
 
-            RenderSystem.disableScissor();
+            guiGraphics.disableScissor();
 
 
             // Render the scrollbar
@@ -101,12 +99,14 @@ public class ScrollDropDownMenu<T> extends AbstractWidget {
                 guiGraphics.fill(scrollbarX, scrollbarY, scrollbarX + scrollbarWidth, scrollbarY + scrollbarHeight, scrollbarHandleColor);
             }
 
-            guiGraphics.pose().popPose();
+            guiGraphics.pose().popMatrix();
         }
     }
 
     @Override
-    public void onClick(double mouseX, double mouseY) {
+    public void onClick(MouseButtonEvent event, boolean doubleClick) {
+        double mouseX = event.x();
+        double mouseY = event.y();
         // Do not use
     }
 
@@ -160,7 +160,7 @@ public class ScrollDropDownMenu<T> extends AbstractWidget {
     }
 
     @Override
-    public boolean mouseScrolled(double mouseX, double mouseY, double delta) {
+    public boolean mouseScrolled(double mouseX, double mouseY, double scrollX, double delta) {
         if(!visible) return false;
 
         if (isOpen) {
@@ -172,7 +172,10 @@ public class ScrollDropDownMenu<T> extends AbstractWidget {
     }
 
     @Override
-    public boolean mouseReleased(double mouseX, double mouseY, int button) {
+    public boolean mouseReleased(MouseButtonEvent event) {
+        double mouseX = event.x();
+        double mouseY = event.y();
+        int button = event.button();
         if(!visible) return false;
 
         if (isScrolling) {

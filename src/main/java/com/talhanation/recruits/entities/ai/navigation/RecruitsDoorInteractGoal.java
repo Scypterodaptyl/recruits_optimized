@@ -6,7 +6,6 @@ import com.talhanation.recruits.pathfinding.AsyncGroundPathNavigation;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.world.entity.Entity;
-import net.minecraft.world.entity.Mob;
 import net.minecraft.world.entity.ai.goal.Goal;
 import net.minecraft.world.entity.ai.util.GoalUtils;
 import net.minecraft.world.level.Level;
@@ -34,7 +33,7 @@ public abstract class RecruitsDoorInteractGoal extends Goal {
         if (!this.hasDoor) {
             return false;
         } else {
-            BlockState blockstate = this.recruit.getCommandSenderWorld().getBlockState(this.doorPos);
+            BlockState blockstate = this.recruit.level().getBlockState(this.doorPos);
             if (!(blockstate.getBlock() instanceof DoorBlock)) {
                 this.hasDoor = false;
                 return false;
@@ -46,24 +45,24 @@ public abstract class RecruitsDoorInteractGoal extends Goal {
 
     protected void setOpen(boolean open) {
         if (this.hasDoor) {
-            BlockState blockstate = this.recruit.getCommandSenderWorld().getBlockState(this.doorPos);
+            BlockState blockstate = this.recruit.level().getBlockState(this.doorPos);
             if (blockstate.getBlock() instanceof FenceGateBlock) {
-                useGate(blockstate, this.recruit.getCommandSenderWorld(), doorPos, this.recruit);
+                useGate(blockstate, this.recruit.level(), doorPos, this.recruit);
             }
             else if (blockstate.getBlock() instanceof DoorBlock doorBlock) {
-                doorBlock.setOpen(this.recruit, this.recruit.getCommandSenderWorld(), blockstate, this.doorPos, open);
+                doorBlock.setOpen(this.recruit, this.recruit.level(), blockstate, this.doorPos, open);
             }
 
             for(Direction direction: Direction.values()){
                 if(direction.equals(Direction.DOWN)) continue;
 
                 BlockPos blockPos = this.doorPos.relative(direction);
-                BlockState state = this.recruit.getCommandSenderWorld().getBlockState(blockPos);
+                BlockState state = this.recruit.level().getBlockState(blockPos);
                 if (state.getBlock() instanceof FenceGateBlock) {
-                    useGate(blockstate, this.recruit.getCommandSenderWorld(), blockPos, this.recruit);
+                    useGate(blockstate, this.recruit.level(), blockPos, this.recruit);
                 }
                 else if (state.getBlock() instanceof DoorBlock doorBlock) {
-                    doorBlock.setOpen(this.recruit, this.recruit.getCommandSenderWorld(), blockstate, this.doorPos, open);
+                    doorBlock.setOpen(this.recruit, this.recruit.level(), blockstate, this.doorPos, open);
                 }
             }
         }
@@ -83,7 +82,7 @@ public abstract class RecruitsDoorInteractGoal extends Goal {
                     Node node = path.getNode(i);
                     this.doorPos = new BlockPos(node.x, node.y, node.z);
                     if (!(this.recruit.distanceToSqr((double)this.doorPos.getX(), this.recruit.getY(), (double)this.doorPos.getZ()) > 5D)) {
-                        this.hasDoor = DoorBlock.isWoodenDoor(this.recruit.getCommandSenderWorld(), this.doorPos) || (this.recruit.getCommandSenderWorld().getBlockState(this.doorPos).getBlock() instanceof FenceGateBlock);
+                        this.hasDoor = DoorBlock.isWoodenDoor(this.recruit.level(), this.doorPos) || (this.recruit.level().getBlockState(this.doorPos).getBlock() instanceof FenceGateBlock);
                         if (this.hasDoor) {
                             return true;
                         }
@@ -91,7 +90,7 @@ public abstract class RecruitsDoorInteractGoal extends Goal {
                 }
 
                 this.doorPos = this.recruit.blockPosition().above();
-                this.hasDoor = DoorBlock.isWoodenDoor(this.recruit.getCommandSenderWorld(), this.doorPos) || (this.recruit.getCommandSenderWorld().getBlockState(this.doorPos).getBlock() instanceof FenceGateBlock);
+                this.hasDoor = DoorBlock.isWoodenDoor(this.recruit.level(), this.doorPos) || (this.recruit.level().getBlockState(this.doorPos).getBlock() instanceof FenceGateBlock);
                 return this.hasDoor;
             } else {
                 return false;

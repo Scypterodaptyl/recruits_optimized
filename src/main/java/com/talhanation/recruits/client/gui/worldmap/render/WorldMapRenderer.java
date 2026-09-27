@@ -1,21 +1,11 @@
 package com.talhanation.recruits.client.gui.worldmap.render;
 
-import com.mojang.blaze3d.systems.RenderSystem;
-import com.mojang.blaze3d.vertex.BufferBuilder;
-import com.mojang.blaze3d.vertex.BufferUploader;
-import com.mojang.blaze3d.vertex.DefaultVertexFormat;
-import com.mojang.blaze3d.vertex.Tesselator;
-import com.mojang.blaze3d.vertex.VertexFormat;
 import com.talhanation.recruits.client.gui.worldmap.render.tile.WorldMapRenderTileCache;
 import com.talhanation.recruits.client.gui.worldmap.render.tile.WorldMapRenderTileKey;
 import com.talhanation.recruits.client.gui.worldmap.storage.WorldMapCacheManager;
 import com.talhanation.recruits.config.RecruitsClientConfig;
-import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.GuiGraphics;
-import net.minecraft.client.multiplayer.ClientLevel;
-import net.minecraft.client.renderer.GameRenderer;
-import net.minecraft.resources.ResourceLocation;
-import net.minecraft.util.Mth;
+import net.minecraft.resources.Identifier;
 import org.joml.Matrix4f;
 
 import java.util.ArrayList;
@@ -36,7 +26,7 @@ public final class WorldMapRenderer {
     private final WorldMapRenderTileCache renderTileCache;
     private final List<VisibleTile> visibleTiles = new ArrayList<>();
     private final List<WorldMapRenderTileKey> preparedTileKeys = new ArrayList<>();
-    private final Map<ResourceLocation, DrawBatch> drawBatches = new LinkedHashMap<>();
+    private final Map<Identifier, DrawBatch> drawBatches = new LinkedHashMap<>();
     private int visibleLevel = -1;
     private int visibleStartX = Integer.MIN_VALUE;
     private int visibleEndX = Integer.MIN_VALUE;
@@ -101,21 +91,12 @@ public final class WorldMapRenderer {
         RenderBudget budget = new RenderBudget(MAX_TILE_DRAWS_PER_FRAME);
         clearDrawBatches();
 
-        RenderSystem.setShader(GameRenderer::getPositionTexShader);
-        RenderSystem.setShaderColor(brightness, brightness, brightness, 1.0F);
-        RenderSystem.enableBlend();
-        RenderSystem.defaultBlendFunc();
-        RenderSystem.disableDepthTest();
-        RenderSystem.depthMask(false);
         try {
             for (VisibleTile visibleTile : visible) {
                 renderBestAvailable(visibleTile.key(), budget, allowParentFallback);
             }
             drawBatches(guiGraphics, frame);
         } finally {
-            RenderSystem.setShaderColor(1.0F, 1.0F, 1.0F, 1.0F);
-            RenderSystem.depthMask(true);
-            RenderSystem.enableDepthTest();
         }
     }
 
@@ -235,8 +216,6 @@ public final class WorldMapRenderer {
     }
 
     private void drawBatches(GuiGraphics guiGraphics, MapFramebufferPass.Frame frame) {
-        Matrix4f matrix = guiGraphics.pose().last().pose();
-        BufferBuilder buffer = Tesselator.getInstance().getBuilder();
         Iterator<DrawBatch> iterator = drawBatches.values().iterator();
         while (iterator.hasNext()) {
             DrawBatch drawBatch = iterator.next();
@@ -245,17 +224,14 @@ public final class WorldMapRenderer {
                 continue;
             }
 
-            RenderSystem.setShaderTexture(0, drawBatch.textureId);
-            buffer.begin(VertexFormat.Mode.QUADS, DefaultVertexFormat.POSITION_TEX);
             for (DrawTile drawTile : drawBatch.tiles) {
-                appendWorldTile(buffer, matrix, drawTile, frame);
+                appendWorldTile(guiGraphics, drawBatch.textureId, drawTile, frame);
             }
-            BufferUploader.drawWithShader(buffer.end());
         }
     }
 
     private static void appendWorldTile(
-            BufferBuilder buffer, Matrix4f matrix, DrawTile drawTile, MapFramebufferPass.Frame frame) {
+            GuiGraphics guiGraphics, Identifier textureId, DrawTile drawTile, MapFramebufferPass.Frame frame) {
         WorldMapRenderTileKey key = drawTile.key;
         WorldMapRenderTileCache.TileView tile = drawTile.tile;
         double screenX = frame.renderOffsetX() + key.worldMinX() * frame.fboScale();
@@ -268,39 +244,12 @@ public final class WorldMapRenderer {
         double x2 = screenX + screenSize;
         double z2 = screenZ + screenSize;
 
-        appendQuad(buffer, matrix, x1, z1, x2, z2, tile.u1(), tile.v1(), tile.u2(), tile.v2());
-    }
-
-    private static void appendQuad(
-            BufferBuilder buffer,
-            Matrix4f matrix,
-            double x1,
-            double z1,
-            double x2,
-            double z2,
-            float u1,
-            float v1,
-            float u2,
-            float v2) {
-        buffer.vertex(matrix, (float) x1, (float) z2, 0.0F).uv(u1, v2).endVertex();
-        buffer.vertex(matrix, (float) x2, (float) z2, 0.0F).uv(u2, v2).endVertex();
-        buffer.vertex(matrix, (float) x2, (float) z1, 0.0F).uv(u2, v1).endVertex();
-        buffer.vertex(matrix, (float) x1, (float) z1, 0.0F).uv(u1, v1).endVertex();
+        MapRenderUtil.texturedQuad(guiGraphics, textureId, x1, z1, x2, z2, tile.u1(), tile.v1(), tile.u2(), tile.v2(), 0xFFFFFFFF);
     }
 
     private static float getMapBrightness() {
-        if (!RecruitsClientConfig.WorldMapNightShading.get()) {
-            return 1.0F;
-        }
-
-        ClientLevel level = Minecraft.getInstance().level;
-        if (level == null || level.dimensionType() == null || !level.dimensionType().hasSkyLight()) {
-            return 1.0F;
-        }
-
-        float ambient = Math.min(1.0F, 0.375F + level.dimensionType().ambientLight());
-        float sunBrightness = (level.getSkyDarken(1.0F) - 0.2F) / 0.8F;
-        return ambient + (1.0F - ambient) * Mth.clamp(sunBrightness, 0.0F, 1.0F);
+        // the brightness is currently not applied to the tiles
+        return 1.0F;
     }
 
     private record VisibleTile(WorldMapRenderTileKey key, double centerDistance) {}
@@ -313,10 +262,10 @@ public final class WorldMapRenderer {
     }
 
     private static final class DrawBatch {
-        private final ResourceLocation textureId;
+        private final Identifier textureId;
         private final List<DrawTile> tiles = new ArrayList<>();
 
-        private DrawBatch(ResourceLocation textureId) {
+        private DrawBatch(Identifier textureId) {
             this.textureId = textureId;
         }
     }

@@ -1,7 +1,9 @@
 package com.talhanation.recruits.client.gui.component;
 
+import net.minecraft.client.input.MouseButtonEvent;
+import net.minecraft.client.input.MouseButtonInfo;
+
 import net.minecraft.client.Minecraft;
-import net.minecraft.client.gui.components.Button;
 import net.minecraft.network.chat.Component;
 import net.minecraftforge.client.gui.widget.ExtendedButton;
 
@@ -11,13 +13,16 @@ public class ActivateableButton extends ExtendedButton {
     }
 
     @Override
-    public boolean mouseClicked(double p_93641_, double p_93642_, int p_93643_) {
+    public boolean mouseClicked(MouseButtonEvent event, boolean doubleClick) {
+        double p_93641_ = event.x();
+        double p_93642_ = event.y();
+        int p_93643_ = event.button();
         if (this.visible) {
-            if (this.isValidClickButton(p_93643_)) {
+            if (this.isValidClickButton(event.buttonInfo())) {
                 boolean flag = this.clicked(p_93641_, p_93642_);
                 if (flag) {
                     this.playDownSound(Minecraft.getInstance().getSoundManager());
-                    this.onClick(p_93641_, p_93642_);
+                    this.onClick(new MouseButtonEvent(p_93641_, p_93642_, new MouseButtonInfo(0, 0)), false);
                     return true;
                 }
             }

@@ -6,8 +6,8 @@ import com.talhanation.recruits.entities.ai.async.NearbyEntityCache;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.ai.goal.Goal;
-import net.minecraft.world.entity.npc.Villager;
-import net.minecraft.world.entity.npc.VillagerProfession;
+import net.minecraft.world.entity.npc.villager.Villager;
+import net.minecraft.world.entity.npc.villager.VillagerProfession;
 import net.minecraft.world.phys.AABB;
 
 import java.util.ArrayList;
@@ -24,7 +24,7 @@ public class VillagerBecomeNobleGoal extends Goal {
 
     @Override
     public boolean canUse() {
-        return !this.villager.isBaby() && !villager.isSleeping() && this.villager.getVillagerData().getProfession().equals(VillagerProfession.NONE);
+        return !this.villager.isBaby() && !villager.isSleeping() && this.villager.getVillagerData().profession().is(VillagerProfession.NONE);
     }
 
     @Override
@@ -41,15 +41,15 @@ public class VillagerBecomeNobleGoal extends Goal {
     @Override
     public void tick() {
         super.tick();
-        if(this.villager.getCommandSenderWorld().isClientSide()) return;
+        if(this.villager.level().isClientSide()) return;
         if(timer > 0) timer--;
     }
 
     @Override
     public void stop() {
         super.stop();
-        if(this.villager.getCommandSenderWorld().isClientSide()) return;
-        if (!(this.villager.getCommandSenderWorld() instanceof ServerLevel serverLevel)) return;
+        if(this.villager.level().isClientSide()) return;
+        if (!(this.villager.level() instanceof ServerLevel serverLevel)) return;
 
         AABB aabb = this.villager.getBoundingBox().inflate(100);
         List<LivingEntity> list = new ArrayList<>();

@@ -272,7 +272,7 @@ public class WorldMapContextMenu {
                 textColor = hovered ? 0xFFFFFF : 0xCCCCCC;
             }
 
-            guiGraphics.drawString(screen.getMinecraft().font, entry.text(), x + 8, entryY + 6, textColor);
+            guiGraphics.drawString(screen.getMinecraft().font, entry.text(), x + 8, entryY + 6, com.talhanation.recruits.client.gui.util.GuiCompat.opaque(textColor));
 
             if (!entry.stack.isEmpty()) {
                 guiGraphics.renderFakeItem(entry.stack, x + width - 20, entryY + 1);

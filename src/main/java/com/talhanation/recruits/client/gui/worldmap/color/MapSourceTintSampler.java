@@ -27,7 +27,7 @@ public final class MapSourceTintSampler implements BlockAndTintGetter, MapTintSt
 
     public MapSourceTintSampler(ClientLevel level, BiomeLookup biomeLookup) {
         this.level = level;
-        this.biomeRegistry = level.registryAccess().registryOrThrow(Registries.BIOME);
+        this.biomeRegistry = level.registryAccess().lookupOrThrow(Registries.BIOME);
         this.biomeLookup = biomeLookup;
     }
 
@@ -67,8 +67,8 @@ public final class MapSourceTintSampler implements BlockAndTintGetter, MapTintSt
     }
 
     @Override
-    public int getMinBuildHeight() {
-        return level.getMinBuildHeight();
+    public int getMinY() {
+        return level.getMinY();
     }
 
     @Override

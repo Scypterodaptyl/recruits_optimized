@@ -8,7 +8,7 @@ import com.talhanation.recruits.network.codec.ClaimNetworkCodec;
 import com.talhanation.recruits.world.RecruitsClaim;
 import com.talhanation.recruits.world.RecruitsFaction;
 import com.talhanation.recruits.world.RecruitsPlayerInfo;
-import de.maxhenkel.corelib.net.Message;
+import com.talhanation.recruits.network.Message;
 import net.minecraft.network.FriendlyByteBuf;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
@@ -17,7 +17,7 @@ import net.minecraft.world.level.Level;
 import net.minecraft.world.scores.PlayerTeam;
 import net.minecraft.world.scores.Team;
 import net.minecraftforge.api.distmarker.Dist;
-import net.minecraftforge.network.NetworkEvent;
+import net.minecraftforge.event.network.CustomPayloadEvent;
 import net.minecraftforge.network.PacketDistributor;
 
 import javax.annotation.Nullable;
@@ -46,14 +46,14 @@ public class MessageUpdateClaim implements Message<MessageUpdateClaim> {
         return Dist.DEDICATED_SERVER;
     }
 
-    public void executeServerSide(NetworkEvent.Context context){
+    public void executeServerSide(CustomPayloadEvent.Context context){
         ServerPlayer sender = context.getSender();
         RecruitsClaim updatedClaim = this.claim;
         if (updatedClaim == null || sender == null) return;
         if(!RecruitsServerConfig.AllowClaiming.get()) return;
         if(sender.level().dimension() != Level.OVERWORLD) return;
 
-        ServerLevel level = (ServerLevel) sender.getCommandSenderWorld();
+        ServerLevel level = (ServerLevel) sender.level();
         RecruitsClaim acceptedClaim = validateClaimUpdate(level, sender, updatedClaim);
         if (acceptedClaim == null) {
             resyncKnownClaim(sender, updatedClaim);
@@ -270,7 +270,7 @@ public class MessageUpdateClaim implements Message<MessageUpdateClaim> {
     }
 
     private static boolean isAdminCreative(ServerPlayer sender) {
-        return sender.isCreative() && sender.hasPermissions(2);
+        return sender.isCreative() && sender.permissions().hasPermission(net.minecraft.server.permissions.Permissions.COMMANDS_GAMEMASTER);
     }
 
     @Nullable
@@ -437,7 +437,7 @@ public class MessageUpdateClaim implements Message<MessageUpdateClaim> {
         }
 
         Main.SIMPLE_CHANNEL.send(
-                PacketDistributor.PLAYER.with(() -> sender),
+                PacketDistributor.PLAYER.with(sender),
                 new MessageToClientUpdateClaim(reply));
     }
 

@@ -2,7 +2,7 @@ package com.talhanation.recruits.compat.siegeweapons;
 
 import com.talhanation.recruits.Main;
 import com.talhanation.recruits.entities.SiegeEngineerEntity;
-import net.minecraft.resources.ResourceLocation;
+import net.minecraft.resources.Identifier;
 import net.minecraft.tags.ItemTags;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.item.ItemStack;
@@ -127,7 +127,7 @@ public abstract class SiegeWeapon {
 
 
     public void repairSiegeWeapon(SiegeEngineerEntity siegeEngineer) {
-        int amount = (10 + siegeEngineer.getCommandSenderWorld().random.nextInt(5));
+        int amount = (10 + siegeEngineer.level().random.nextInt(5));
         try{
             if (Main.isSiegeWeaponsLoaded && entity.getEncodeId().contains("siegeweapons")) {
                 Class<?> siegeweaponClass = resolveClass("com.talhanation.siegeweapons.entities.AbstractVehicleEntity");
@@ -193,6 +193,6 @@ public abstract class SiegeWeapon {
     @Nullable
     public static ItemStack getSiegeWeaponItem() {
         if (!Main.isSiegeWeaponsLoaded) return null;
-        return ForgeRegistries.ITEMS.getDelegateOrThrow(ResourceLocation.tryParse("siegeweapons:catapult")).get().getDefaultInstance();
+        return ForgeRegistries.ITEMS.getDelegateOrThrow(Identifier.tryParse("siegeweapons:catapult")).get().getDefaultInstance();
     }
 }

@@ -1,12 +1,12 @@
 package com.talhanation.recruits.network;
 
 import com.talhanation.recruits.FactionEvents;
-import de.maxhenkel.corelib.net.Message;
+import com.talhanation.recruits.network.Message;
 import net.minecraft.network.FriendlyByteBuf;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraftforge.api.distmarker.Dist;
-import net.minecraftforge.network.NetworkEvent;
+import net.minecraftforge.event.network.CustomPayloadEvent;
 
 import java.util.Objects;
 
@@ -27,11 +27,11 @@ public class MessageAddRecruitToTeam implements Message<MessageAddRecruitToTeam>
         return Dist.DEDICATED_SERVER;
     }
 
-    public void executeServerSide(NetworkEvent.Context context) {
+    public void executeServerSide(CustomPayloadEvent.Context context) {
         ServerPlayer player = Objects.requireNonNull(context.getSender());
         if (player.getTeam() == null || !player.getTeam().getName().equals(teamName)) return;
 
-        ServerLevel level = player.serverLevel();
+        ServerLevel level = player.level();
         int boundedAmount = Math.max(1, Math.min(x, 4));
 
         FactionEvents.addNPCToData(level, teamName, boundedAmount);

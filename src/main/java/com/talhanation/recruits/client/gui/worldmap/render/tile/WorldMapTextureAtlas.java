@@ -1,18 +1,19 @@
 package com.talhanation.recruits.client.gui.worldmap.render.tile;
 
-import com.mojang.blaze3d.platform.TextureUtil;
+import com.mojang.blaze3d.systems.GpuDevice;
 import com.mojang.blaze3d.systems.RenderSystem;
+import com.mojang.blaze3d.textures.FilterMode;
+import com.mojang.blaze3d.textures.GpuTexture;
+import com.mojang.blaze3d.textures.TextureFormat;
 import com.talhanation.recruits.Main;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.renderer.texture.AbstractTexture;
-import net.minecraft.resources.ResourceLocation;
-import net.minecraft.server.packs.resources.ResourceManager;
-import org.lwjgl.opengl.GL11;
-import org.lwjgl.opengl.GL12;
+import net.minecraft.resources.Identifier;
 
-import java.io.IOException;
 import java.util.BitSet;
 import java.util.concurrent.atomic.AtomicLong;
+
+
 
 /**
  * Keeps many map tiles in one persistent texture. Besides avoiding texture allocation churn, this
@@ -25,8 +26,8 @@ final class WorldMapTextureAtlas implements AutoCloseable {
     private static final AtomicLong ATLAS_SEQUENCE = new AtomicLong();
 
     private final PixelTexture texture = new PixelTexture();
-    private final ResourceLocation textureId =
-            new ResourceLocation(Main.MOD_ID, "worldmap/atlas_" + ATLAS_SEQUENCE.incrementAndGet());
+    private final Identifier textureId =
+            Identifier.fromNamespaceAndPath(Main.MOD_ID, "worldmap/atlas_" + ATLAS_SEQUENCE.incrementAndGet());
     private final BitSet usedSlots = new BitSet(CAPACITY);
 
     WorldMapTextureAtlas() {
@@ -70,7 +71,7 @@ final class WorldMapTextureAtlas implements AutoCloseable {
             throw new IllegalStateException("Invalid world map atlas slot");
         }
         uploader.uploadRegion(
-                texture.getId(),
+                texture.getTexture(),
                 slot.pixelX() + x,
                 slot.pixelY() + y,
                 pixels,
@@ -81,7 +82,7 @@ final class WorldMapTextureAtlas implements AutoCloseable {
                 height);
     }
 
-    ResourceLocation textureId() {
+    Identifier textureId() {
         return textureId;
     }
 
@@ -127,22 +128,19 @@ final class WorldMapTextureAtlas implements AutoCloseable {
 
     private static final class PixelTexture extends AbstractTexture {
         private PixelTexture() {
-            RenderSystem.assertOnRenderThreadOrInit();
-            TextureUtil.prepareImage(getId(), ATLAS_SIZE, ATLAS_SIZE);
-            setFilter(false, false);
-            RenderSystem.bindTexture(getId());
-            GL11.glTexParameteri(GL11.GL_TEXTURE_2D, GL11.GL_TEXTURE_MIN_FILTER, GL11.GL_NEAREST);
-            GL11.glTexParameteri(GL11.GL_TEXTURE_2D, GL11.GL_TEXTURE_MAG_FILTER, GL11.GL_NEAREST);
-            GL11.glTexParameteri(GL11.GL_TEXTURE_2D, GL11.GL_TEXTURE_WRAP_S, GL12.GL_CLAMP_TO_EDGE);
-            GL11.glTexParameteri(GL11.GL_TEXTURE_2D, GL11.GL_TEXTURE_WRAP_T, GL12.GL_CLAMP_TO_EDGE);
-        }
-
-        @Override
-        public void load(ResourceManager resourceManager) throws IOException {}
-
-        @Override
-        public void close() {
-            releaseId();
+            RenderSystem.assertOnRenderThread();
+            GpuDevice device = RenderSystem.getDevice();
+            this.texture = device.createTexture(
+                    () -> "Recruits world map atlas",
+                    GpuTexture.USAGE_COPY_DST | GpuTexture.USAGE_TEXTURE_BINDING,
+                    TextureFormat.RGBA8,
+                    ATLAS_SIZE,
+                    ATLAS_SIZE,
+                    1,
+                    1);
+            this.textureView = device.createTextureView(this.texture);
+            this.sampler = RenderSystem.getSamplerCache().getClampToEdge(FilterMode.NEAREST);
+            device.createCommandEncoder().clearColorTexture(this.texture, 0);
         }
     }
 }

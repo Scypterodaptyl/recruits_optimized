@@ -5,7 +5,6 @@ import net.minecraft.nbt.ListTag;
 import net.minecraft.nbt.Tag;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.world.level.saveddata.SavedData;
-import net.minecraft.world.level.storage.DimensionDataStorage;
 
 import java.util.ArrayList;
 import java.util.Collection;
@@ -17,13 +16,13 @@ public class RecruitsClaimSaveData extends SavedData {
     private List<RecruitsClaim> claimList = new ArrayList<>();
 
     public static RecruitsClaimSaveData get(ServerLevel level) {
-        return level.getDataStorage().computeIfAbsent(RecruitsClaimSaveData::load, RecruitsClaimSaveData::new, FILE_ID);
+        return level.getDataStorage().computeIfAbsent(TYPE);
     }
 
     public static RecruitsClaimSaveData load(CompoundTag nbt) {
         RecruitsClaimSaveData data = new RecruitsClaimSaveData();
-        if (nbt.contains("claims", Tag.TAG_LIST)) {
-            ListTag list = nbt.getList("claims", Tag.TAG_COMPOUND);
+        if (nbt.contains("claims")) {
+            ListTag list = nbt.getListOrEmpty("claims");
             for (Tag t : list) {
                 data.claimList.add(RecruitsClaim.fromNBT((CompoundTag) t));
             }
@@ -31,8 +30,7 @@ public class RecruitsClaimSaveData extends SavedData {
         return data;
     }
 
-    @Override
-    public CompoundTag save(CompoundTag nbt) {
+        public CompoundTag save(CompoundTag nbt) {
         ListTag list = new ListTag();
         for (RecruitsClaim claim : this.claimList) {
             list.add(claim.toNBT());
@@ -48,6 +46,6 @@ public class RecruitsClaimSaveData extends SavedData {
     public void setAllClaims(List<RecruitsClaim> claims) {
         this.claimList = claims;
     }
+
+    public static final net.minecraft.world.level.saveddata.SavedDataType<RecruitsClaimSaveData> TYPE = com.talhanation.recruits.util.SavedDataUtil.type(FILE_ID, RecruitsClaimSaveData::new, RecruitsClaimSaveData::load, data -> data.save(new CompoundTag()));
 }
-
-

@@ -24,6 +24,7 @@
   "block.recruits.horseman_block": "Horseman's Table",
   "block.recruits.crossbowman_block": "Crossbowman's Table",
   "category.recruits": "Recruits",
+  "key.category.recruits.main": "Recruits",
   "key.recruits.command_screen_key": "Open Command Screen",
   "key.recruits.team_screen_key": "Open Faction Screen",
   "key.recruits.map_screen_key": "Open Claim-Map Screen",

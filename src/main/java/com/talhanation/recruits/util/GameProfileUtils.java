@@ -4,23 +4,23 @@ import net.minecraft.client.Minecraft;
 import net.minecraft.client.multiplayer.ClientPacketListener;
 import net.minecraft.client.multiplayer.PlayerInfo;
 import net.minecraft.client.resources.DefaultPlayerSkin;
-import net.minecraft.resources.ResourceLocation;
+import net.minecraft.resources.Identifier;
 
 import java.util.UUID;
 
 public class GameProfileUtils {
     private static final Minecraft mc = Minecraft.getInstance();
 
-    public static ResourceLocation getSkin(UUID uuid) {
+    public static Identifier getSkin(UUID uuid) {
         ClientPacketListener connection = mc.getConnection();
         if (connection == null) {
-            return DefaultPlayerSkin.getDefaultSkin(uuid);
+            return DefaultPlayerSkin.get(uuid).body().texturePath();
         }
         PlayerInfo playerInfo = connection.getPlayerInfo(uuid);
         if (playerInfo == null) {
-            return DefaultPlayerSkin.getDefaultSkin(uuid);
+            return DefaultPlayerSkin.get(uuid).body().texturePath();
         }
-        return playerInfo.getSkinLocation();
+        return playerInfo.getSkin().body().texturePath();
     }
 
 }

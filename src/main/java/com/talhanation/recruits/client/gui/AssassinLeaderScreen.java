@@ -1,19 +1,19 @@
 package com.talhanation.recruits.client.gui;
 
-import com.mojang.blaze3d.vertex.PoseStack;
+import net.minecraft.client.input.KeyEvent;
+
 import com.talhanation.recruits.Main;
 import com.talhanation.recruits.entities.AssassinLeaderEntity;
 import com.talhanation.recruits.inventory.AssassinLeaderMenu;
 import com.talhanation.recruits.network.MessageAssassinCount;
 import com.talhanation.recruits.network.MessageAssassinate;
-import de.maxhenkel.corelib.inventory.ScreenBase;
-import net.minecraft.client.gui.Gui;
+import com.talhanation.recruits.corelib.ScreenBase;
 import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.client.gui.components.Button;
 import net.minecraft.client.gui.components.EditBox;
 import net.minecraft.network.chat.Component;
 import net.minecraft.network.chat.MutableComponent;
-import net.minecraft.resources.ResourceLocation;
+import net.minecraft.resources.Identifier;
 import net.minecraft.world.entity.player.Inventory;
 import net.minecraftforge.api.distmarker.Dist;
 import net.minecraftforge.api.distmarker.OnlyIn;
@@ -24,7 +24,7 @@ import java.awt.*;
 
 @OnlyIn(Dist.CLIENT)
 public class AssassinLeaderScreen extends ScreenBase<AssassinLeaderMenu> {
-    private static final ResourceLocation RESOURCE_LOCATION = new ResourceLocation(Main.MOD_ID,"textures/gui/assassin_gui.png");
+    private static final Identifier RESOURCE_LOCATION = Identifier.fromNamespaceAndPath(Main.MOD_ID,"textures/gui/assassin_gui.png");
 
     private static final MutableComponent TEXT_HEALTH = Component.literal("gui.recruits.inv.health");
     private static final MutableComponent TEXT_LEVEL = Component.literal("gui.recruits.inv.level");
@@ -111,13 +111,16 @@ public class AssassinLeaderScreen extends ScreenBase<AssassinLeaderMenu> {
 
 
     @Override
-    public boolean keyPressed(int key, int a, int b) {
+    public boolean keyPressed(KeyEvent event) {
+        int key = event.key();
+        int a = event.scancode();
+        int b = event.modifiers();
         if (key == GLFW.GLFW_KEY_ESCAPE) {
             minecraft.player.closeContainer();
             return true;
         }
 
-        return textField.keyPressed(key, a, b) || textField.canConsumeInput() || super.keyPressed(key, a, b);
+        return textField.keyPressed(new KeyEvent(key, a, b)) || textField.canConsumeInput() || super.keyPressed(event);
     }
 
     @Override

@@ -1,6 +1,10 @@
 package com.talhanation.recruits.client.gui.faction;
 
-import com.mojang.blaze3d.systems.RenderSystem;
+import net.minecraft.client.input.MouseButtonEvent;
+import net.minecraft.client.input.KeyEvent;
+import net.minecraft.client.renderer.RenderPipelines;
+import net.minecraft.client.Minecraft;
+
 import com.talhanation.recruits.Main;
 import com.talhanation.recruits.FactionEvents;
 import com.talhanation.recruits.client.ClientManager;
@@ -16,17 +20,16 @@ import com.talhanation.recruits.network.MessageCreateTeam;
 import com.talhanation.recruits.network.MessageSaveTeamSettings;
 import com.talhanation.recruits.world.RecruitsPlayerInfo;
 import com.talhanation.recruits.world.RecruitsFactionManager;
-import de.maxhenkel.corelib.inventory.ScreenBase;
+import com.talhanation.recruits.corelib.ScreenBase;
 import net.minecraft.ChatFormatting;
 import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.client.gui.components.Button;
 import net.minecraft.client.gui.components.EditBox;
 import net.minecraft.client.gui.components.Tooltip;
 import net.minecraft.client.gui.screens.Screen;
-import net.minecraft.client.renderer.GameRenderer;
 import net.minecraft.network.chat.Component;
 import net.minecraft.network.chat.MutableComponent;
-import net.minecraft.resources.ResourceLocation;
+import net.minecraft.resources.Identifier;
 import net.minecraft.world.entity.player.Inventory;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.ItemStack;
@@ -43,7 +46,7 @@ import static com.talhanation.recruits.client.gui.faction.FactionInspectionScree
 import static com.talhanation.recruits.client.ClientManager.*;
 public class FactionEditScreen extends ScreenBase<TeamEditMenu> {
 
-    private static final ResourceLocation TEXTURE = new ResourceLocation(Main.MOD_ID, "textures/gui/team/team_create_gui.png");
+    private static final Identifier TEXTURE = Identifier.fromNamespaceAndPath(Main.MOD_ID, "textures/gui/team/team_create_gui.png");
     private static final Component EDIT = Component.translatable("gui.recruits.team.edit");
     private static final Component BACK = Component.translatable("gui.recruits.button.back");
     private static final Component SAVE = Component.translatable("gui.recruits.button.save");
@@ -229,7 +232,7 @@ public class FactionEditScreen extends ScreenBase<TeamEditMenu> {
     public void containerTick() {
         super.containerTick();
 
-        if(textFieldTeamName != null) textFieldTeamName.tick();
+        
 
         if(postInit) {
             this.postInit();
@@ -309,7 +312,7 @@ public class FactionEditScreen extends ScreenBase<TeamEditMenu> {
 
         addRenderableWidget(new ExtendedButton(guiLeft + widgetsX + 20, guiTop + imageHeight - widgetsY + (20 + gap ) * 4, 20, 20,Component.literal("-"),
             (button)-> {
-                if(hasShiftDown()){
+                if(Minecraft.getInstance().hasShiftDown()){
                     maxRecruitsPerPlayer -= 5;
                 }
                 else
@@ -322,7 +325,7 @@ public class FactionEditScreen extends ScreenBase<TeamEditMenu> {
 
         addRenderableWidget(new ExtendedButton(guiLeft + widgetsX + 90, guiTop + imageHeight - widgetsY + (20 + gap ) * 4, 20, 20,Component.literal("+"),
         (button)-> {
-            if(hasShiftDown()){
+            if(Minecraft.getInstance().hasShiftDown()){
                 maxRecruitsPerPlayer += 5;
             }
             else
@@ -362,7 +365,7 @@ public class FactionEditScreen extends ScreenBase<TeamEditMenu> {
                     ownFaction.setTeamDisplayName(textFieldTeamName.getValue());
                     ownFaction.setTeamColor(teamColor.getId());
                     if(banner != null && !banner.isEmpty()){
-                        ownFaction.setBanner(banner.serializeNBT());
+                        ownFaction.setBanner(com.talhanation.recruits.util.NbtCompat.saveItem(banner));
                     }
                     ownFaction.setUnitColor((byte) unitColors.indexOf(unitColor));
                     ownFaction.setMaxNPCsPerPlayer(maxRecruitsPerPlayer);
@@ -417,7 +420,7 @@ public class FactionEditScreen extends ScreenBase<TeamEditMenu> {
                 hasChanges = true;
             }
 
-            if(banner != null && !banner.isEmpty() && !ownFaction.getBanner().equals(banner.serializeNBT())){
+            if(banner != null && !banner.isEmpty() && !ownFaction.getBanner().equals(com.talhanation.recruits.util.NbtCompat.saveItem(banner))){
                 totalCost += factionCreationPrice;
                 hasChanges = true;
             }
@@ -448,11 +451,14 @@ public class FactionEditScreen extends ScreenBase<TeamEditMenu> {
 
 
     @Override
-    public boolean mouseClicked(double x, double y, int p_94697_) {
+    public boolean mouseClicked(MouseButtonEvent event, boolean doubleClick) {
+        double x = event.x();
+        double y = event.y();
+        int p_94697_ = event.button();
         if(teamColorDropdownMatrix != null) teamColorDropdownMatrix.onMouseClicked(x,y);
         if(unitColorDropdownMatrix != null) unitColorDropdownMatrix.onMouseClicked(x,y);
 
-        return super.mouseClicked(x, y, p_94697_);
+        return super.mouseClicked(event, doubleClick);
     }
 
     int x1 = 15;
@@ -466,10 +472,7 @@ public class FactionEditScreen extends ScreenBase<TeamEditMenu> {
 
     @Override
     protected void renderBg(GuiGraphics guiGraphics, float p_97788_, int p_97789_, int p_97790_) {
-        RenderSystem.setShader(GameRenderer::getPositionTexShader);
-        RenderSystem.setShaderColor(1F, 1F, 1F, 1F);
-        RenderSystem.setShaderTexture(0, TEXTURE);
-        guiGraphics.blit(TEXTURE, guiLeft, guiTop, 0, 0, imageWidth, imageHeight);
+        guiGraphics.blit(RenderPipelines.GUI_TEXTURED, TEXTURE, guiLeft, guiTop, (float) (0), (float) (0), imageWidth, imageHeight, 256, 256);
     }
 
     public void renderForeground(GuiGraphics guiGraphics, int mouseX, int mouseY, float delta) {
@@ -483,12 +486,9 @@ public class FactionEditScreen extends ScreenBase<TeamEditMenu> {
             currencyX = width / 2 + 63;
         }
 
-        guiGraphics.drawString(font, getTitle(), guiLeft + imageWidth / 2 - font.width(getTitle()) / 2, guiTop + 5, FONT_COLOR);
+        guiGraphics.drawString(font, getTitle(), guiLeft + imageWidth / 2 - font.width(getTitle()) / 2, guiTop + 5, com.talhanation.recruits.client.gui.util.GuiCompat.opaque(FONT_COLOR));
 
-        RenderSystem.setShader(GameRenderer::getPositionTexShader);
-        RenderSystem.setShaderColor(1F, 1F, 1F, 1F);
-        RenderSystem.setShaderTexture(0, LEADER_CROWN);
-        guiGraphics.blit(LEADER_CROWN, crownX, crownY, 0, 0, 16, 16, 16, 16);
+        guiGraphics.blit(RenderPipelines.GUI_TEXTURED, LEADER_CROWN, crownX, crownY, (float) (0), (float) (0), 16, 16, 16, 16);
 
         if(totalCost > 0 && currency != null){
             guiGraphics.renderFakeItem(currency, currencyX, currencyY);
@@ -536,7 +536,7 @@ public class FactionEditScreen extends ScreenBase<TeamEditMenu> {
         boolean nameLength = this.textFieldTeamName != null && this.textFieldTeamName.getValue().length() >= 3 && this.textFieldTeamName.getValue().length() <= 32;
         boolean sufficientEmeralds = player.isCreative() || getPlayerCurrencyAmount() >= factionCreationPrice;
         boolean bannerNotEmpty = this.banner != null && !this.banner.isEmpty() && !RecruitsFactionManager.isBannerBlank(this.banner);
-        boolean bannerNotInUse = this.banner != null && !RecruitsFactionManager.isBannerInUse(this.banner.serializeNBT(), factions);
+        boolean bannerNotInUse = this.banner != null && !RecruitsFactionManager.isBannerInUse(com.talhanation.recruits.util.NbtCompat.saveItem(this.banner), factions);
         boolean factionNameOK = !RecruitsFactionManager.isNameInUse(this.textFieldTeamName.getValue(), factions);
 
         return bannerNotInUse && bannerNotEmpty && factionNameOK && nameLength && leaderInfo != null && sufficientEmeralds;
@@ -553,12 +553,12 @@ public class FactionEditScreen extends ScreenBase<TeamEditMenu> {
             if(RecruitsFactionManager.isBannerBlank(banner)) {
                 bannerNotEmpty = false;
             }
-            else if (!ItemStack.isSameItemSameTags(banner, ItemStack.of(ownFaction.getBanner())) && RecruitsFactionManager.isBannerInUse(banner.serializeNBT(), factions)) {
+            else if (!ItemStack.isSameItemSameComponents(banner, com.talhanation.recruits.util.NbtCompat.loadItem(ownFaction.getBanner())) && RecruitsFactionManager.isBannerInUse(com.talhanation.recruits.util.NbtCompat.saveItem(banner), factions)) {
                 bannerNotEmpty = false;
             }
         }
 
-        boolean bannerNotInUse = this.banner != null && !RecruitsFactionManager.isBannerInUse(this.banner.serializeNBT(), factions);
+        boolean bannerNotInUse = this.banner != null && !RecruitsFactionManager.isBannerInUse(com.talhanation.recruits.util.NbtCompat.saveItem(this.banner), factions);
 
         return bannerNotInUse && bannerNotEmpty && nameLength && leaderInfo != null && sufficientEmeralds && hasChanges && displayNameOK;
     }
@@ -570,7 +570,7 @@ public class FactionEditScreen extends ScreenBase<TeamEditMenu> {
 
     private int getPlayerCurrencyAmount(){
         int count = 0;
-        for (ItemStack stack : player.getInventory().items) {
+        for (ItemStack stack : player.getInventory().getNonEquipmentItems()) {
             if (!stack.isEmpty() && stack.is(currency.getItem())) {
                 count += stack.getCount();
             }
@@ -581,7 +581,7 @@ public class FactionEditScreen extends ScreenBase<TeamEditMenu> {
     public void onBannerPlaced(){
         if(menu.getBanner() != null && bannerRenderer != null){
             if(menu.getBanner().isEmpty()){
-                if(ownFaction != null) bannerRenderer.setBannerItem(ItemStack.of(ownFaction.getBanner()));
+                if(ownFaction != null) bannerRenderer.setBannerItem(com.talhanation.recruits.util.NbtCompat.loadItem(ownFaction.getBanner()));
                 this.banner = null;
             }
             else{
@@ -614,18 +614,21 @@ public class FactionEditScreen extends ScreenBase<TeamEditMenu> {
     }
 
     @Override
-    public boolean keyPressed(int key, int a, int b) {
+    public boolean keyPressed(KeyEvent event) {
+        int key = event.key();
+        int a = event.scancode();
+        int b = event.modifiers();
         if (key == GLFW.GLFW_KEY_ESCAPE) {
             this.onClose();
             return true;
         }
         if(this.textFieldTeamName == null){
-            return super.keyPressed(key, a, b);
+            return super.keyPressed(event);
         }
 
         setFocused(textFieldTeamName);
 
-        return textFieldTeamName.keyPressed(key, a, b) || textFieldTeamName.canConsumeInput() || super.keyPressed(key, a, b);
+        return textFieldTeamName.keyPressed(new KeyEvent(key, a, b)) || textFieldTeamName.canConsumeInput() || super.keyPressed(event);
     }
 
     public void removed() {
@@ -652,7 +655,7 @@ public class FactionEditScreen extends ScreenBase<TeamEditMenu> {
         if (banner == null || banner.isEmpty() || RecruitsFactionManager.isBannerBlank(banner)) {
             errors.add(FactionCreationError.BANNER_EMPTY);
         }
-        else if (RecruitsFactionManager.isBannerInUse(banner.serializeNBT(), factions)) {
+        else if (RecruitsFactionManager.isBannerInUse(com.talhanation.recruits.util.NbtCompat.saveItem(banner), factions)) {
             errors.add(FactionCreationError.BANNER_IN_USE);
         }
 
@@ -687,7 +690,7 @@ public class FactionEditScreen extends ScreenBase<TeamEditMenu> {
             if(RecruitsFactionManager.isBannerBlank(banner)) {
                 errors.add(FactionCreationError.BANNER_EMPTY);
             }
-            else if (!ItemStack.isSameItemSameTags(banner, ItemStack.of(ownFaction.getBanner())) && RecruitsFactionManager.isBannerInUse(banner.serializeNBT(), factions)) {
+            else if (!ItemStack.isSameItemSameComponents(banner, com.talhanation.recruits.util.NbtCompat.loadItem(ownFaction.getBanner())) && RecruitsFactionManager.isBannerInUse(com.talhanation.recruits.util.NbtCompat.saveItem(banner), factions)) {
                 errors.add(FactionCreationError.BANNER_IN_USE);
             }
         }

@@ -29,11 +29,11 @@ import net.minecraft.world.InteractionResult;
 import net.minecraft.world.damagesource.DamageSource;
 import net.minecraft.world.entity.EntityType;
 import net.minecraft.world.entity.Mob;
-import net.minecraft.world.entity.MobSpawnType;
+import net.minecraft.world.entity.EntitySpawnReason;
 import net.minecraft.world.entity.SpawnGroupData;
 import net.minecraft.world.entity.ai.attributes.AttributeSupplier;
 import net.minecraft.world.entity.ai.attributes.Attributes;
-import net.minecraft.world.entity.animal.horse.AbstractHorse;
+import net.minecraft.world.entity.animal.equine.AbstractHorse;
 import net.minecraft.world.entity.item.ItemEntity;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.*;
@@ -56,7 +56,7 @@ public class MessengerEntity extends AbstractChunkLoaderEntity implements ICompa
     private static final EntityDataAccessor<String> OWNER_NAME = SynchedEntityData.defineId(MessengerEntity.class, EntityDataSerializers.STRING);
     private static final EntityDataAccessor<Integer> MESSENGER_STATE = SynchedEntityData.defineId(MessengerEntity.class, EntityDataSerializers.INT);
     private static final EntityDataAccessor<Integer> WAITING_TIME = SynchedEntityData.defineId(MessengerEntity.class, EntityDataSerializers.INT);
-    private static final EntityDataAccessor<CompoundTag> TARGETPLAYER = SynchedEntityData.defineId(MessengerEntity.class, EntityDataSerializers.COMPOUND_TAG);
+    private static final EntityDataAccessor<CompoundTag> TARGETPLAYER = SynchedEntityData.defineId(MessengerEntity.class, com.talhanation.recruits.init.ModDataSerializers.COMPOUND_TAG);
     private static final EntityDataAccessor<String> MESSAGE = SynchedEntityData.defineId(MessengerEntity.class, EntityDataSerializers.STRING);
     private static final EntityDataAccessor<Integer> TREATY_DURATION_HOURS = SynchedEntityData.defineId(MessengerEntity.class, EntityDataSerializers.INT);
     private static final EntityDataAccessor<Boolean> IS_TREATY_MESSENGER = SynchedEntityData.defineId(MessengerEntity.class, EntityDataSerializers.BOOLEAN);
@@ -75,15 +75,15 @@ public class MessengerEntity extends AbstractChunkLoaderEntity implements ICompa
         super(entityType, world);
     }
 
-    protected void defineSynchedData() {
-        super.defineSynchedData();
-        this.entityData.define(OWNER_NAME, "");
-        this.entityData.define(MESSENGER_STATE, 0);
-        this.entityData.define(WAITING_TIME, 0);
-        this.entityData.define(TARGETPLAYER, new CompoundTag());
-        this.entityData.define(MESSAGE, "");
-        this.entityData.define(TREATY_DURATION_HOURS, 0);
-        this.entityData.define(IS_TREATY_MESSENGER, false);
+    protected void defineSynchedData(SynchedEntityData.Builder builder) {
+        super.defineSynchedData(builder);
+        builder.define(OWNER_NAME, "");
+        builder.define(MESSENGER_STATE, 0);
+        builder.define(WAITING_TIME, 0);
+        builder.define(TARGETPLAYER, new CompoundTag());
+        builder.define(MESSAGE, "");
+        builder.define(TREATY_DURATION_HOURS, 0);
+        builder.define(IS_TREATY_MESSENGER, false);
     }
 
     @Override
@@ -92,8 +92,8 @@ public class MessengerEntity extends AbstractChunkLoaderEntity implements ICompa
         this.goalSelector.addGoal(2, new UseShield(this));
     }
 
-    public void addAdditionalSaveData(CompoundTag nbt) {
-        super.addAdditionalSaveData(nbt);
+    public void saveRecruitData(CompoundTag nbt) {
+        super.saveRecruitData(nbt);
         nbt.putString("Message", this.getMessage());
         nbt.putInt("TreatyDurationHours", this.getTreatyDurationHours());
         nbt.putBoolean("IsTreatyMessenger", this.isTreatyMessenger());
@@ -116,31 +116,31 @@ public class MessengerEntity extends AbstractChunkLoaderEntity implements ICompa
         }
     }
 
-    public void readAdditionalSaveData(CompoundTag nbt) {
-        super.readAdditionalSaveData(nbt);
+    public void loadRecruitData(CompoundTag nbt) {
+        super.loadRecruitData(nbt);
 
         if(nbt.contains("TargetPlayerInfo")){
-            this.setTargetPlayerInfo(RecruitsPlayerInfo.getFromNBT(nbt.getCompound("TargetPlayerInfo")));
+            this.setTargetPlayerInfo(RecruitsPlayerInfo.getFromNBT(nbt.getCompoundOrEmpty("TargetPlayerInfo")));
         }
 
-        this.setMessage(nbt.getString("Message"));
-        this.setTreatyDurationHours(nbt.getInt("TreatyDurationHours"));
-        this.setIsTreatyMessenger(nbt.getBoolean("IsTreatyMessenger"));
-        this.setOwnerName(nbt.getString("OwnerName"));
-        this.setWaitingTime(nbt.getInt("waitingTime"));
-        this.teleportWaitTimer = nbt.getInt("waitTimer");
-        this.arrivedWaitTimer = nbt.getInt("arrivedWaitTimer");
-        this.treatyNotAccepted = nbt.getBoolean("treatyNotAccepted");
-        this.targetPlayerOpened = nbt.getBoolean("targetPlayerOpened");
+        this.setMessage(nbt.getStringOr("Message", ""));
+        this.setTreatyDurationHours(nbt.getIntOr("TreatyDurationHours", 0));
+        this.setIsTreatyMessenger(nbt.getBooleanOr("IsTreatyMessenger", false));
+        this.setOwnerName(nbt.getStringOr("OwnerName", ""));
+        this.setWaitingTime(nbt.getIntOr("waitingTime", 0));
+        this.teleportWaitTimer = nbt.getIntOr("waitTimer", 0);
+        this.arrivedWaitTimer = nbt.getIntOr("arrivedWaitTimer", 0);
+        this.treatyNotAccepted = nbt.getBooleanOr("treatyNotAccepted", false);
+        this.targetPlayerOpened = nbt.getBooleanOr("targetPlayerOpened", false);
         if(nbt.contains("state")){
-            this.setMessengerState(MessengerState.fromIndex(nbt.getInt("state")));
+            this.setMessengerState(MessengerState.fromIndex(nbt.getIntOr("state", 0)));
         }
 
         if (nbt.contains("initialPosX")) {
             this.initialPos = new BlockPos(
-                    nbt.getInt("initialPosX"),
-                    nbt.getInt("initialPosY"),
-                    nbt.getInt("initialPosZ"));
+                    nbt.getIntOr("initialPosX", 0),
+                    nbt.getIntOr("initialPosY", 0),
+                    nbt.getIntOr("initialPosZ", 0));
         }
     }
 
@@ -149,18 +149,18 @@ public class MessengerEntity extends AbstractChunkLoaderEntity implements ICompa
         return Mob.createMobAttributes()
                 .add(Attributes.MAX_HEALTH, 20.0D)
                 .add(Attributes.MOVEMENT_SPEED, 0.3D)
-                .add(ForgeMod.SWIM_SPEED.get(), 0.3D)
+                .add(ForgeMod.SWIM_SPEED.getHolder().get(), 0.3D)
                 .add(Attributes.KNOCKBACK_RESISTANCE, 0.1D)
                 .add(Attributes.ATTACK_DAMAGE, 0.5D)
                 .add(Attributes.FOLLOW_RANGE, 32.0D)
-                .add(ForgeMod.ENTITY_REACH.get(), 0D)
+                .add(Attributes.ENTITY_INTERACTION_RANGE, 0D)
                 .add(Attributes.ATTACK_SPEED);
     }
 
 
     @Nullable
-    public SpawnGroupData finalizeSpawn(ServerLevelAccessor world, DifficultyInstance difficultyInstance, MobSpawnType reason, @Nullable SpawnGroupData data, @Nullable CompoundTag nbt) {
-        SpawnGroupData ilivingentitydata = super.finalizeSpawn(world, difficultyInstance, reason, data, nbt);
+    public SpawnGroupData finalizeSpawn(ServerLevelAccessor world, DifficultyInstance difficultyInstance, EntitySpawnReason reason, @Nullable SpawnGroupData data) {
+        SpawnGroupData ilivingentitydata = super.finalizeSpawn(world, difficultyInstance, reason, data);
         ((AsyncGroundPathNavigation)this.getNavigation()).setCanOpenDoors(true);
 
         this.initSpawn();
@@ -180,7 +180,7 @@ public class MessengerEntity extends AbstractChunkLoaderEntity implements ICompa
 
     @Override
     public boolean wantsToPickUp(ItemStack itemStack) {
-        if((itemStack.getItem() instanceof SwordItem && this.getMatchingItem(item -> item.getItem() instanceof SwordItem) == null) ||
+        if((com.talhanation.recruits.util.ItemCompat.isSword(itemStack) && this.getMatchingItem(item -> com.talhanation.recruits.util.ItemCompat.isSword(item)) == null) ||
                 (itemStack.getItem() instanceof BowItem && this.getMatchingItem(item -> item.getItem() instanceof BowItem) == null) ||
                 (itemStack.getItem() instanceof ShieldItem) && this.getMatchingItem(item -> item.getItem() instanceof ShieldItem) == null)
             return true;
@@ -203,8 +203,8 @@ public class MessengerEntity extends AbstractChunkLoaderEntity implements ICompa
     }
     @Nullable
     public ServerPlayer getTargetPlayer(){
-        if(this.getTargetPlayerInfo() != null && !this.getCommandSenderWorld().isClientSide()){
-            ServerLevel serverLevel = (ServerLevel) this.getCommandSenderWorld();
+        if(this.getTargetPlayerInfo() != null && !this.level().isClientSide()){
+            ServerLevel serverLevel = (ServerLevel) this.level();
             return serverLevel.getServer().getPlayerList().getPlayer(this.getTargetPlayerInfo().getUUID());
         }
         return null;
@@ -222,9 +222,9 @@ public class MessengerEntity extends AbstractChunkLoaderEntity implements ICompa
                 RecruitsFaction faction = FactionEvents.recruitsFactionManager.getFactionByStringID(team);
                 RecruitsPlayerInfo ownerPlayerInfo = new RecruitsPlayerInfo(this.getOwnerUUID(), this.getOwnerName(), faction);
 
-                Main.SIMPLE_CHANNEL.send(PacketDistributor.PLAYER.with(() -> serverPlayer), new MessageToClientOpenTreatyAnswerScreen(MessengerEntity.this, this.getTreatyDurationHours(), ownerPlayerInfo));
+                Main.SIMPLE_CHANNEL.send(PacketDistributor.PLAYER.with(serverPlayer), new MessageToClientOpenTreatyAnswerScreen(MessengerEntity.this, this.getTreatyDurationHours(), ownerPlayerInfo));
             } else {
-                Main.SIMPLE_CHANNEL.send(PacketDistributor.PLAYER.with(() -> serverPlayer), new MessageToClientOpenMessengerAnswerScreen(MessengerEntity.this, this.getMessage(), this.getTargetPlayerInfo()));
+                Main.SIMPLE_CHANNEL.send(PacketDistributor.PLAYER.with(serverPlayer), new MessageToClientOpenMessengerAnswerScreen(MessengerEntity.this, this.getMessage(), this.getTargetPlayerInfo()));
             }
             this.targetPlayerOpened = true;
         }
@@ -307,19 +307,19 @@ public class MessengerEntity extends AbstractChunkLoaderEntity implements ICompa
     }
 
     public void start(){
-        if(!this.getCommandSenderWorld().isClientSide()){
+        if(!this.level().isClientSide()){
             this.initialPos = this.getOnPos();
-            ServerLevel serverLevel = (ServerLevel) getCommandSenderWorld();
+            ServerLevel serverLevel = (ServerLevel) level();
 
             MinecraftServer server = serverLevel.getServer();
             ServerPlayer targetPlayer = server.getPlayerList().getPlayer(this.getTargetPlayerInfo().getUUID());
             if(this.getOwner() != null){
                 if(targetPlayer == null || targetPlayer.equals(this.getOwner())){
-                    this.getOwner().sendSystemMessage(PLAYER_NOT_FOUND());
+                    this.getOwner().displayClientMessage(PLAYER_NOT_FOUND(), false);
                     return;
                 }
                 else
-                    this.getOwner().sendSystemMessage(MESSENGER_INFO_ON_MY_WAY());
+                    this.getOwner().displayClientMessage(MESSENGER_INFO_ON_MY_WAY(), false);
             }
 
             this.setListen(false);
@@ -331,7 +331,7 @@ public class MessengerEntity extends AbstractChunkLoaderEntity implements ICompa
     @Override
     public void tick() {
         super.tick();
-        if(this.getCommandSenderWorld().isClientSide()) return;
+        if(this.level().isClientSide()) return;
 
         MessengerState state = getMessengerState();
         if(state != null){
@@ -360,14 +360,14 @@ public class MessengerEntity extends AbstractChunkLoaderEntity implements ICompa
 
                         double distance = this.distanceToSqr(targetPlayer);
                         if(distance <= 60){
-                            if(this.getOwner() != null) this.getOwner().sendSystemMessage(MESSENGER_ARRIVED_AT_TARGET_OWNER());
+                            if(this.getOwner() != null) this.getOwner().displayClientMessage(MESSENGER_ARRIVED_AT_TARGET_OWNER(), false);
 
                             if(this.isTreatyMessenger()){
-                                targetPlayer.sendSystemMessage(MESSENGER_INFO_AT_TARGET_TREATY());
+                                targetPlayer.displayClientMessage(MESSENGER_INFO_AT_TARGET_TREATY(), false);
                             }
                             else{
-                                if(!this.getMainHandItem().isEmpty()) targetPlayer.sendSystemMessage(MESSENGER_INFO_AT_TARGET_WITH_ITEM());
-                                else targetPlayer.sendSystemMessage(MESSENGER_INFO_AT_TARGET());
+                                if(!this.getMainHandItem().isEmpty()) targetPlayer.displayClientMessage(MESSENGER_INFO_AT_TARGET_WITH_ITEM(), false);
+                                else targetPlayer.displayClientMessage(MESSENGER_INFO_AT_TARGET(), false);
                             }
 
                             this.setFollowState(2);
@@ -377,7 +377,7 @@ public class MessengerEntity extends AbstractChunkLoaderEntity implements ICompa
                         }
                     }
                     else {
-                        if(this.getOwner() != null) this.getOwner().sendSystemMessage(MESSENGER_ARRIVED_NO_TARGET_PLAYER());
+                        if(this.getOwner() != null) this.getOwner().displayClientMessage(MESSENGER_ARRIVED_NO_TARGET_PLAYER(), false);
                         teleportWaitTimer = 100;
                         this.setMessengerState(MessengerState.TELEPORT_BACK);
                     }
@@ -385,7 +385,7 @@ public class MessengerEntity extends AbstractChunkLoaderEntity implements ICompa
 
                 case ARRIVED -> {
                     if(--arrivedWaitTimer < 0){
-                        if(this.getOwner() != null) this.getOwner().sendSystemMessage(MESSENGER_ARRIVED_NO_TARGET_PLAYER());
+                        if(this.getOwner() != null) this.getOwner().displayClientMessage(MESSENGER_ARRIVED_NO_TARGET_PLAYER(), false);
                         teleportWaitTimer = 0;
                         this.setMessengerState(MessengerState.TELEPORT_BACK);
                     }
@@ -409,8 +409,8 @@ public class MessengerEntity extends AbstractChunkLoaderEntity implements ICompa
                     }
                     else{
                         if(this.getOwner() != null) {
-                            if(this.targetPlayerOpened) this.getOwner().sendSystemMessage(MESSENGER_ARRIVED_TARGET_PLAYER_NOT_ANSWERED());
-                            else this.getOwner().sendSystemMessage(MESSENGER_ARRIVED_NO_TARGET_PLAYER());
+                            if(this.targetPlayerOpened) this.getOwner().displayClientMessage(MESSENGER_ARRIVED_TARGET_PLAYER_NOT_ANSWERED(), false);
+                            else this.getOwner().displayClientMessage(MESSENGER_ARRIVED_NO_TARGET_PLAYER(), false);
                         }
                         teleportWaitTimer = 100;
                         this.setMessengerState(MessengerState.TELEPORT_BACK);
@@ -439,7 +439,7 @@ public class MessengerEntity extends AbstractChunkLoaderEntity implements ICompa
 
                     if(isTreatyMessenger() && treatyNotAccepted){
                         treatyNotAccepted = false;
-                        this.getOwner().sendSystemMessage(MESSENGER_ARRIVED_TARGET_PLAYER_NOT_ACCEPTED());
+                        this.getOwner().displayClientMessage(MESSENGER_ARRIVED_TARGET_PLAYER_NOT_ACCEPTED(), false);
                     }
                 }
             }
@@ -454,9 +454,9 @@ public class MessengerEntity extends AbstractChunkLoaderEntity implements ICompa
                 player.getInventory().add(deliverItem.copy());
             }
             else{
-                ItemEntity itementity = new ItemEntity(this.getCommandSenderWorld(), this.getX() + this.getLookAngle().x, this.getY() + 2.0D, this.getZ() + this.getLookAngle().z, deliverItem);
+                ItemEntity itementity = new ItemEntity(this.level(), this.getX() + this.getLookAngle().x, this.getY() + 2.0D, this.getZ() + this.getLookAngle().z, deliverItem);
                 this.getInventory().setChanged();
-                this.getCommandSenderWorld().addFreshEntity(itementity);
+                this.level().addFreshEntity(itementity);
             }
 
             this.setItemInHand(InteractionHand.MAIN_HAND, ItemStack.EMPTY);
@@ -464,10 +464,10 @@ public class MessengerEntity extends AbstractChunkLoaderEntity implements ICompa
         }
     }
     private void teleportNearOwner() {
-        if(!this.getCommandSenderWorld().isClientSide()){
+        if(!this.level().isClientSide()){
             if(getOwner() != null ){
                 BlockPos targetPos = getOwner().getOnPos();
-                BlockPos tpPos = RecruitsPatrolSpawn.func_221244_a(targetPos, 10, new Random(), (ServerLevel) this.getCommandSenderWorld());
+                BlockPos tpPos = RecruitsPatrolSpawn.func_221244_a(targetPos, 10, new Random(), (ServerLevel) this.level());
                 if(tpPos == null) tpPos = targetPos;
 
                 if(this.getVehicle() instanceof AbstractHorse horse) horse.teleportTo(tpPos.getX(), tpPos.getY(), tpPos.getZ());
@@ -476,7 +476,7 @@ public class MessengerEntity extends AbstractChunkLoaderEntity implements ICompa
                 this.setFollowState(1);
             }
             else {
-                BlockPos tpPos = RecruitsPatrolSpawn.func_221244_a(initialPos, 10, new Random(), (ServerLevel) this.getCommandSenderWorld());
+                BlockPos tpPos = RecruitsPatrolSpawn.func_221244_a(initialPos, 10, new Random(), (ServerLevel) this.level());
 
                 if(tpPos == null) tpPos = initialPos;
 
@@ -489,10 +489,10 @@ public class MessengerEntity extends AbstractChunkLoaderEntity implements ICompa
         }
     }
     private void teleportNearTargetPlayer(Player player) {
-        if (!this.getCommandSenderWorld().isClientSide()){
+        if (!this.level().isClientSide()){
             if (player != null) {
                 BlockPos targetPos = player.getOnPos();
-                BlockPos tpPos = RecruitsPatrolSpawn.func_221244_a(targetPos, 20, new Random(), (ServerLevel) this.getCommandSenderWorld());
+                BlockPos tpPos = RecruitsPatrolSpawn.func_221244_a(targetPos, 20, new Random(), (ServerLevel) this.level());
 
                 if (tpPos == null) tpPos = targetPos;
 
@@ -504,7 +504,7 @@ public class MessengerEntity extends AbstractChunkLoaderEntity implements ICompa
     }
 
     public void playHornSound() {
-        this.playSound(SoundEvents.GOAT_HORN_SOUND_VARIANTS.get(1).get(), 20F, 0.8F + 0.4F * this.getCommandSenderWorld().random.nextFloat());
+        this.playSound(SoundEvents.GOAT_HORN_SOUND_VARIANTS.get(1).get(), 20F, 0.8F + 0.4F * this.level().random.nextFloat());
     }
 
     public void arriveAtTargetPlayer(ServerPlayer target){
@@ -522,7 +522,7 @@ public class MessengerEntity extends AbstractChunkLoaderEntity implements ICompa
             if(ownerTeam != null) target.sendSystemMessage(MESSENGER_ARRIVED_TEAM(this.getOwnerName(), ownerTeam.getDisplayName().getString()));
         }
 
-        Main.SIMPLE_CHANNEL.send(PacketDistributor.PLAYER.with(()-> target), new MessageToClientSetToast(1, this.getOwnerName()));
+        Main.SIMPLE_CHANNEL.send(PacketDistributor.PLAYER.with(target), new MessageToClientSetToast(1, this.getOwnerName()));
     }
 
     private MutableComponent PLAYER_NOT_FOUND(){
@@ -608,10 +608,10 @@ public class MessengerEntity extends AbstractChunkLoaderEntity implements ICompa
     }
 
     @Override
-    public boolean hurt(@NotNull DamageSource dmg, float amt) {
+    public boolean hurtServer(net.minecraft.server.level.ServerLevel serverLevel, @NotNull DamageSource dmg, float amt) {
         MessengerState state = getMessengerState();
         if(state == null || state == MessengerState.IDLE){
-            return super.hurt(dmg, amt);
+            return super.hurtServer(serverLevel, dmg, amt);
         }
         else return false;
     }

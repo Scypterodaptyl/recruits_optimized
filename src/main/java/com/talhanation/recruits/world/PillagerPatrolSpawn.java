@@ -10,16 +10,14 @@ import net.minecraft.network.chat.Component;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.sounds.SoundEvents;
 import net.minecraft.sounds.SoundSource;
-import net.minecraft.world.entity.SpawnPlacements.Type;
 import net.minecraft.world.entity.EntityType;
-import net.minecraft.world.entity.MobSpawnType;
-import net.minecraft.world.entity.monster.Pillager;
-import net.minecraft.world.entity.monster.Vindicator;
+import net.minecraft.world.entity.EntitySpawnReason;
+import net.minecraft.world.entity.monster.illager.Pillager;
+import net.minecraft.world.entity.monster.illager.Vindicator;
 import net.minecraft.world.entity.monster.Witch;
 import net.minecraft.world.entity.player.Player;
-import net.minecraft.world.level.GameRules;
+import net.minecraft.world.level.gamerules.GameRules;
 import net.minecraft.world.level.levelgen.Heightmap.Types;
-import net.minecraft.world.level.NaturalSpawner;
 
 import javax.annotation.Nullable;
 import java.util.Iterator;
@@ -42,7 +40,7 @@ public class PillagerPatrolSpawn {
         if(timer > 0) --this.timer;
 
         if(this.timer <= 0){
-            if (this.world.getGameRules().getBoolean(GameRules.RULE_DO_PATROL_SPAWNING)) {
+            if (this.world.getGameRules().get(GameRules.SPAWN_PATROLS)) {
                 double rnd = random.nextInt(100);
 
                 if (rnd <= this.chance && this.attemptSpawnPatrol()){}//To avoid multiple method call
@@ -57,7 +55,7 @@ public class PillagerPatrolSpawn {
             return true;
         }
         else{
-            if(!player.getCommandSenderWorld().dimensionType().hasRaids()){
+            if(!((net.minecraft.server.level.ServerLevel) player.level()).environmentAttributes().getValue(net.minecraft.world.attribute.EnvironmentAttributes.CAN_START_RAID, player.blockPosition())){
                 player = this.world.getRandomPlayer();
             }
             BlockPos blockpos = player.getOnPos();
@@ -75,7 +73,7 @@ public class PillagerPatrolSpawn {
                 this.world.playSound(null, upPos.above(2), SoundEvents.RAID_HORN.get(), SoundSource.BLOCKS, 15F, 2F);
 
                 Main.LOGGER.info("New Pillager Patrol Spawned at "+ upPos);
-                player.sendSystemMessage(Component.literal("A Pillager Patrol Spawned next to you!").withStyle(ChatFormatting.GRAY));
+                player.displayClientMessage(Component.literal("A Pillager Patrol Spawned next to you!").withStyle(ChatFormatting.GRAY), false);
                 return true;
             }
         }
@@ -114,9 +112,9 @@ public class PillagerPatrolSpawn {
     }
 
     public static Pillager createPillager(BlockPos upPos, BlockPos targetPos, ServerLevel world){
-        Pillager pillager = EntityType.PILLAGER.create(world);
-        pillager.moveTo(upPos.getX() + 0.5D, upPos.getY() + 0.5D, upPos.getZ() + 0.5D, random.nextFloat() * 360 - 180F, 0);
-        pillager.finalizeSpawn(world, world.getCurrentDifficultyAt(upPos), MobSpawnType.PATROL, null, null);
+        Pillager pillager = EntityType.PILLAGER.create(world, net.minecraft.world.entity.EntitySpawnReason.PATROL);
+        pillager.snapTo(upPos.getX() + 0.5D, upPos.getY() + 0.5D, upPos.getZ() + 0.5D, random.nextFloat() * 360 - 180F, 0);
+        pillager.finalizeSpawn(world, world.getCurrentDifficultyAt(upPos), EntitySpawnReason.PATROL, null);
         pillager.setPersistenceRequired();
         pillager.setPatrolTarget(targetPos);
 
@@ -125,9 +123,9 @@ public class PillagerPatrolSpawn {
     }
 
     public static Witch createWitch(BlockPos upPos, BlockPos targetPos, ServerLevel world) {
-        Witch pillager = EntityType.WITCH.create(world);
-        pillager.moveTo(upPos.getX() + 0.5D, upPos.getY() + 0.5D, upPos.getZ() + 0.5D, random.nextFloat() * 360 - 180F, 0);
-        pillager.finalizeSpawn(world, world.getCurrentDifficultyAt(upPos), MobSpawnType.PATROL, null, null);
+        Witch pillager = EntityType.WITCH.create(world, net.minecraft.world.entity.EntitySpawnReason.PATROL);
+        pillager.snapTo(upPos.getX() + 0.5D, upPos.getY() + 0.5D, upPos.getZ() + 0.5D, random.nextFloat() * 360 - 180F, 0);
+        pillager.finalizeSpawn(world, world.getCurrentDifficultyAt(upPos), EntitySpawnReason.PATROL, null);
         pillager.setPersistenceRequired();
         pillager.setPatrolTarget(targetPos);
         world.addFreshEntity(pillager);
@@ -135,9 +133,9 @@ public class PillagerPatrolSpawn {
     }
 
     public static Vindicator createVindicator(BlockPos upPos, BlockPos targetPos, ServerLevel world){
-        Vindicator pillager = EntityType.VINDICATOR.create(world);
-        pillager.moveTo(upPos.getX() + 0.5D, upPos.getY() + 0.5D, upPos.getZ() + 0.5D, random.nextFloat() * 360 - 180F, 0);
-        pillager.finalizeSpawn(world, world.getCurrentDifficultyAt(upPos), MobSpawnType.PATROL, null, null);
+        Vindicator pillager = EntityType.VINDICATOR.create(world, net.minecraft.world.entity.EntitySpawnReason.PATROL);
+        pillager.snapTo(upPos.getX() + 0.5D, upPos.getY() + 0.5D, upPos.getZ() + 0.5D, random.nextFloat() * 360 - 180F, 0);
+        pillager.finalizeSpawn(world, world.getCurrentDifficultyAt(upPos), EntitySpawnReason.PATROL, null);
         pillager.setPersistenceRequired();
         pillager.setPatrolTarget(targetPos);
         world.addFreshEntity(pillager);
@@ -225,7 +223,7 @@ public class PillagerPatrolSpawn {
             int k = p_221244_1_.getZ() + random.nextInt(p_221244_2_ * 2) - p_221244_2_;
             int l = this.world.getHeight(Types.WORLD_SURFACE, j, k);
             BlockPos blockpos1 = new BlockPos(j, l, k);
-            if (!this.world.getLevel().isCloseToVillage(blockpos1, 2) && NaturalSpawner.isSpawnPositionOk(Type.ON_GROUND, this.world, blockpos1, EntityType.WANDERING_TRADER)) {
+            if (!this.world.getLevel().isCloseToVillage(blockpos1, 2) && net.minecraft.world.entity.SpawnPlacementTypes.ON_GROUND.isSpawnPositionOk(this.world, blockpos1, EntityType.WANDERING_TRADER)) {
                 blockpos = blockpos1;
                 break;
             }

@@ -1,10 +1,9 @@
 package com.talhanation.recruits.inventory;
 
-import com.mojang.datafixers.util.Pair;
 import com.talhanation.recruits.entities.AbstractRecruitEntity;
 import com.talhanation.recruits.init.ModScreens;
-import de.maxhenkel.corelib.inventory.ContainerBase;
-import net.minecraft.resources.ResourceLocation;
+import com.talhanation.recruits.corelib.ContainerBase;
+import net.minecraft.resources.Identifier;
 import net.minecraft.world.Container;
 import net.minecraft.world.entity.EquipmentSlot;
 import net.minecraft.world.entity.player.Inventory;
@@ -28,7 +27,7 @@ public class RecruitInventoryMenu extends ContainerBase {
 
     private final Container recruitInventory;
     private final AbstractRecruitEntity recruit;
-    private static final ResourceLocation[] TEXTURE_EMPTY_SLOTS = new ResourceLocation[]{
+    private static final Identifier[] TEXTURE_EMPTY_SLOTS = new Identifier[]{
             InventoryMenu.EMPTY_ARMOR_SLOT_BOOTS,
             InventoryMenu.EMPTY_ARMOR_SLOT_LEGGINGS,
             InventoryMenu.EMPTY_ARMOR_SLOT_CHESTPLATE,
@@ -99,8 +98,8 @@ public class RecruitInventoryMenu extends ContainerBase {
             }
 
             @Override
-            public Pair<ResourceLocation, ResourceLocation> getNoItemIcon () {
-                return Pair.of(InventoryMenu.BLOCK_ATLAS, InventoryMenu.EMPTY_ARMOR_SLOT_SHIELD);
+            public Identifier getNoItemIcon () {
+                return InventoryMenu.EMPTY_ARMOR_SLOT_SHIELD;
             }
         });
 
@@ -150,9 +149,9 @@ public class RecruitInventoryMenu extends ContainerBase {
                     recruit.onInventoryChanged();
                 }
 
-                @OnlyIn(Dist.CLIENT)
-                public Pair<ResourceLocation, ResourceLocation> getNoItemIcon() {
-                    return Pair.of(InventoryMenu.BLOCK_ATLAS, TEXTURE_EMPTY_SLOTS[equipmentslottype.getIndex()]);
+                @Override
+                public Identifier getNoItemIcon() {
+                    return TEXTURE_EMPTY_SLOTS[equipmentslottype.getIndex()];
                 }
             });
         }

@@ -1,7 +1,6 @@
 package com.talhanation.recruits.client.events;
 
 import com.talhanation.recruits.client.gui.commandscreen.ICommandCategory;
-import net.minecraft.util.Mth;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.*;

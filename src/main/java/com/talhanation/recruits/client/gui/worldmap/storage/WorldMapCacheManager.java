@@ -1185,7 +1185,7 @@ public class WorldMapCacheManager {
     // -------------------------------------------------------------------------
 
     private boolean isCurrentClientLevel(Level level) {
-        return level != null && level.isClientSide && level == mc.level;
+        return level != null && level.isClientSide() && level == mc.level;
     }
 
     private boolean isChunkLoaded(int chunkX, int chunkZ) {

@@ -3,7 +3,7 @@ package com.talhanation.recruits.world;
 import com.talhanation.recruits.config.RecruitsServerConfig;
 import com.talhanation.recruits.init.ModEntityTypes;
 import net.minecraft.network.chat.Component;
-import net.minecraft.resources.ResourceLocation;
+import net.minecraft.resources.Identifier;
 
 import javax.annotation.Nullable;
 import java.util.*;
@@ -90,7 +90,7 @@ public class RecruitsHireTradesRegistry {
     }
 
     @Nullable
-    public static RecruitsHireTrade getByResourceLocation(ResourceLocation resourceLocation) {
+    public static RecruitsHireTrade getByResourceLocation(Identifier resourceLocation) {
         for (Map<Integer, List<RecruitsHireTrade>> levelMap : TRADES.values()) {
             for (List<RecruitsHireTrade> tradeList : levelMap.values()) {
                 for (RecruitsHireTrade trade : tradeList) {

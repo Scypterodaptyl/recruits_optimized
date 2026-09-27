@@ -23,10 +23,9 @@ import net.minecraft.world.entity.*;
 import net.minecraft.world.entity.ai.attributes.AttributeSupplier;
 import net.minecraft.world.entity.ai.attributes.Attributes;
 import net.minecraft.world.entity.item.ItemEntity;
-import net.minecraft.world.entity.projectile.AbstractArrow;
+import net.minecraft.world.entity.projectile.arrow.AbstractArrow;
 import net.minecraft.world.entity.projectile.ProjectileUtil;
 import net.minecraft.world.item.*;
-import net.minecraft.world.item.enchantment.EnchantmentHelper;
 import net.minecraft.world.item.enchantment.Enchantments;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.ServerLevelAccessor;
@@ -50,15 +49,15 @@ public class BowmanEntity extends AbstractRecruitEntity implements IRangedRecrui
         super(entityType, world);
     }
 
-    protected void defineSynchedData() {
-        super.defineSynchedData();
-        this.entityData.define(STRATEGIC_FIRE_POS, Optional.empty());
-        this.entityData.define(SHOULD_STRATEGIC_FIRE, false);
+    protected void defineSynchedData(SynchedEntityData.Builder builder) {
+        super.defineSynchedData(builder);
+        builder.define(STRATEGIC_FIRE_POS, Optional.empty());
+        builder.define(SHOULD_STRATEGIC_FIRE, false);
     }
 
     @Override
-    public void addAdditionalSaveData(CompoundTag nbt) {
-        super.addAdditionalSaveData(nbt);
+    public void saveRecruitData(CompoundTag nbt) {
+        super.saveRecruitData(nbt);
 
         if(this.StrategicFirePos() != null){
 
@@ -70,15 +69,15 @@ public class BowmanEntity extends AbstractRecruitEntity implements IRangedRecrui
     }
 
     @Override
-    public void readAdditionalSaveData(CompoundTag nbt) {
-        super.readAdditionalSaveData(nbt);
+    public void loadRecruitData(CompoundTag nbt) {
+        super.loadRecruitData(nbt);
 
         if (nbt.contains("StrategicFirePosX") && nbt.contains("StrategicFirePosY") && nbt.contains("StrategicFirePosZ")) {
             this.setStrategicFirePos(new BlockPos (
-                    nbt.getInt("StrategicFirePosX"),
-                    nbt.getInt("StrategicFirePosY"),
-                    nbt.getInt("StrategicFirePosZ")));
-            this.setShouldStrategicFire(nbt.getBoolean("ShouldStrategicFire"));
+                    nbt.getIntOr("StrategicFirePosX", 0),
+                    nbt.getIntOr("StrategicFirePosY", 0),
+                    nbt.getIntOr("StrategicFirePosZ", 0)));
+            this.setShouldStrategicFire(nbt.getBooleanOr("ShouldStrategicFire", false));
         }
     }
 
@@ -100,20 +99,20 @@ public class BowmanEntity extends AbstractRecruitEntity implements IRangedRecrui
         return Mob.createLivingAttributes()
                 .add(Attributes.MAX_HEALTH, 20.0D)
                 .add(Attributes.MOVEMENT_SPEED, 0.31D)
-                .add(ForgeMod.SWIM_SPEED.get(), 0.3D)
+                .add(ForgeMod.SWIM_SPEED.getHolder().get(), 0.3D)
                 .add(Attributes.KNOCKBACK_RESISTANCE, 0.05D)
                 .add(Attributes.ATTACK_DAMAGE, 0.5D)
                 .add(Attributes.FOLLOW_RANGE, 64.0D) //do not change as ranged ai dependants on it
-                .add(ForgeMod.ENTITY_REACH.get(), 0D)
+                .add(Attributes.ENTITY_INTERACTION_RANGE, 0D)
                 .add(Attributes.ATTACK_SPEED);
     }
 
     @Override
     @Nullable
-    public SpawnGroupData finalizeSpawn(ServerLevelAccessor world, DifficultyInstance difficultyInstance, MobSpawnType reason, @Nullable SpawnGroupData data, @Nullable CompoundTag nbt) {
+    public SpawnGroupData finalizeSpawn(ServerLevelAccessor world, DifficultyInstance difficultyInstance, EntitySpawnReason reason, @Nullable SpawnGroupData data) {
         RandomSource randomsource = world.getRandom();
-        SpawnGroupData ilivingentitydata = super.finalizeSpawn(world, difficultyInstance, reason, data, nbt);
-        this.populateDefaultEquipmentEnchantments(randomsource, difficultyInstance);
+        SpawnGroupData ilivingentitydata = super.finalizeSpawn(world, difficultyInstance, reason, data);
+        this.populateDefaultEquipmentEnchantments(world, randomsource, difficultyInstance);
         this.initSpawn();
         return ilivingentitydata;
     }
@@ -135,7 +134,7 @@ public class BowmanEntity extends AbstractRecruitEntity implements IRangedRecrui
 
     @Override
     public boolean canHoldItem(ItemStack itemStack){
-        return !(itemStack.getItem() instanceof SwordItem || itemStack.getItem() instanceof ShieldItem || itemStack.getItem() instanceof CrossbowItem);
+        return !(com.talhanation.recruits.util.ItemCompat.isSword(itemStack) || itemStack.getItem() instanceof ShieldItem || itemStack.getItem() instanceof CrossbowItem);
     }
 
     @Override
@@ -151,17 +150,17 @@ public class BowmanEntity extends AbstractRecruitEntity implements IRangedRecrui
 
             ItemStack itemstack = this.getProjectile(this.getItemInHand(InteractionHand.MAIN_HAND));
 
-            AbstractArrow arrow = ProjectileUtil.getMobArrow(this, itemstack, v);
+            AbstractArrow arrow = ProjectileUtil.getMobArrow(this, itemstack, v, this.getMainHandItem());
             arrow = ((net.minecraft.world.item.BowItem) this.getMainHandItem().getItem()).customArrow(arrow);
 
-            int powerLevel = EnchantmentHelper.getItemEnchantmentLevel(Enchantments.POWER_ARROWS, itemstack);
-            arrow.setBaseDamage(arrow.getBaseDamage() + (double) powerLevel * 0.5D + 0.5D + this.arrowDamageModifier());
+            int powerLevel = com.talhanation.recruits.util.EnchantUtil.getLevel(Enchantments.POWER, itemstack);
+            arrow.setBaseDamage(arrow.baseDamage + (double) powerLevel * 0.5D + 0.5D + this.arrowDamageModifier());
 
-            int punchLevel = EnchantmentHelper.getItemEnchantmentLevel(Enchantments.PUNCH_ARROWS, itemstack);
-            if (punchLevel > 0) arrow.setKnockback(punchLevel);
+            int punchLevel = com.talhanation.recruits.util.EnchantUtil.getLevel(Enchantments.PUNCH, itemstack);
+            // punch knockback is applied by the weapon enchantment itself
 
-            int fireLevel = EnchantmentHelper.getItemEnchantmentLevel(Enchantments.FLAMING_ARROWS, itemstack);
-            if (fireLevel > 0) arrow.setSecondsOnFire(100);
+            int fireLevel = com.talhanation.recruits.util.EnchantUtil.getLevel(Enchantments.FLAME, itemstack);
+            if (fireLevel > 0) arrow.igniteForSeconds(100);
 
             double distance = this.distanceToSqr(target.getX(), target.getY(), target.getZ());
             double heightDiff = target.getY() - this.getY();
@@ -180,7 +179,7 @@ public class BowmanEntity extends AbstractRecruitEntity implements IRangedRecrui
             arrow.shoot(d0, d1 + d3 * angle, d2, force, accuracy);
 
             if(RecruitsServerConfig.RangedRecruitsNeedArrowsToShoot.get()){
-                int k = EnchantmentHelper.getItemEnchantmentLevel(Enchantments.INFINITY_ARROWS, this.getMainHandItem());
+                int k = com.talhanation.recruits.util.EnchantUtil.getLevel(Enchantments.INFINITY, this.getMainHandItem());
                 if (k == 0) {
                     this.consumeArrow();
                     arrow.pickup = AbstractArrow.Pickup.ALLOWED;
@@ -189,7 +188,7 @@ public class BowmanEntity extends AbstractRecruitEntity implements IRangedRecrui
 
             this.playSound(SoundEvents.ARROW_SHOOT, 1.0F, 1.0F / (this.getRandom().nextFloat() * 0.4F + 0.8F));
 
-            this.getCommandSenderWorld().addFreshEntity(arrow);
+            this.level().addFreshEntity(arrow);
 
             this.damageMainHandItem();
         }
@@ -204,17 +203,17 @@ public class BowmanEntity extends AbstractRecruitEntity implements IRangedRecrui
         if (this.getMainHandItem().getItem() instanceof BowItem) {
             ItemStack itemstack = this.getProjectile(this.getItemInHand(InteractionHand.MAIN_HAND));
 
-            AbstractArrow arrow = ProjectileUtil.getMobArrow(this, itemstack, v);
+            AbstractArrow arrow = ProjectileUtil.getMobArrow(this, itemstack, v, this.getMainHandItem());
             arrow = ((net.minecraft.world.item.BowItem) this.getMainHandItem().getItem()).customArrow(arrow);
 
-            int powerLevel = EnchantmentHelper.getItemEnchantmentLevel(Enchantments.POWER_ARROWS, itemstack);
-            if (powerLevel > 0) arrow.setBaseDamage(arrow.getBaseDamage() + (double) powerLevel * 0.5D + 0.5D + this.arrowDamageModifier());
+            int powerLevel = com.talhanation.recruits.util.EnchantUtil.getLevel(Enchantments.POWER, itemstack);
+            if (powerLevel > 0) arrow.setBaseDamage(arrow.baseDamage + (double) powerLevel * 0.5D + 0.5D + this.arrowDamageModifier());
 
-            int punchLevel = EnchantmentHelper.getItemEnchantmentLevel(Enchantments.PUNCH_ARROWS, itemstack);
-            if (punchLevel > 0) arrow.setKnockback(punchLevel);
+            int punchLevel = com.talhanation.recruits.util.EnchantUtil.getLevel(Enchantments.PUNCH, itemstack);
+            // punch knockback is applied by the weapon enchantment itself
 
-            int fireLevel = EnchantmentHelper.getItemEnchantmentLevel(Enchantments.FLAMING_ARROWS, itemstack);
-            if (fireLevel > 0) arrow.setSecondsOnFire(100);
+            int fireLevel = com.talhanation.recruits.util.EnchantUtil.getLevel(Enchantments.FLAME, itemstack);
+            if (fireLevel > 0) arrow.igniteForSeconds(100);
 
             double d0 = x - this.getX();
             double d1 = y - this.getY();
@@ -226,7 +225,7 @@ public class BowmanEntity extends AbstractRecruitEntity implements IRangedRecrui
             arrow.shoot(d0, d1 + d3 + angle, d2, force + 1.95F, accuracy);
 
             this.playSound(SoundEvents.ARROW_SHOOT, 1.0F, 1.0F / (this.getRandom().nextFloat() * 0.4F + 0.8F));
-            this.getCommandSenderWorld().addFreshEntity(arrow);
+            this.level().addFreshEntity(arrow);
 
             if(RecruitsServerConfig.RangedRecruitsNeedArrowsToShoot.get()){
                 this.consumeArrow();
@@ -271,7 +270,7 @@ public class BowmanEntity extends AbstractRecruitEntity implements IRangedRecrui
 
     @Override
     public boolean wantsToPickUp(ItemStack itemStack) {
-        if ((itemStack.getItem() instanceof BowItem || itemStack.getItem() instanceof ProjectileWeaponItem || itemStack.getItem() instanceof SwordItem) && this.getMainHandItem().isEmpty()){
+        if ((itemStack.getItem() instanceof BowItem || itemStack.getItem() instanceof ProjectileWeaponItem || com.talhanation.recruits.util.ItemCompat.isSword(itemStack)) && this.getMainHandItem().isEmpty()){
             return !hasSameTypeOfItem(itemStack);
         }
         else if(itemStack.is(ItemTags.ARROWS) && RecruitsServerConfig.RangedRecruitsNeedArrowsToShoot.get())

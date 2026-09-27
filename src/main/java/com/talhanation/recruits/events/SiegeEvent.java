@@ -2,8 +2,10 @@ package com.talhanation.recruits;
 
 import com.talhanation.recruits.world.RecruitsClaim;
 import net.minecraft.server.level.ServerLevel;
-import net.minecraftforge.eventbus.api.Cancelable;
-import net.minecraftforge.eventbus.api.Event;
+import net.minecraftforge.eventbus.api.bus.CancellableEventBus;
+import net.minecraftforge.eventbus.api.bus.EventBus;
+import net.minecraftforge.eventbus.api.event.MutableEvent;
+import net.minecraftforge.eventbus.api.event.characteristic.Cancellable;
 
 /**
  * Siege-Events werden auf dem {@code MinecraftForge.EVENT_BUS} gepostet
@@ -17,7 +19,7 @@ import net.minecraftforge.eventbus.api.Event;
  *   }
  * </pre>
  */
-public abstract class SiegeEvent extends Event {
+public abstract class SiegeEvent extends MutableEvent {
 
     private final RecruitsClaim claim;
     private final ServerLevel level;
@@ -43,8 +45,8 @@ public abstract class SiegeEvent extends Event {
      * Wird gefeuert, kurz bevor ein Siege startet.
      * <p>Ist cancelable: {@code event.setCanceled(true)} verhindert den Start.</p>
      */
-    @Cancelable
-    public static class Start extends SiegeEvent {
+        public static class Start extends SiegeEvent implements Cancellable {
+        public static final CancellableEventBus<SiegeEvent.Start> BUS = CancellableEventBus.create(SiegeEvent.Start.class);
         public Start(RecruitsClaim claim, ServerLevel level) {
             super(claim, level);
         }
@@ -55,6 +57,7 @@ public abstract class SiegeEvent extends Event {
      * Angreifer gewonnen hat (z.B. zu wenig Angreifer).
      */
     public static class End extends SiegeEvent {
+        public static final EventBus<SiegeEvent.End> BUS = EventBus.create(SiegeEvent.End.class);
         public End(RecruitsClaim claim, ServerLevel level) {
             super(claim, level);
         }
@@ -65,6 +68,7 @@ public abstract class SiegeEvent extends Event {
      * Zu diesem Zeitpunkt wurde der Besitzer des Claims bereits gewechselt.
      */
     public static class Success extends SiegeEvent {
+        public static final EventBus<SiegeEvent.Success> BUS = EventBus.create(SiegeEvent.Success.class);
         public Success(RecruitsClaim claim, ServerLevel level) {
             super(claim, level);
         }
@@ -94,8 +98,8 @@ public abstract class SiegeEvent extends Event {
      *   }
      * </pre>
      */
-    @Cancelable
-    public static class Tick extends SiegeEvent {
+        public static class Tick extends SiegeEvent implements Cancellable {
+        public static final CancellableEventBus<SiegeEvent.Tick> BUS = CancellableEventBus.create(SiegeEvent.Tick.class);
         private final int attackerCount;
         private final int defenderCount;
         private int damage;

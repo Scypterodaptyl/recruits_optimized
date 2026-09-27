@@ -23,6 +23,7 @@
   "block.recruits.horseman_block": "Tisch des Kavalleristen",
   "block.recruits.crossbowman_block": "Tisch des Armbrustschützen",
   "category.recruits": "Rekruten",
+  "key.category.recruits.main": "Rekruten",
   "key.recruits.command_screen_key": "Befehlsbildschirm öffnen",
   "key.recruits.team_screen_key": "Fraktion-Bildschirm öffnen",
   "key.recruits.map_screen_key": "Open Claim-Map Screen",

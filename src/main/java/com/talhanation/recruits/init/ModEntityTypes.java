@@ -2,7 +2,9 @@ package com.talhanation.recruits.init;
 
 import com.talhanation.recruits.Main;
 import com.talhanation.recruits.entities.*;
-import net.minecraft.resources.ResourceLocation;
+import net.minecraft.core.registries.Registries;
+import net.minecraft.resources.Identifier;
+import net.minecraft.resources.ResourceKey;
 import net.minecraft.world.entity.EntityType;
 import net.minecraft.world.entity.MobCategory;
 import net.minecraftforge.registries.DeferredRegister;
@@ -19,83 +21,119 @@ public class ModEntityTypes {
                     .sized(0.6F, 1.95F)
                     .clientTrackingRange(10)
                     .canSpawnFarFromPlayer()
-                    .build(new ResourceLocation(Main.MOD_ID, "recruit").toString()));
+                    
+                    .eyeHeight(1.911F)
+                    .vehicleAttachment(net.minecraft.world.entity.Avatar.DEFAULT_VEHICLE_ATTACHMENT)
+                    .build(ResourceKey.create(Registries.ENTITY_TYPE, Identifier.fromNamespaceAndPath(Main.MOD_ID, "recruit"))));
 
     public static final RegistryObject<EntityType<RecruitShieldmanEntity>> RECRUIT_SHIELDMAN = ENTITY_TYPES.register("recruit_shieldman",
             () -> EntityType.Builder.of(RecruitShieldmanEntity::new, MobCategory.CREATURE)
                     .sized(0.6F, 1.95F)
                     .clientTrackingRange(10)
                     .canSpawnFarFromPlayer()
-                    .build(new ResourceLocation(Main.MOD_ID, "recruit_shield").toString()));
+                    
+                    .eyeHeight(1.911F)
+                    .vehicleAttachment(net.minecraft.world.entity.Avatar.DEFAULT_VEHICLE_ATTACHMENT)
+                    .build(ResourceKey.create(Registries.ENTITY_TYPE, Identifier.fromNamespaceAndPath(Main.MOD_ID, "recruit_shieldman"))));
 
     public static final RegistryObject<EntityType<BowmanEntity>> BOWMAN = ENTITY_TYPES.register("bowman",
             () -> EntityType.Builder.of(BowmanEntity::new, MobCategory.CREATURE)
                     .sized(0.6F, 1.95F)
                     .clientTrackingRange(10)
                     .canSpawnFarFromPlayer()
-                    .build(new ResourceLocation(Main.MOD_ID, "bowman").toString()));
+                    
+                    .eyeHeight(1.911F)
+                    .vehicleAttachment(net.minecraft.world.entity.Avatar.DEFAULT_VEHICLE_ATTACHMENT)
+                    .build(ResourceKey.create(Registries.ENTITY_TYPE, Identifier.fromNamespaceAndPath(Main.MOD_ID, "bowman"))));
 
     public static final RegistryObject<EntityType<CrossBowmanEntity>> CROSSBOWMAN = ENTITY_TYPES.register("crossbowman",
             () -> EntityType.Builder.of(CrossBowmanEntity::new, MobCategory.CREATURE)
                     .sized(0.6F, 1.95F)
                     .clientTrackingRange(10)
                     .canSpawnFarFromPlayer()
-                    .build(new ResourceLocation(Main.MOD_ID, "crossbowman").toString()));
+                    
+                    .eyeHeight(1.911F)
+                    .vehicleAttachment(net.minecraft.world.entity.Avatar.DEFAULT_VEHICLE_ATTACHMENT)
+                    .build(ResourceKey.create(Registries.ENTITY_TYPE, Identifier.fromNamespaceAndPath(Main.MOD_ID, "crossbowman"))));
     public static final RegistryObject<EntityType<NomadEntity>> NOMAD = ENTITY_TYPES.register("nomad",
             () -> EntityType.Builder.of(NomadEntity::new, MobCategory.CREATURE)
                     .sized(0.6F, 1.95F)
                     .clientTrackingRange(10)
                     .canSpawnFarFromPlayer()
-                    .build(new ResourceLocation(Main.MOD_ID, "nomad").toString()));
+                    
+                    .eyeHeight(1.911F)
+                    .vehicleAttachment(net.minecraft.world.entity.Avatar.DEFAULT_VEHICLE_ATTACHMENT)
+                    .build(ResourceKey.create(Registries.ENTITY_TYPE, Identifier.fromNamespaceAndPath(Main.MOD_ID, "nomad"))));
 
     public static final RegistryObject<EntityType<HorsemanEntity>> HORSEMAN = ENTITY_TYPES.register("horseman",
             () -> EntityType.Builder.of(HorsemanEntity::new, MobCategory.CREATURE)
                     .sized(0.6F, 1.95F)
                     .clientTrackingRange(10)
                     .canSpawnFarFromPlayer()
-                    .build(new ResourceLocation(Main.MOD_ID, "horseman").toString()));
+                    
+                    .eyeHeight(1.911F)
+                    .vehicleAttachment(net.minecraft.world.entity.Avatar.DEFAULT_VEHICLE_ATTACHMENT)
+                    .build(ResourceKey.create(Registries.ENTITY_TYPE, Identifier.fromNamespaceAndPath(Main.MOD_ID, "horseman"))));
 
     public static final RegistryObject<EntityType<MessengerEntity>> MESSENGER = ENTITY_TYPES.register("messenger",
             () -> EntityType.Builder.of(MessengerEntity::new, MobCategory.CREATURE)
                     .sized(0.6F, 1.95F)
                     .clientTrackingRange(10)
                     .canSpawnFarFromPlayer()
-                    .build(new ResourceLocation(Main.MOD_ID, "messenger").toString()));
+                    
+                    .eyeHeight(1.911F)
+                    .vehicleAttachment(net.minecraft.world.entity.Avatar.DEFAULT_VEHICLE_ATTACHMENT)
+                    .build(ResourceKey.create(Registries.ENTITY_TYPE, Identifier.fromNamespaceAndPath(Main.MOD_ID, "messenger"))));
 
     public static final RegistryObject<EntityType<ScoutEntity>> SCOUT = ENTITY_TYPES.register("scout",
             () -> EntityType.Builder.of(ScoutEntity::new, MobCategory.CREATURE)
                     .sized(0.6F, 1.95F)
                     .clientTrackingRange(10)
                     .canSpawnFarFromPlayer()
-                    .build(new ResourceLocation(Main.MOD_ID, "scout").toString()));
+                    
+                    .eyeHeight(1.911F)
+                    .vehicleAttachment(net.minecraft.world.entity.Avatar.DEFAULT_VEHICLE_ATTACHMENT)
+                    .build(ResourceKey.create(Registries.ENTITY_TYPE, Identifier.fromNamespaceAndPath(Main.MOD_ID, "scout"))));
 
     public static final RegistryObject<EntityType<CommanderEntity>> PATROL_LEADER = ENTITY_TYPES.register("patrol_leader",
             () -> EntityType.Builder.of(CommanderEntity::new, MobCategory.CREATURE)
                     .sized(0.6F, 1.95F)
                     .clientTrackingRange(10)
                     .canSpawnFarFromPlayer()
-                    .build(new ResourceLocation(Main.MOD_ID, "patrol_leader").toString()));
+                    
+                    .eyeHeight(1.911F)
+                    .vehicleAttachment(net.minecraft.world.entity.Avatar.DEFAULT_VEHICLE_ATTACHMENT)
+                    .build(ResourceKey.create(Registries.ENTITY_TYPE, Identifier.fromNamespaceAndPath(Main.MOD_ID, "patrol_leader"))));
 
     public static final RegistryObject<EntityType<CaptainEntity>> CAPTAIN = ENTITY_TYPES.register("captain",
             () -> EntityType.Builder.of(CaptainEntity::new, MobCategory.CREATURE)
                     .sized(0.6F, 1.95F)
                     .clientTrackingRange(10)
                     .canSpawnFarFromPlayer()
-                    .build(new ResourceLocation(Main.MOD_ID, "captain").toString()));
+                    
+                    .eyeHeight(1.911F)
+                    .vehicleAttachment(net.minecraft.world.entity.Avatar.DEFAULT_VEHICLE_ATTACHMENT)
+                    .build(ResourceKey.create(Registries.ENTITY_TYPE, Identifier.fromNamespaceAndPath(Main.MOD_ID, "captain"))));
 
     public static final RegistryObject<EntityType<VillagerNobleEntity>> VILLAGER_NOBLE = ENTITY_TYPES.register("villager_noble",
             () -> EntityType.Builder.of(VillagerNobleEntity::new, MobCategory.CREATURE)
                     .sized(0.6F, 1.95F)
                     .clientTrackingRange(10)
                     .canSpawnFarFromPlayer()
-                    .build(new ResourceLocation(Main.MOD_ID, "villager_noble").toString()));
+                    
+                    .eyeHeight(1.911F)
+                    .vehicleAttachment(net.minecraft.world.entity.Avatar.DEFAULT_VEHICLE_ATTACHMENT)
+                    .build(ResourceKey.create(Registries.ENTITY_TYPE, Identifier.fromNamespaceAndPath(Main.MOD_ID, "villager_noble"))));
 
     public static final RegistryObject<EntityType<SiegeEngineerEntity>> SIEGE_ENGINEER = ENTITY_TYPES.register("siege_engineer",
             () -> EntityType.Builder.of(SiegeEngineerEntity::new, MobCategory.CREATURE)
                     .sized(0.6F, 1.95F)
                     .clientTrackingRange(10)
                     .canSpawnFarFromPlayer()
-                    .build(new ResourceLocation(Main.MOD_ID, "siege_engineer").toString()));
+                    
+                    .eyeHeight(1.911F)
+                    .vehicleAttachment(net.minecraft.world.entity.Avatar.DEFAULT_VEHICLE_ATTACHMENT)
+                    .build(ResourceKey.create(Registries.ENTITY_TYPE, Identifier.fromNamespaceAndPath(Main.MOD_ID, "siege_engineer"))));
 
 
     /*
@@ -105,7 +143,10 @@ public class ModEntityTypes {
                     .canSpawnFarFromPlayer()
                     .setTrackingRange(32)
                     .setShouldReceiveVelocityUpdates(true)
-                    .build(new ResourceLocation(Main.MOD_ID, "assassin").toString()));
+                    
+                    .eyeHeight(1.911F)
+                    .vehicleAttachment(net.minecraft.world.entity.Avatar.DEFAULT_VEHICLE_ATTACHMENT)
+                    .build(ResourceKey.create(Registries.ENTITY_TYPE, Identifier.fromNamespaceAndPath(Main.MOD_ID, "assassin"))));
 
     public static final RegistryObject<EntityType<AssassinLeaderEntity>> ASSASSIN_LEADER = ENTITY_TYPES.register("assassin_leader",
             () -> EntityType.Builder.of(AssassinLeaderEntity::new, MobCategory.CREATURE)
@@ -113,7 +154,10 @@ public class ModEntityTypes {
                     .canSpawnFarFromPlayer()
                     .setTrackingRange(32)
                     .setShouldReceiveVelocityUpdates(true)
-                    .build(new ResourceLocation(Main.MOD_ID, "assassin_leader").toString()));
+                    
+                    .eyeHeight(1.911F)
+                    .vehicleAttachment(net.minecraft.world.entity.Avatar.DEFAULT_VEHICLE_ATTACHMENT)
+                    .build(ResourceKey.create(Registries.ENTITY_TYPE, Identifier.fromNamespaceAndPath(Main.MOD_ID, "assassin_leader"))));
 
      */
 

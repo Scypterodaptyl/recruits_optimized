@@ -122,7 +122,7 @@ public final class WorldMapRouteControls {
             routeDropDown.renderWidget(guiGraphics, mouseX, mouseY, partialTicks);
         } else {
             guiGraphics.drawString(
-                    font, cachedCollapsedLabel, cachedCollapsedLabelX, ROUTE_UI_Y + (ROUTE_BTN_SIZE - 8) / 2, 0xFFFFFF);
+                    font, cachedCollapsedLabel, cachedCollapsedLabelX, ROUTE_UI_Y + (ROUTE_BTN_SIZE - 8) / 2, 0xFFFFFFFF);
         }
     }
 
@@ -140,7 +140,7 @@ public final class WorldMapRouteControls {
 
         guiGraphics.fill(x, ROUTE_UI_Y, x + ROUTE_BTN_SIZE, ROUTE_UI_Y + ROUTE_BTN_SIZE, bg);
         guiGraphics.renderOutline(x, ROUTE_UI_Y, ROUTE_BTN_SIZE, ROUTE_BTN_SIZE, 0x40FFFFFF);
-        guiGraphics.drawString(cachedFont, label, labelX, ROUTE_UI_Y + 6, color);
+        guiGraphics.drawString(cachedFont, label, labelX, ROUTE_UI_Y + 6, com.talhanation.recruits.client.gui.util.GuiCompat.opaque(color));
     }
 
     private void updateLabelLayout(Font font, RecruitsRoute selectedRoute) {

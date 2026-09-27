@@ -1,6 +1,7 @@
 package com.talhanation.recruits.client.gui.diplomacy;
 
-import com.mojang.blaze3d.systems.RenderSystem;
+import net.minecraft.client.renderer.RenderPipelines;
+
 import com.talhanation.recruits.Main;
 import com.talhanation.recruits.client.gui.component.BannerRenderer;
 import com.talhanation.recruits.client.gui.widgets.ListScreenEntryBase;
@@ -9,9 +10,8 @@ import com.talhanation.recruits.world.RecruitsDiplomacyManager;
 import com.talhanation.recruits.world.RecruitsFaction;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.GuiGraphics;
-import net.minecraft.client.renderer.GameRenderer;
-import net.minecraft.resources.ResourceLocation;
-import net.minecraft.util.FastColor;
+import net.minecraft.resources.Identifier;
+import net.minecraft.util.ARGB;
 import net.minecraftforge.api.distmarker.Dist;
 import net.minecraftforge.api.distmarker.OnlyIn;
 import org.jetbrains.annotations.NotNull;
@@ -22,10 +22,10 @@ import javax.annotation.Nullable;
 public class DiplomacyTeamEntry extends ListScreenEntryBase<DiplomacyTeamEntry> {
     protected static final int SKIN_SIZE = 24;
     protected static final int PADDING = 4;
-    protected static final int BG_FILL = FastColor.ARGB32.color(255, 60, 60, 60);
-    protected static final int BG_FILL_HOVERED = FastColor.ARGB32.color(255, 100, 100, 100);
-    protected static final int BG_FILL_SELECTED = FastColor.ARGB32.color(255, 10, 10, 10);
-    protected static final int PLAYER_NAME_COLOR = FastColor.ARGB32.color(255, 255, 255, 255);
+    protected static final int BG_FILL = ARGB.color(255, 60, 60, 60);
+    protected static final int BG_FILL_HOVERED = ARGB.color(255, 100, 100, 100);
+    protected static final int BG_FILL_SELECTED = ARGB.color(255, 10, 10, 10);
+    protected static final int PLAYER_NAME_COLOR = ARGB.color(255, 255, 255, 255);
 
     protected final Minecraft minecraft;
     protected final DiplomacyTeamListScreen screen;
@@ -42,7 +42,12 @@ public class DiplomacyTeamEntry extends ListScreenEntryBase<DiplomacyTeamEntry> 
     }
 
     @Override
-    public void render(GuiGraphics guiGraphics, int index, int top, int left, int width, int height, int mouseX, int mouseY, boolean hovered, float delta) {
+    public void renderContent(GuiGraphics guiGraphics, int mouseX, int mouseY, boolean hovered, float delta) {
+        int index = 0;
+        int top = this.getY();
+        int left = this.getX();
+        int width = this.getWidth();
+        int height = this.getHeight() - 4;
         int skinX = left + PADDING;
         int skinY = top + (height - SKIN_SIZE) / 2;
         int textX = skinX + SKIN_SIZE + PADDING;
@@ -66,10 +71,7 @@ public class DiplomacyTeamEntry extends ListScreenEntryBase<DiplomacyTeamEntry> 
         int iconY = 5;
         bannerRenderer.renderBanner(guiGraphics, left, top, width, height, 15);
         if(status != null){
-            RenderSystem.setShader(GameRenderer::getPositionTexShader);
-            RenderSystem.setShaderColor(1F, 1F, 1F, 1F);
-            RenderSystem.setShaderTexture(0, getStatusTextureLocation());
-            guiGraphics.blit(getStatusTextureLocation(), left + iconX, top + iconY, 0, 0, 21, 21, 21, 21);
+            guiGraphics.blit(RenderPipelines.GUI_TEXTURED, getStatusTextureLocation(), left + iconX, top + iconY, (float) (0), (float) (0), 21, 21, 21, 21);
         }
 
         /*
@@ -80,7 +82,7 @@ public class DiplomacyTeamEntry extends ListScreenEntryBase<DiplomacyTeamEntry> 
 
         GuiComponent.fill(poseStack, left + 10, top + 20, left + 200,top + 10, 0x8000FF00);
          */
-       guiGraphics.drawString(minecraft.font, team.getTeamDisplayName(), (float) textX + 10, (float) textY, PLAYER_NAME_COLOR, false);
+       guiGraphics.drawString(minecraft.font, team.getTeamDisplayName(), (int) ((float) textX + 10), (int) ((float) textY), com.talhanation.recruits.client.gui.util.GuiCompat.opaque(PLAYER_NAME_COLOR), false);
     }
 
     @Nullable
@@ -93,13 +95,13 @@ public class DiplomacyTeamEntry extends ListScreenEntryBase<DiplomacyTeamEntry> 
         return screen.list;
     }
 
-    private ResourceLocation getStatusTextureLocation() {
-        ResourceLocation location;
+    private Identifier getStatusTextureLocation() {
+        Identifier location;
 
         switch (this.status){
-            default -> location = new ResourceLocation(Main.MOD_ID, "textures/gui/image/neutral.png");
-            case ALLY ->  location = new ResourceLocation(Main.MOD_ID, "textures/gui/image/ally.png");
-            case ENEMY ->  location = new ResourceLocation(Main.MOD_ID, "textures/gui/image/enemy.png");
+            default -> location = Identifier.fromNamespaceAndPath(Main.MOD_ID, "textures/gui/image/neutral.png");
+            case ALLY ->  location = Identifier.fromNamespaceAndPath(Main.MOD_ID, "textures/gui/image/ally.png");
+            case ENEMY ->  location = Identifier.fromNamespaceAndPath(Main.MOD_ID, "textures/gui/image/enemy.png");
         }
         return location;
     }

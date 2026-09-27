@@ -8,12 +8,11 @@ import net.minecraft.world.level.Level;
 import net.minecraftforge.event.TickEvent;
 import net.minecraftforge.event.level.ChunkEvent;
 import net.minecraftforge.event.level.LevelEvent;
-import net.minecraftforge.eventbus.api.SubscribeEvent;
+import net.minecraftforge.eventbus.api.listener.SubscribeEvent;
 
 public class ClientPlayerEvents {
     @SubscribeEvent
-    public void onClientTick(TickEvent.ClientTickEvent event) {
-        if (event.phase != TickEvent.Phase.END) return;
+    public void onClientTick(TickEvent.ClientTickEvent.Post event) {
         if (!RecruitsClientConfig.UpdateMapTiles.get()) return;
 
         updateMapTiles();
@@ -44,14 +43,14 @@ public class ClientPlayerEvents {
 
     @SubscribeEvent
     public void onChunkLoad(ChunkEvent.Load event) {
-        if (event.getLevel() instanceof Level level && level.isClientSide) {
+        if (event.getLevel() instanceof Level level && level.isClientSide()) {
             WorldMapCacheManager.getInstance().onChunkLoaded(level, event.getChunk().getPos());
         }
     }
 
     @SubscribeEvent
     public void onChunkUnload(ChunkEvent.Unload event) {
-        if (event.getLevel() instanceof Level level && level.isClientSide) {
+        if (event.getLevel() instanceof Level level && level.isClientSide()) {
             WorldMapCacheManager.getInstance().onChunkUnloaded(level, event.getChunk().getPos());
         }
     }

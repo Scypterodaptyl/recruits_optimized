@@ -1,12 +1,12 @@
 package com.talhanation.recruits.network;
 
 import com.talhanation.recruits.world.RecruitsRoute;
-import de.maxhenkel.corelib.net.Message;
+import com.talhanation.recruits.network.Message;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.network.FriendlyByteBuf;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraftforge.api.distmarker.Dist;
-import net.minecraftforge.network.NetworkEvent;
+import net.minecraftforge.event.network.CustomPayloadEvent;
 import net.minecraftforge.network.PacketDistributor;
 
 import java.util.Objects;
@@ -36,14 +36,14 @@ public class MessageTransferRoute implements Message<MessageTransferRoute> {
     }
 
     @Override
-    public void executeServerSide(NetworkEvent.Context context) {
+    public void executeServerSide(CustomPayloadEvent.Context context) {
         ServerPlayer sender = Objects.requireNonNull(context.getSender());
         RecruitsRoute route = RecruitsRoute.fromNBT(routeNBT);
         if (route == null) return;
 
-        ServerPlayer target = sender.getServer().getPlayerList().getPlayer(targetPlayerUUID);
+        ServerPlayer target = sender.level().getServer().getPlayerList().getPlayer(targetPlayerUUID);
         if (target == null) return;
-        SIMPLE_CHANNEL.send(PacketDistributor.PLAYER.with(() -> target),
+        SIMPLE_CHANNEL.send(PacketDistributor.PLAYER.with(target),
                 new MessageToClientReceiveRoute(route.toNBT()));
     }
 

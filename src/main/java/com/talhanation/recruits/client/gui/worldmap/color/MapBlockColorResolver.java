@@ -4,10 +4,9 @@ import com.talhanation.recruits.client.gui.worldmap.pipeline.ChunkSamplingContex
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.color.block.BlockColors;
 import net.minecraft.client.renderer.block.model.BakedQuad;
-import net.minecraft.client.renderer.texture.MissingTextureAtlasSprite;
-import net.minecraft.client.renderer.texture.TextureAtlas;
 import net.minecraft.client.renderer.texture.TextureAtlasSprite;
-import net.minecraft.client.resources.model.BakedModel;
+import net.minecraft.client.renderer.block.model.BlockModelPart;
+import net.minecraft.client.renderer.block.model.BlockStateModel;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.util.RandomSource;
@@ -131,23 +130,27 @@ public final class MapBlockColorResolver {
     private static TextureColor computeTextureColor(BlockState state) {
         try {
             Minecraft minecraft = Minecraft.getInstance();
-            BakedModel model = minecraft.getBlockRenderer().getBlockModelShaper().getBlockModel(state);
+            BlockStateModel model = minecraft.getBlockRenderer().getBlockModelShaper().getBlockModel(state);
             RandomSource random = RandomSource.create(42L);
-            List<BakedQuad> upQuads = model.getQuads(state, Direction.UP, random, ModelData.EMPTY, null);
+            List<BlockModelPart> parts = model.collectParts(random);
+            List<BakedQuad> upQuads = new java.util.ArrayList<>();
+            List<BakedQuad> generalQuads = new java.util.ArrayList<>();
+            for (BlockModelPart part : parts) {
+                upQuads.addAll(part.getQuads(Direction.UP));
+                generalQuads.addAll(part.getQuads(null));
+            }
             BakedQuad quad = selectColorQuad(upQuads);
-            TextureAtlasSprite sprite = quad != null ? quad.getSprite() : null;
-            int tintIndex = quad != null ? quad.getTintIndex() : -1;
+            TextureAtlasSprite sprite = quad != null ? quad.sprite() : null;
+            int tintIndex = quad != null ? quad.tintIndex() : -1;
             if (quad == null || sprite == null || isMissingSprite(sprite)) {
-                random.setSeed(42L);
-                List<BakedQuad> generalQuads = model.getQuads(state, null, random, ModelData.EMPTY, null);
                 quad = selectColorQuad(generalQuads);
                 if (quad != null) {
-                    sprite = quad.getSprite();
-                    tintIndex = quad.getTintIndex();
+                    sprite = quad.sprite();
+                    tintIndex = quad.tintIndex();
                 }
             }
             if (sprite == null || isMissingSprite(sprite)) {
-                sprite = model.getParticleIcon(ModelData.EMPTY);
+                sprite = model.particleIcon();
                 tintIndex = DEFAULT_TINT_INDEX;
             }
             return isMissingSprite(sprite) ? TextureColor.EMPTY : averageSprite(sprite, tintIndex);
@@ -166,8 +169,9 @@ public final class MapBlockColorResolver {
         if (cached == null) {
             cached =
                     Minecraft.getInstance()
-                            .getTextureAtlas(TextureAtlas.LOCATION_BLOCKS)
-                            .apply(MissingTextureAtlasSprite.getLocation());
+                            .getAtlasManager()
+                            .getAtlasOrThrow(net.minecraft.data.AtlasIds.BLOCKS)
+                            .missingSprite();
             missingSprite = cached;
         }
         return cached;
@@ -176,8 +180,8 @@ public final class MapBlockColorResolver {
     private static BakedQuad selectColorQuad(List<BakedQuad> quads) {
         BakedQuad fallback = null;
         for (BakedQuad quad : quads) {
-            if (quad == null || isMissingSprite(quad.getSprite())) continue;
-            if (quad.getTintIndex() >= 0) return quad;
+            if (quad == null || isMissingSprite(quad.sprite())) continue;
+            if (quad.tintIndex() >= 0) return quad;
             if (fallback == null) fallback = quad;
         }
         return fallback;

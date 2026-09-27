@@ -1,6 +1,8 @@
 package com.talhanation.recruits.client.gui.worldmap.claim;
 
-import com.mojang.blaze3d.systems.RenderSystem;
+import net.minecraft.client.input.MouseButtonEvent;
+import net.minecraft.client.renderer.RenderPipelines;
+
 import com.talhanation.recruits.client.ClientManager;
 import com.talhanation.recruits.client.gui.component.BannerRenderer;
 import com.talhanation.recruits.client.gui.worldmap.WorldMapScreen;
@@ -10,12 +12,12 @@ import com.talhanation.recruits.world.RecruitsFaction;
 import net.minecraft.client.gui.Font;
 import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.network.chat.Component;
-import net.minecraft.resources.ResourceLocation;
+import net.minecraft.resources.Identifier;
 
 import java.util.Objects;
 
 public class ClaimInfoMenu {
-    private static final ResourceLocation SIEGE_ICON = new ResourceLocation("recruits:textures/gui/image/enemy.png");
+    private static final Identifier SIEGE_ICON = Identifier.parse("recruits:textures/gui/image/enemy.png");
     private static final int PANEL_BACKGROUND = 0xD0000000;
     private static final int PANEL_OUTLINE = 0xFFFFFFFF;
     private static final int LABEL_COLOR = 0xFFB8B8B8;
@@ -162,18 +164,8 @@ public class ClaimInfoMenu {
         }
 
         if (isUnderSiege()) {
-            RenderSystem.setShaderTexture(0, SIEGE_ICON);
             int iconSize = 12;
-            guiGraphics.blit(
-                    SIEGE_ICON,
-                    bannerX + bannerWidth / 2 - iconSize / 2,
-                    bannerY + bannerHeight - iconSize,
-                    0,
-                    0,
-                    iconSize,
-                    iconSize,
-                    iconSize,
-                    iconSize);
+            guiGraphics.blit(RenderPipelines.GUI_TEXTURED, SIEGE_ICON, bannerX + bannerWidth / 2 - iconSize / 2, bannerY + bannerHeight - iconSize, (float) (0), (float) (0), iconSize, iconSize, iconSize, iconSize);
         }
     }
 
@@ -183,8 +175,8 @@ public class ClaimInfoMenu {
         int valueX = labelX + LABEL_COLUMN_WIDTH;
         int maxValueWidth = x + width - 8 - valueX;
 
-        guiGraphics.drawString(font, trimToWidth(font, label, LABEL_COLUMN_WIDTH - 4), labelX, rowY, LABEL_COLOR);
-        guiGraphics.drawString(font, trimToWidth(font, value, maxValueWidth), valueX, rowY, valueColor);
+        guiGraphics.drawString(font, trimToWidth(font, label, LABEL_COLUMN_WIDTH - 4), labelX, rowY, com.talhanation.recruits.client.gui.util.GuiCompat.opaque(LABEL_COLOR));
+        guiGraphics.drawString(font, trimToWidth(font, value, maxValueWidth), valueX, rowY, com.talhanation.recruits.client.gui.util.GuiCompat.opaque(valueColor));
     }
 
     private void drawPermissionRow(GuiGraphics guiGraphics, Font font, int rowY, String labelKey, boolean allowed) {
@@ -215,7 +207,7 @@ public class ClaimInfoMenu {
     private void drawTrimmedString(
             GuiGraphics guiGraphics, Font font, String text, int textX, int textY, int maxWidth, int color) {
         String trimmed = trimToWidth(font, text == null ? "" : text, maxWidth);
-        guiGraphics.drawString(font, trimmed, textX, textY, color);
+        guiGraphics.drawString(font, trimmed, textX, textY, com.talhanation.recruits.client.gui.util.GuiCompat.opaque(color));
     }
 
     private String trimToWidth(Font font, String text, int maxWidth) {
@@ -323,19 +315,28 @@ public class ClaimInfoMenu {
         return Objects.equals(left.getStringID(), right.getStringID());
     }
 
-    public boolean mouseClicked(double mouseX, double mouseY, int button) {
+    public boolean mouseClicked(MouseButtonEvent event, boolean doubleClick) {
+        double mouseX = event.x();
+        double mouseY = event.y();
+        int button = event.button();
         if (!visible || !isMouseOver(mouseX, mouseY)) return false;
 
         return true;
     }
 
-    public boolean mouseDragged(double mouseX, double mouseY, int button, double dragX, double dragY) {
+    public boolean mouseDragged(MouseButtonEvent event, double dragX, double dragY) {
+        double mouseX = event.x();
+        double mouseY = event.y();
+        int button = event.button();
         if (!visible) return false;
 
         return false;
     }
 
-    public boolean mouseReleased(double mouseX, double mouseY, int button) {
+    public boolean mouseReleased(MouseButtonEvent event) {
+        double mouseX = event.x();
+        double mouseY = event.y();
+        int button = event.button();
         if (!visible) return false;
 
         return false;

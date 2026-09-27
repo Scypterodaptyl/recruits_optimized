@@ -5,12 +5,12 @@ import com.talhanation.recruits.client.api.ClientClaimEvent;
 import com.talhanation.recruits.client.gui.worldmap.claim.WorldMapClaimIndex;
 import com.talhanation.recruits.network.codec.ClaimNetworkCodec;
 import com.talhanation.recruits.world.RecruitsClaim;
-import de.maxhenkel.corelib.net.Message;
+import com.talhanation.recruits.network.Message;
 import net.minecraft.network.FriendlyByteBuf;
 import net.minecraftforge.api.distmarker.Dist;
 import net.minecraftforge.api.distmarker.OnlyIn;
 import net.minecraftforge.common.MinecraftForge;
-import net.minecraftforge.network.NetworkEvent;
+import net.minecraftforge.event.network.CustomPayloadEvent;
 
 public class MessageToClientUpdateClaim implements Message<MessageToClientUpdateClaim> {
     private RecruitsClaim claim;
@@ -29,7 +29,7 @@ public class MessageToClientUpdateClaim implements Message<MessageToClientUpdate
 
     @Override
     @OnlyIn(Dist.CLIENT)
-    public void executeClientSide(NetworkEvent.Context context) {
+    public void executeClientSide(CustomPayloadEvent.Context context) {
         this.updateOrAddClaim(claim);
     }
 
@@ -58,7 +58,7 @@ public class MessageToClientUpdateClaim implements Message<MessageToClientUpdate
 
                 ClientManager.updateActiveSiege(newClaim);
 
-                MinecraftForge.EVENT_BUS.post(new ClientClaimEvent.DataUpdated(newClaim, isCurrentClaim));
+                ClientClaimEvent.DataUpdated.BUS.post(new ClientClaimEvent.DataUpdated(newClaim, isCurrentClaim));
                 return;
             }
         }
@@ -66,8 +66,7 @@ public class MessageToClientUpdateClaim implements Message<MessageToClientUpdate
         ClientManager.recruitsClaims.add(newClaim);
         WorldMapClaimIndex.invalidate();
         ClientManager.updateActiveSiege(newClaim);
-        MinecraftForge.EVENT_BUS.post(
-                new ClientClaimEvent.DataUpdated(newClaim, false));
+        ClientClaimEvent.DataUpdated.BUS.post(new ClientClaimEvent.DataUpdated(newClaim, false));
     }
 
     @OnlyIn(Dist.CLIENT)
@@ -83,7 +82,7 @@ public class MessageToClientUpdateClaim implements Message<MessageToClientUpdate
         }
 
         WorldMapClaimIndex.invalidate();
-        MinecraftForge.EVENT_BUS.post(new ClientClaimEvent.DataUpdated(removedClaim, wasCurrentClaim));
+        ClientClaimEvent.DataUpdated.BUS.post(new ClientClaimEvent.DataUpdated(removedClaim, wasCurrentClaim));
     }
 
     @Override

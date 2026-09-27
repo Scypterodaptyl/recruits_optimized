@@ -5,7 +5,7 @@ import com.talhanation.recruits.entities.AbstractRecruitEntity;
 import com.talhanation.recruits.entities.CaptainEntity;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.ai.goal.Goal;
-import net.minecraft.world.entity.vehicle.Boat;
+import net.minecraft.world.entity.vehicle.boat.Boat;
 
 
 public class RecruitFollowOwnerGoal extends Goal {
@@ -25,7 +25,7 @@ public class RecruitFollowOwnerGoal extends Goal {
     }
 
     public boolean canUse() {
-        long i = this.recruit.getCommandSenderWorld().getGameTime();
+        long i = this.recruit.level().getGameTime();
         if (i - this.lastCanUseCheck >= 10L) {
             this.lastCanUseCheck = i;
             LivingEntity livingentity = this.recruit.getOwner();

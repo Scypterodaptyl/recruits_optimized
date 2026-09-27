@@ -1,24 +1,13 @@
 package com.talhanation.recruits.client.gui.worldmap.route;
 
-import com.mojang.blaze3d.systems.RenderSystem;
-import com.mojang.blaze3d.vertex.BufferBuilder;
-import com.mojang.blaze3d.vertex.BufferUploader;
-import com.mojang.blaze3d.vertex.DefaultVertexFormat;
-import com.mojang.blaze3d.vertex.PoseStack;
-import com.mojang.blaze3d.vertex.Tesselator;
-import com.mojang.blaze3d.vertex.VertexConsumer;
-import com.mojang.blaze3d.vertex.VertexFormat;
 import com.talhanation.recruits.client.gui.worldmap.storage.WorldMapCacheManager;
 import com.talhanation.recruits.world.RecruitsRoute;
 import com.talhanation.recruits.world.RecruitsRoute.Waypoint;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.Font;
 import net.minecraft.client.gui.GuiGraphics;
-import net.minecraft.client.renderer.GameRenderer;
-import net.minecraft.client.renderer.RenderType;
-import net.minecraft.client.renderer.texture.OverlayTexture;
 import net.minecraft.network.chat.Component;
-import net.minecraft.resources.ResourceLocation;
+import net.minecraft.resources.Identifier;
 import net.minecraft.world.level.ChunkPos;
 import org.joml.Matrix4f;
 
@@ -26,7 +15,7 @@ import javax.annotation.Nullable;
 import java.util.List;
 
 public class RouteRenderer {
-    private static final ResourceLocation MAP_ICONS = new ResourceLocation("textures/map/map_icons.png");
+    private static final Identifier MAP_ICONS = Identifier.withDefaultNamespace("textures/map/decorations/player_off_map.png");
 
     private static final int COLOR_NORMAL = 0xFFFFFFFF; // white
     private static final int COLOR_NOT_LOADED = 0xFFFF4444; // red
@@ -76,8 +65,7 @@ public class RouteRenderer {
                     Minecraft.getInstance().font,
                     label,
                     mouseX - textWidth / 2,
-                    mouseY + 6,
-                    COLOR_NORMAL,
+                    mouseY + 6, com.talhanation.recruits.client.gui.util.GuiCompat.opaque(COLOR_NORMAL),
                     false);
         }
     }
@@ -144,64 +132,8 @@ public class RouteRenderer {
             GuiGraphics guiGraphics, double x1, double z1, double x2, double z2, int color) {
         if (Math.hypot(x2 - x1, z2 - z1) < 0.0001) return;
 
-        guiGraphics.flush();
-
-        RenderSystem.disableDepthTest();
-        RenderSystem.depthMask(false);
-        RenderSystem.disableCull();
-        RenderSystem.enableBlend();
-        RenderSystem.defaultBlendFunc();
-        RenderSystem.setShader(GameRenderer::getPositionColorShader);
-
-        try {
-            Matrix4f matrix = guiGraphics.pose().last().pose();
-            BufferBuilder buffer = Tesselator.getInstance().getBuilder();
-            buffer.begin(VertexFormat.Mode.QUADS, DefaultVertexFormat.POSITION_COLOR);
-            appendLineQuad(buffer, matrix, x1, z1, x2, z2, 3.0, ROUTE_LINE_SHADOW_COLOR);
-            appendLineQuad(buffer, matrix, x1, z1, x2, z2, 1.25, color);
-            BufferUploader.drawWithShader(buffer.end());
-        } finally {
-            RenderSystem.depthMask(true);
-            RenderSystem.enableCull();
-            RenderSystem.enableDepthTest();
-        }
-    }
-
-    private static void appendLineQuad(
-            BufferBuilder buffer,
-            Matrix4f matrix,
-            double x1,
-            double y1,
-            double x2,
-            double y2,
-            double thickness,
-            int color) {
-        double dx = x2 - x1;
-        double dy = y2 - y1;
-        double length = Math.hypot(dx, dy);
-        if (length < 0.0001) return;
-
-        double half = thickness * 0.5;
-        double nx = -dy / length * half;
-        double ny = dx / length * half;
-
-        int alpha = (color >>> 24) & 0xFF;
-        int red = (color >>> 16) & 0xFF;
-        int green = (color >>> 8) & 0xFF;
-        int blue = color & 0xFF;
-
-        buffer.vertex(matrix, (float) (x1 - nx), (float) (y1 - ny), 0.0F)
-                .color(red, green, blue, alpha)
-                .endVertex();
-        buffer.vertex(matrix, (float) (x2 - nx), (float) (y2 - ny), 0.0F)
-                .color(red, green, blue, alpha)
-                .endVertex();
-        buffer.vertex(matrix, (float) (x2 + nx), (float) (y2 + ny), 0.0F)
-                .color(red, green, blue, alpha)
-                .endVertex();
-        buffer.vertex(matrix, (float) (x1 + nx), (float) (y1 + ny), 0.0F)
-                .color(red, green, blue, alpha)
-                .endVertex();
+        com.talhanation.recruits.client.gui.worldmap.render.MapRenderUtil.line(guiGraphics, x1, z1, x2, z2, 3.0, ROUTE_LINE_SHADOW_COLOR);
+        com.talhanation.recruits.client.gui.worldmap.render.MapRenderUtil.line(guiGraphics, x1, z1, x2, z2, 1.25, color);
     }
 
     private static void renderWaypointIcon(
@@ -252,11 +184,11 @@ public class RouteRenderer {
     private static void renderCenteredTextAt(
             GuiGraphics guiGraphics, String text, double centerX, double y, int color) {
         Font font = Minecraft.getInstance().font;
-        PoseStack pose = guiGraphics.pose();
-        pose.pushPose();
-        pose.translate(centerX, y, 0.0);
-        guiGraphics.drawString(font, text, -font.width(text) / 2, 0, color, false);
-        pose.popPose();
+        org.joml.Matrix3x2fStack pose = guiGraphics.pose();
+        pose.pushMatrix();
+        pose.translate((float) (centerX), (float) (y));
+        guiGraphics.drawString(font, text, -font.width(text) / 2, 0, com.talhanation.recruits.client.gui.util.GuiCompat.opaque(color), false);
+        pose.popMatrix();
     }
 
     private static boolean isChunkLoaded(Waypoint waypoint) {
@@ -271,60 +203,16 @@ public class RouteRenderer {
 
     private static void renderIconAt(
             GuiGraphics guiGraphics, double pixelX, double pixelZ, int iconIndex, int color, int alpha) {
-        PoseStack pose = guiGraphics.pose();
-        pose.pushPose();
-        pose.translate(pixelX, pixelZ, 0);
-        pose.scale(3.0f, 3.0f, 3.0f);
+        org.joml.Matrix3x2fStack pose = guiGraphics.pose();
+        pose.pushMatrix();
+        pose.translate((float) (pixelX), (float) (pixelZ));
+        pose.scale((float) (3.0f), (float) (3.0f));
 
-        float u0 = (iconIndex % 16) / 16f;
-        float v0 = (iconIndex / 16) / 16f;
-        float u1 = u0 + 1f / 16f;
-        float v1 = v0 + 1f / 16f;
 
-        int a = (color >> 24) & 0xFF;
-        int r = (color >> 16) & 0xFF;
-        int g = (color >> 8) & 0xFF;
-        int b = color & 0xFF;
+        // map decorations are single sprite files now, the old icon index is kept for reference
+        com.talhanation.recruits.client.gui.worldmap.render.MapRenderUtil.texturedQuad(guiGraphics, MAP_ICONS, -1f, -1f, 1f, 1f, 0f, 1f, 1f, 0f, color);
 
-        guiGraphics.flush();
-        VertexConsumer consumer = guiGraphics.bufferSource().getBuffer(RenderType.text(MAP_ICONS));
-        Matrix4f matrix = pose.last().pose();
-        int light = 0xF000F0;
-        consumer
-                .vertex(matrix, -1f, 1f, 0f)
-                .color(r, g, b, a)
-                .uv(u0, v0)
-                .overlayCoords(OverlayTexture.NO_OVERLAY)
-                .uv2(light)
-                .normal(0, 0, 1)
-                .endVertex();
-        consumer
-                .vertex(matrix, 1f, 1f, 0f)
-                .color(r, g, b, a)
-                .uv(u1, v0)
-                .overlayCoords(OverlayTexture.NO_OVERLAY)
-                .uv2(light)
-                .normal(0, 0, 1)
-                .endVertex();
-        consumer
-                .vertex(matrix, 1f, -1f, 0f)
-                .color(r, g, b, a)
-                .uv(u1, v1)
-                .overlayCoords(OverlayTexture.NO_OVERLAY)
-                .uv2(light)
-                .normal(0, 0, 1)
-                .endVertex();
-        consumer
-                .vertex(matrix, -1f, -1f, 0f)
-                .color(r, g, b, a)
-                .uv(u0, v1)
-                .overlayCoords(OverlayTexture.NO_OVERLAY)
-                .uv2(light)
-                .normal(0, 0, 1)
-                .endVertex();
-        guiGraphics.flush();
-
-        pose.popPose();
+        pose.popMatrix();
     }
 
     // -------------------------------------------------------------------------

@@ -2,12 +2,12 @@ package com.talhanation.recruits.network;
 
 import com.talhanation.recruits.ClaimEvents;
 import com.talhanation.recruits.world.RecruitsClaim;
-import de.maxhenkel.corelib.net.Message;
+import com.talhanation.recruits.network.Message;
 import net.minecraft.network.FriendlyByteBuf;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.world.level.Level;
 import net.minecraftforge.api.distmarker.Dist;
-import net.minecraftforge.network.NetworkEvent;
+import net.minecraftforge.event.network.CustomPayloadEvent;
 
 import java.util.UUID;
 
@@ -28,12 +28,12 @@ public class MessageDeleteClaim implements Message<MessageDeleteClaim> {
         return Dist.DEDICATED_SERVER;
     }
 
-    public void executeServerSide(NetworkEvent.Context context){
+    public void executeServerSide(CustomPayloadEvent.Context context){
         if (this.claimId == null || context.getSender() == null) return;
         if (context.getSender().level().dimension() != Level.OVERWORLD) return;
 
         ClaimEvents.recruitsClaimManager.removeClaim(
-                (ServerLevel) context.getSender().getCommandSenderWorld(),
+                (ServerLevel) context.getSender().level(),
                 this.claimId);
     }
     public MessageDeleteClaim fromBytes(FriendlyByteBuf buf) {

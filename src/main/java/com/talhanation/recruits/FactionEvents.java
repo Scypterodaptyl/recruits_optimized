@@ -12,7 +12,7 @@ import net.minecraft.commands.CommandSourceStack;
 import net.minecraft.core.Holder;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.network.chat.Component;
-import net.minecraft.resources.ResourceLocation;
+import net.minecraft.resources.Identifier;
 import net.minecraft.server.MinecraftServer;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
@@ -32,8 +32,7 @@ import net.minecraftforge.event.entity.EntityLeaveLevelEvent;
 import net.minecraftforge.event.level.LevelEvent;
 import net.minecraftforge.event.server.ServerStartingEvent;
 import net.minecraftforge.event.server.ServerStoppingEvent;
-import net.minecraftforge.eventbus.api.SubscribeEvent;
-import net.minecraftforge.network.NetworkHooks;
+import net.minecraftforge.eventbus.api.listener.SubscribeEvent;
 import net.minecraftforge.network.PacketDistributor;
 import net.minecraftforge.registries.ForgeRegistries;
 import org.jetbrains.annotations.NotNull;
@@ -124,7 +123,7 @@ public class FactionEvents {
         PlayerTeam team = server.getScoreboard().getPlayerTeam(teamName);
         int cost = RecruitsServerConfig.FactionCreationCost.get();
         if(banner == null) banner = Items.BROWN_BANNER.getDefaultInstance();
-        CompoundTag nbt = banner.serializeNBT();
+        CompoundTag nbt = com.talhanation.recruits.util.NbtCompat.saveItem(banner);
 
         if (team != null) {
             serverPlayer.sendSystemMessage(Component.translatable("chat.recruits.team_creation.team_exists").withStyle(ChatFormatting.RED));
@@ -160,7 +159,7 @@ public class FactionEvents {
             //TeamCommand
             if (menu) doPayment(serverPlayer, cost);
 
-            recruitsFactionManager.addTeam(teamName, displayName, serverPlayer.getUUID(), serverPlayer.getScoreboardName(), banner.serializeNBT(), colorByte, newTeam.getColor());
+            recruitsFactionManager.addTeam(teamName, displayName, serverPlayer.getUUID(), serverPlayer.getScoreboardName(), com.talhanation.recruits.util.NbtCompat.saveItem(banner), colorByte, newTeam.getColor());
             addPlayerToData(level, teamName, 1, playerName);
             RecruitsFaction createdFactionForMember = recruitsFactionManager.getFactionByStringID(teamName);
             if (createdFactionForMember != null) createdFactionForMember.addMember(serverPlayer.getUUID(), playerName);
@@ -177,7 +176,7 @@ public class FactionEvents {
             RecruitsFaction createdFaction = recruitsFactionManager.getFactionByStringID(teamName);
             if (createdFaction != null) {
                 FactionEvent.Created createdEvent = new FactionEvent.Created(createdFaction, level, serverPlayer);
-                if (MinecraftForge.EVENT_BUS.post(createdEvent)) {
+                if (FactionEvent.Created.BUS.post(createdEvent)) {
                     // Addon hat gecanceled – Fraktion wieder entfernen
                     removeTeam(level, teamName);
                 }
@@ -205,7 +204,7 @@ public class FactionEvents {
                 isLeader = command;
 
             if (recruitsFaction != null) {
-                MinecraftForge.EVENT_BUS.post(new FactionEvent.PlayerLeft(recruitsFaction, level, player, isLeader));
+                FactionEvent.PlayerLeft.BUS.post(new FactionEvent.PlayerLeft(recruitsFaction, level, player, isLeader));
             }
             int recruits = getRecruitsOfPlayer(player.getUUID(), level).size();
             addNPCToData(level, teamName, -recruits);
@@ -251,7 +250,7 @@ public class FactionEvents {
 
         if(serverPlayer != null){
             boolean isLeader = recruitsFaction != null && serverPlayer.getUUID().equals(recruitsFaction.getTeamLeaderUUID());
-            if(!isLeader && !serverPlayer.hasPermissions(2)) return;
+            if(!isLeader && !serverPlayer.permissions().hasPermission(net.minecraft.server.permissions.Permissions.COMMANDS_GAMEMASTER)) return;
 
             if(cost > 0 && !playerHasEnoughEmeralds(serverPlayer, cost)) {
                 serverPlayer.sendSystemMessage(Component.translatable("chat.recruits.team_creation.noenough_money").withStyle(ChatFormatting.RED));
@@ -303,12 +302,12 @@ public class FactionEvents {
     public static void notifyFactionMembers(ServerLevel level, RecruitsFaction recruitsFaction, int id, String notification){
         List<ServerPlayer> playersInTeam = FactionEvents.recruitsFactionManager.getPlayersInTeam(recruitsFaction.getStringID(), level);
         for (ServerPlayer teamPlayer : playersInTeam) {
-            Main.SIMPLE_CHANNEL.send(PacketDistributor.PLAYER.with(()-> teamPlayer), new MessageToClientSetDiplomaticToast(id, recruitsFaction, notification));
+            Main.SIMPLE_CHANNEL.send(PacketDistributor.PLAYER.with(teamPlayer), new MessageToClientSetDiplomaticToast(id, recruitsFaction, notification));
         }
     }
 
     public static void notifyPlayer(ServerLevel level, RecruitsPlayerInfo playerInfo, int id, String notification){
-        Main.SIMPLE_CHANNEL.send(PacketDistributor.PLAYER.with(() -> (ServerPlayer) level.getPlayerByUUID(playerInfo.getUUID())), new MessageToClientSetToast(id, notification));
+        Main.SIMPLE_CHANNEL.send(PacketDistributor.PLAYER.with((ServerPlayer) level.getPlayerByUUID(playerInfo.getUUID())), new MessageToClientSetToast(id, notification));
     }
 
     public static void removeTeam(ServerLevel level, String teamName){
@@ -317,7 +316,7 @@ public class FactionEvents {
 
         RecruitsFaction disbandingFaction = recruitsFactionManager.getFactionByStringID(teamName);
         if (disbandingFaction != null) {
-            MinecraftForge.EVENT_BUS.post(new FactionEvent.Disbanded(disbandingFaction, level));
+            FactionEvent.Disbanded.BUS.post(new FactionEvent.Disbanded(disbandingFaction, level));
         }
         if(playerTeam != null){
             server.getScoreboard().removePlayerTeam(playerTeam);
@@ -349,7 +348,7 @@ public class FactionEvents {
 
         if(recruitsFaction == null || playerToAdd == null || !recruitsFaction.canAddPlayer()) return;
 
-        if(player != null && !player.getUUID().equals(recruitsFaction.getTeamLeaderUUID()) && !player.hasPermissions(2)) return;
+        if(player != null && !player.getUUID().equals(recruitsFaction.getTeamLeaderUUID()) && !player.permissions().hasPermission(net.minecraft.server.permissions.Permissions.COMMANDS_GAMEMASTER)) return;
 
         if(isPlayerAlreadyAFactionLeader(playerToAdd)){
             if(player != null) player.sendSystemMessage(CAN_NOT_ADD_OTHER_LEADER());
@@ -360,7 +359,7 @@ public class FactionEvents {
             RecruitsFaction joiningFaction = recruitsFactionManager.getFactionByStringID(teamName);
             if (joiningFaction != null) {
                 FactionEvent.PlayerJoined joinEvent = new FactionEvent.PlayerJoined(joiningFaction, level, playerToAdd);
-                if (MinecraftForge.EVENT_BUS.post(joinEvent)) return;
+                if (FactionEvent.PlayerJoined.BUS.post(joinEvent)) return;
             }
 
             server.getScoreboard().addPlayerToTeam(namePlayerToAdd, playerTeam);
@@ -376,7 +375,7 @@ public class FactionEvents {
 
             serverSideUpdateTeam(level);
 
-            Main.SIMPLE_CHANNEL.send(PacketDistributor.PLAYER.with(()-> playerToAdd), new MessageToClientSetDiplomaticToast(8, recruitsFaction));
+            Main.SIMPLE_CHANNEL.send(PacketDistributor.PLAYER.with(playerToAdd), new MessageToClientSetDiplomaticToast(8, recruitsFaction));
 
             notifyFactionMembers(level, recruitsFaction, 9, playerToAdd.getName().getString());
 
@@ -445,7 +444,7 @@ public class FactionEvents {
 
         if(recruitsFaction != null){
             if(recruitsFaction.addPlayerAsJoinRequest(player.getName().getString())){
-                Main.SIMPLE_CHANNEL.send(PacketDistributor.PLAYER.with(()-> recruitsFactionManager.getTeamLeader(recruitsFaction, level)), new MessageToClientSetDiplomaticToast(7, recruitsFaction, player.getName().getString()));
+                Main.SIMPLE_CHANNEL.send(PacketDistributor.PLAYER.with(recruitsFactionManager.getTeamLeader(recruitsFaction, level)), new MessageToClientSetDiplomaticToast(7, recruitsFaction, player.getName().getString()));
                 recruitsFactionManager.broadcastFactionsToAll(level);
             }
         }
@@ -496,7 +495,7 @@ public class FactionEvents {
     public static ItemStack getCurrency(){
         ItemStack currencyItemStack;
         String str = RecruitsServerConfig.RecruitCurrency.get();
-        Optional<Holder<Item>> holder = ForgeRegistries.ITEMS.getHolder(ResourceLocation.tryParse(str));
+        Optional<Holder<Item>> holder = ForgeRegistries.ITEMS.getHolder(Identifier.tryParse(str));
 
         currencyItemStack = holder.map(itemHolder -> itemHolder.value().getDefaultInstance()).orElseGet(Items.EMERALD::getDefaultInstance);
 
@@ -564,7 +563,7 @@ public class FactionEvents {
     }
 
     public static void assignToTeamMate(ServerPlayer oldOwner, UUID newOwnerUUID, AbstractRecruitEntity recruit) {
-        ServerLevel level = (ServerLevel) oldOwner.getCommandSenderWorld();
+        ServerLevel level = (ServerLevel) oldOwner.level();
 
         Team team = oldOwner.getTeam();
 
@@ -584,7 +583,7 @@ public class FactionEvents {
                     }
                     recruit.disband(oldOwner, true, true);
 
-                    Main.SIMPLE_CHANNEL.send(PacketDistributor.PLAYER.with(()-> newOwner), new MessageToClientSetToast(0, oldOwner.getName().getString()));
+                    Main.SIMPLE_CHANNEL.send(PacketDistributor.PLAYER.with(newOwner), new MessageToClientSetToast(0, oldOwner.getName().getString()));
 
                     recruit.hire(newOwner, null, true);
 
@@ -607,7 +606,7 @@ public class FactionEvents {
     }
 
     @SubscribeEvent
-    public void onTypeCommandEvent(CommandEvent event){
+    public boolean onTypeCommandEvent(CommandEvent event){
         if (event.getParseResults() != null) {
             String command = event.getParseResults().getReader().getString();
             CommandSourceStack sourceStack = event.getParseResults().getContext().build(command).getSource();
@@ -624,16 +623,16 @@ public class FactionEvents {
                         createTeam(false, sender, level, teamName, teamName, sender.getName().getString(), mainhand.getItem() instanceof BannerItem ? mainhand : null, ChatFormatting.WHITE, (byte) 0);
                         sourceStack.sendSuccess(() -> Component.translatable("commands.team.add.success", teamName), true);
 
-                        event.setCanceled(true);
                         delayedServerSideUpdate(level);
+                        return true;
                     }
                     else if(command.contains("remove")){
                         String[] parts = command.split(" ");
                         String teamName = parts[2];
                         leaveTeam(true,sender, teamName, level, false);
                         sourceStack.sendSuccess(() -> Component.translatable("commands.team.remove.success", teamName), true);
-                        event.setCanceled(true);
                         delayedServerSideUpdate(level);
+                        return true;
                     }
                     else if(command.contains("join") || command.contains("leave")){
                         delayedServerSideUpdate(level);
@@ -646,7 +645,7 @@ public class FactionEvents {
                         String[] parts = command.split(" ");
                         String teamName = parts[2];
                         createTeamConsole(sourceStack, level, teamName, "white", (byte) 0);
-                        event.setCanceled(true);
+                        return true;
                     }
                     else if (command.contains("remove")) {
                         String[] parts = command.split(" ");
@@ -663,7 +662,7 @@ public class FactionEvents {
                         } else {
                             sourceStack.sendFailure(Component.translatable("team.notFound", teamName));
                         }
-                        event.setCanceled(true);
+                        return true;
                     }
                     else if (command.contains("join")) {
                         String[] parts = command.split(" ");
@@ -678,7 +677,7 @@ public class FactionEvents {
                         } else {
                             sourceStack.sendFailure(Component.translatable("argument.player.unknown"));
                         }
-                        event.setCanceled(true);
+                        return true;
                     }
                     else if (command.contains("leave")) {
                         String[] parts = command.split(" ");
@@ -693,11 +692,12 @@ public class FactionEvents {
                         } else {
                             sourceStack.sendFailure(Component.translatable("argument.player.unknown"));
                         }
-                        event.setCanceled(true);
+                        return true;
                     }
                 }
             }
         }
+        return false;
     }
 
     public void delayedServerSideUpdate(ServerLevel serverLevel){
@@ -720,7 +720,7 @@ public class FactionEvents {
                         newTeam.setAllowFriendlyFire(RecruitsServerConfig.GlobalTeamSetting.get() && RecruitsServerConfig.GlobalTeamFriendlyFireSetting.get());
                         newTeam.setSeeFriendlyInvisibles(RecruitsServerConfig.GlobalTeamSetting.get() && RecruitsServerConfig.GlobalTeamSeeFriendlyInvisibleSetting.get());
 
-                        recruitsFactionManager.addTeam(teamName, teamName, new UUID(0,0),"none", banner.serializeNBT(), colorByte, newTeam.getColor());
+                        recruitsFactionManager.addTeam(teamName, teamName, new UUID(0,0),"none", com.talhanation.recruits.util.NbtCompat.saveItem(banner), colorByte, newTeam.getColor());
 
                         Main.LOGGER.info("The new Team " + teamName + " has been created by console.");
 
@@ -809,7 +809,7 @@ public class FactionEvents {
     }
     public static void openDisbandingScreen(Player player, UUID recruit) {
         if (player instanceof ServerPlayer) {
-            NetworkHooks.openScreen((ServerPlayer) player, new MenuProvider() {
+            ((ServerPlayer) player).openMenu(new MenuProvider() {
                 @Override
                 public Component getDisplayName() {
                     return Component.literal("disband_screen");
@@ -829,7 +829,7 @@ public class FactionEvents {
 
     public static void openTeamEditScreen(Player player) {
         if (player instanceof ServerPlayer serverPlayer) {
-            NetworkHooks.openScreen(serverPlayer, new MenuProvider() {
+            (serverPlayer).openMenu(new MenuProvider() {
 
                 @Override
                 public Component getDisplayName() {

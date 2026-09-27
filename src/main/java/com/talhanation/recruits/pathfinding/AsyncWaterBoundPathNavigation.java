@@ -3,8 +3,6 @@ package com.talhanation.recruits.pathfinding;
 import com.talhanation.recruits.config.RecruitsServerConfig;
 import net.minecraft.core.BlockPos;
 import net.minecraft.world.entity.EntityType;
-import net.minecraft.world.entity.Mob;
-import net.minecraft.world.entity.ai.navigation.PathNavigation;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.pathfinder.NodeEvaluator;
 import net.minecraft.world.level.pathfinder.PathFinder;
@@ -35,7 +33,7 @@ public class AsyncWaterBoundPathNavigation extends AsyncPathNavigation {
     }
 
     protected boolean canUpdatePath() {
-        return this.allowBreaching || this.isInLiquid();
+        return this.allowBreaching || this.mob.isInLiquid();
     }
 
     protected @NotNull Vec3 getTempMobPos() {
@@ -51,9 +49,14 @@ public class AsyncWaterBoundPathNavigation extends AsyncPathNavigation {
     }
 
     public boolean isStableDestination(@NotNull BlockPos p_26608_) {
-        return !this.level.getBlockState(p_26608_).isSolidRender(this.level, p_26608_);
+        return !this.level.getBlockState(p_26608_).isSolidRender();
     }
 
     public void setCanFloat(boolean p_26612_) {
+    }
+
+    @Override
+    public boolean canNavigateGround() {
+        return false;
     }
 }

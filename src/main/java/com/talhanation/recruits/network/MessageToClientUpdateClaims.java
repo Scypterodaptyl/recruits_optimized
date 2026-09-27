@@ -4,12 +4,12 @@ import com.talhanation.recruits.client.ClientManager;
 import com.talhanation.recruits.client.gui.worldmap.claim.WorldMapClaimIndex;
 import com.talhanation.recruits.network.codec.ClaimNetworkCodec;
 import com.talhanation.recruits.world.RecruitsClaim;
-import de.maxhenkel.corelib.net.Message;
+import com.talhanation.recruits.network.Message;
 import net.minecraft.network.FriendlyByteBuf;
 import net.minecraft.world.item.ItemStack;
 import net.minecraftforge.api.distmarker.Dist;
 import net.minecraftforge.api.distmarker.OnlyIn;
-import net.minecraftforge.network.NetworkEvent;
+import net.minecraftforge.event.network.CustomPayloadEvent;
 
 import java.util.ArrayList;
 import java.util.Collections;
@@ -64,7 +64,7 @@ public class MessageToClientUpdateClaims implements Message<MessageToClientUpdat
 
     @Override
     @OnlyIn(Dist.CLIENT)
-    public void executeClientSide(NetworkEvent.Context context) {
+    public void executeClientSide(CustomPayloadEvent.Context context) {
         if (resetClaims) {
             ClientManager.recruitsClaims = new ArrayList<>(this.claims);
             ClientManager.activeSiegeClaims.clear();
@@ -92,7 +92,7 @@ public class MessageToClientUpdateClaims implements Message<MessageToClientUpdat
         this.chunkCost = buf.readInt();
         this.maxClaimChunks = buf.readInt();
         this.cascadeOfCost = buf.readBoolean();
-        this.currencyItemStack = buf.readItem();
+        this.currencyItemStack = com.talhanation.recruits.util.NbtCompat.loadItem(buf.readNbt());
         this.allowClaiming = buf.readBoolean();
         this.fogOfWarEnabled = buf.readBoolean();
         this.resetClaims = buf.readBoolean();
@@ -107,7 +107,7 @@ public class MessageToClientUpdateClaims implements Message<MessageToClientUpdat
         buf.writeInt(this.chunkCost);
         buf.writeInt(this.maxClaimChunks);
         buf.writeBoolean(this.cascadeOfCost);
-        buf.writeItemStack(this.currencyItemStack, false);
+        buf.writeNbt(com.talhanation.recruits.util.NbtCompat.saveItem(this.currencyItemStack));
         buf.writeBoolean(this.allowClaiming);
         buf.writeBoolean(this.fogOfWarEnabled);
         buf.writeBoolean(this.resetClaims);

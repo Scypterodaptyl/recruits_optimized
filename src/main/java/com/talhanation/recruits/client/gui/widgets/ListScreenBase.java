@@ -3,7 +3,6 @@ package com.talhanation.recruits.client.gui.widgets;
 import com.talhanation.recruits.client.gui.RecruitsScreenBase;
 import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.network.chat.Component;
-import com.mojang.blaze3d.vertex.PoseStack;
 
 public abstract class ListScreenBase extends RecruitsScreenBase {
 

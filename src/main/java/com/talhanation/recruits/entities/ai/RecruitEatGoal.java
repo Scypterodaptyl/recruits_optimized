@@ -21,9 +21,9 @@ public class RecruitEatGoal extends Goal {
 
     @Override
     public boolean canUse() {
-        if(!this.recruit.getCommandSenderWorld().isClientSide() && !RecruitsServerConfig.RecruitsUpdateHungerAndMorale.get()) return false;
+        if(!this.recruit.level().isClientSide() && !RecruitsServerConfig.RecruitsUpdateHungerAndMorale.get()) return false;
 
-        long i = this.recruit.getCommandSenderWorld().getGameTime();
+        long i = this.recruit.level().getGameTime();
         if(i - this.lastCanUseCheckMorale >= 1200L){
             this.lastCanUseCheckMorale = i;
             this.recruit.updateMorale();
@@ -74,10 +74,13 @@ public class RecruitEatGoal extends Goal {
         Main.LOGGER.debug("Start--------------:");
         */
 
-        recruit.heal(Objects.requireNonNull(foodStack.getItem().getFoodProperties(foodStack, recruit)).getSaturationModifier() * 1);
+        net.minecraft.world.food.FoodProperties food = Objects.requireNonNull(foodStack.get(net.minecraft.core.component.DataComponents.FOOD));
+        // FoodProperties stores the absolute saturation now, convert back to the old modifier value
+        float saturationModifier = food.nutrition() > 0 ? food.saturation() / (food.nutrition() * 2.0F) : 0.0F;
+        recruit.heal(saturationModifier * 1);
         if (!recruit.isSaturated()){
-            float saturation = Objects.requireNonNull(foodStack.getItem().getFoodProperties(foodStack, recruit)).getSaturationModifier();
-            float nutrition = Objects.requireNonNull(foodStack.getItem().getFoodProperties(foodStack, recruit)).getNutrition() * 5;
+            float saturation = saturationModifier;
+            float nutrition = food.nutrition() * 5;
 
             float currentHunger = recruit.getHunger();
             float newHunger = currentHunger + saturation + nutrition;

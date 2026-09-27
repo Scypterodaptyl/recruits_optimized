@@ -1,11 +1,11 @@
 package com.talhanation.recruits.network;
 
 import com.talhanation.recruits.entities.MessengerEntity;
-import de.maxhenkel.corelib.net.Message;
+import com.talhanation.recruits.network.Message;
 import net.minecraft.network.FriendlyByteBuf;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraftforge.api.distmarker.Dist;
-import net.minecraftforge.network.NetworkEvent;
+import net.minecraftforge.event.network.CustomPayloadEvent;
 
 import java.util.List;
 import java.util.Objects;
@@ -24,9 +24,9 @@ public class MessageAnswerMessenger implements Message<MessageAnswerMessenger> {
         return Dist.DEDICATED_SERVER;
     }
 
-    public void executeServerSide(NetworkEvent.Context context){
+    public void executeServerSide(CustomPayloadEvent.Context context){
         ServerPlayer player = context.getSender();
-        List<MessengerEntity> list = Objects.requireNonNull(context.getSender()).getCommandSenderWorld().getEntitiesOfClass(
+        List<MessengerEntity> list = Objects.requireNonNull(context.getSender()).level().getEntitiesOfClass(
                 MessengerEntity.class,
                 context.getSender().getBoundingBox().inflate(16D)
         );

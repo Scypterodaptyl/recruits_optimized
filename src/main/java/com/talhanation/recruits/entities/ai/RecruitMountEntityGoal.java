@@ -5,7 +5,6 @@ import com.talhanation.recruits.entities.AbstractRecruitEntity;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.ai.goal.Goal;
-import net.minecraft.world.entity.animal.horse.AbstractHorse;
 
 public class RecruitMountEntityGoal extends Goal {
 
@@ -60,7 +59,7 @@ public class RecruitMountEntityGoal extends Goal {
 
     private void findMount(){
         if (recruit.getMountUUID() == null) return;
-        if (!(recruit.getCommandSenderWorld() instanceof ServerLevel serverLevel)) return;
+        if (!(recruit.level() instanceof ServerLevel serverLevel)) return;
 
         Entity candidate = serverLevel.getEntity(recruit.getMountUUID());
         if (candidate != null && candidate.distanceToSqr(recruit) <= 32D * 32D && recruit.canMountEntity(candidate)) {

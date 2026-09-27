@@ -23,6 +23,7 @@
   "block.recruits.horseman_block": "Стол рекрута-всадника",
   "block.recruits.crossbowman_block": "Стол рекрута-арбалетчика",
   "category.recruits": "Рекруты",
+  "key.category.recruits.main": "Рекруты",
   "key.recruits.command_screen_key": "Открыть экран командования",
   "key.recruits.team_screen_key": "Открыть экран отряда",
   "key.recruits.map_screen_key": "Открыть экран карты территорий",

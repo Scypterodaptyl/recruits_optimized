@@ -112,7 +112,7 @@ public class SiegeWeaponCatapultController implements ISiegeController {
             this.backward = false;
             this.right = false;
             this.left = false;
-            if(DEBUG && siegeEngineer.getOwner() != null) this.siegeEngineer.getOwner().sendSystemMessage(Component.literal(siegeEngineer.getName().getString() + ": REACHED POS"));
+            if(DEBUG && siegeEngineer.getOwner() != null) this.siegeEngineer.getOwner().displayClientMessage(Component.literal(siegeEngineer.getName().getString() + ": REACHED POS"), false);
             return;
         }
 
@@ -138,7 +138,7 @@ public class SiegeWeaponCatapultController implements ISiegeController {
                 left = phiBackward > (ref + tolerance);
                 right = phiBackward < (ref - tolerance);
 
-                if(DEBUG && siegeEngineer.getOwner() != null) this.siegeEngineer.getOwner().sendSystemMessage(Component.literal(siegeEngineer.getName().getString() + ": MOVING BACKWARD dot: " + String.format("%.2f", dot)));
+                if(DEBUG && siegeEngineer.getOwner() != null) this.siegeEngineer.getOwner().displayClientMessage(Component.literal(siegeEngineer.getName().getString() + ": MOVING BACKWARD dot: " + String.format("%.2f", dot)), false);
 
                 this.backward = true;
                 this.forward = false;
@@ -151,7 +151,7 @@ public class SiegeWeaponCatapultController implements ISiegeController {
                 left = phi < (ref - tolerance);
                 right = phi > (ref + tolerance);
 
-                if(DEBUG && siegeEngineer.getOwner() != null) this.siegeEngineer.getOwner().sendSystemMessage(Component.literal(siegeEngineer.getName().getString() + ": FORWARD phi: " + String.format("%.1f", phi) + " dot: " + String.format("%.2f", dot)));
+                if(DEBUG && siegeEngineer.getOwner() != null) this.siegeEngineer.getOwner().displayClientMessage(Component.literal(siegeEngineer.getName().getString() + ": FORWARD phi: " + String.format("%.1f", phi) + " dot: " + String.format("%.2f", dot)), false);
 
                 if(phi > (ref + 20) || phi < (ref - 20)){
                     this.forward = false;
@@ -171,7 +171,7 @@ public class SiegeWeaponCatapultController implements ISiegeController {
 
             this.path = pathNavigation.createPath(this.movementPos.x, this.movementPos.y, this.movementPos.z, 0);
             if(DEBUG && siegeEngineer.getOwner() != null)
-                this.siegeEngineer.getOwner().sendSystemMessage(Component.literal(siegeEngineer.getName().getString() + ": CREATING PATH"));
+                this.siegeEngineer.getOwner().displayClientMessage(Component.literal(siegeEngineer.getName().getString() + ": CREATING PATH"), false);
 
             if(path != null && (!(path instanceof AsyncPath ap) || ap.isProcessed())){
                 try {
@@ -198,7 +198,7 @@ public class SiegeWeaponCatapultController implements ISiegeController {
                 }
             }
 
-            if(DEBUG && siegeEngineer.getOwner() != null) this.siegeEngineer.getOwner().sendSystemMessage(Component.literal(siegeEngineer.getName().getString() + ": FOLLOWING PATH"));
+            if(DEBUG && siegeEngineer.getOwner() != null) this.siegeEngineer.getOwner().displayClientMessage(Component.literal(siegeEngineer.getName().getString() + ": FOLLOWING PATH"), false);
         }
     }
 
@@ -297,9 +297,7 @@ public class SiegeWeaponCatapultController implements ISiegeController {
                 if (!noAmmoMessage) {
                     noAmmoMessage = true;
                     if (siegeEngineer.getOwner() != null) {
-                        siegeEngineer.getOwner().sendSystemMessage(
-                                Component.literal(siegeEngineer.getName().getString() + ": I have no Ammo for the catapult.")
-                        );
+                        siegeEngineer.getOwner().displayClientMessage(Component.literal(siegeEngineer.getName().getString() + ": I have no Ammo for the catapult."), false);
                     }
                 }
                 return false;
@@ -352,8 +350,8 @@ public class SiegeWeaponCatapultController implements ISiegeController {
         catapult.repairSiegeWeapon(siegeEngineer);
 
         if(DEBUG && siegeEngineer.getOwner() != null){
-            siegeEngineer.getOwner().sendSystemMessage(Component.literal(
-                    siegeEngineer.getName().getString() + ": Repairing catapult. Health: " + String.format("%.0f", catapult.getHealth())));
+            siegeEngineer.getOwner().displayClientMessage(Component.literal(
+                    siegeEngineer.getName().getString() + ": Repairing catapult. Health: " + String.format("%.0f", catapult.getHealth())), false);
         }
     }
 

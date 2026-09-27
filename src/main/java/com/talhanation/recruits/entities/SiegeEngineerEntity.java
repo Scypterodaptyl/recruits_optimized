@@ -22,7 +22,7 @@ import net.minecraft.world.entity.*;
 import net.minecraft.world.entity.ai.attributes.AttributeSupplier;
 import net.minecraft.world.entity.ai.attributes.Attributes;
 import com.talhanation.recruits.pathfinding.AsyncGroundPathNavigation;
-import net.minecraft.world.entity.animal.horse.AbstractHorse;
+import net.minecraft.world.entity.animal.equine.AbstractHorse;
 import net.minecraft.world.entity.item.ItemEntity;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.BowItem;
@@ -54,12 +54,12 @@ public class SiegeEngineerEntity extends AbstractRecruitEntity implements ICompa
         this.ballistaController = new SiegeWeaponBallistaController(this, world);
     }
 
-    protected void defineSynchedData() {
-        super.defineSynchedData();
-        this.entityData.define(OWNER_NAME, "");
-        this.entityData.define(STRATEGIC_FIRE_POS, Optional.empty());
-        this.entityData.define(SHOULD_STRATEGIC_FIRE, false);
-        this.entityData.define(TARGET_PRIORITY, TargetPriority.CLOSEST.getIndex());
+    protected void defineSynchedData(SynchedEntityData.Builder builder) {
+        super.defineSynchedData(builder);
+        builder.define(OWNER_NAME, "");
+        builder.define(STRATEGIC_FIRE_POS, Optional.empty());
+        builder.define(SHOULD_STRATEGIC_FIRE, false);
+        builder.define(TARGET_PRIORITY, TargetPriority.CLOSEST.getIndex());
     }
     @Override
     protected void registerGoals() {
@@ -67,8 +67,8 @@ public class SiegeEngineerEntity extends AbstractRecruitEntity implements ICompa
         this.goalSelector.addGoal(2, new UseShield(this));
     }
 
-    public void addAdditionalSaveData(CompoundTag nbt) {
-        super.addAdditionalSaveData(nbt);
+    public void saveRecruitData(CompoundTag nbt) {
+        super.saveRecruitData(nbt);
         nbt.putString("OwnerName", this.getOwnerName());
         if(this.getStrategicFirePos() != null){
 
@@ -80,19 +80,19 @@ public class SiegeEngineerEntity extends AbstractRecruitEntity implements ICompa
         nbt.putInt("TargetPriority", this.getTargetPriority());
     }
 
-    public void readAdditionalSaveData(CompoundTag nbt) {
-        super.readAdditionalSaveData(nbt);
-        this.setOwnerName(nbt.getString("OwnerName"));
+    public void loadRecruitData(CompoundTag nbt) {
+        super.loadRecruitData(nbt);
+        this.setOwnerName(nbt.getStringOr("OwnerName", ""));
 
         if (nbt.contains("StrategicFirePosX") && nbt.contains("StrategicFirePosY") && nbt.contains("StrategicFirePosZ")) {
             this.setStrategicFirePos(new BlockPos (
-                    nbt.getInt("StrategicFirePosX"),
-                    nbt.getInt("StrategicFirePosY"),
-                    nbt.getInt("StrategicFirePosZ")));
+                    nbt.getIntOr("StrategicFirePosX", 0),
+                    nbt.getIntOr("StrategicFirePosY", 0),
+                    nbt.getIntOr("StrategicFirePosZ", 0)));
 
         }
-        this.setShouldStrategicFire(nbt.getBoolean("ShouldStrategicFire"));
-        if(nbt.contains("TargetPriority")) this.setTargetPriority(TargetPriority.fromIndex(nbt.getInt("TargetPriority")));
+        this.setShouldStrategicFire(nbt.getBooleanOr("ShouldStrategicFire", false));
+        if(nbt.contains("TargetPriority")) this.setTargetPriority(TargetPriority.fromIndex(nbt.getIntOr("TargetPriority", 0)));
 
     }
 
@@ -101,19 +101,19 @@ public class SiegeEngineerEntity extends AbstractRecruitEntity implements ICompa
         return Mob.createMobAttributes()
                 .add(Attributes.MAX_HEALTH, 20.0D)
                 .add(Attributes.MOVEMENT_SPEED, 0.3D)
-                .add(ForgeMod.SWIM_SPEED.get(), 0.3D)
+                .add(ForgeMod.SWIM_SPEED.getHolder().get(), 0.3D)
                 .add(Attributes.KNOCKBACK_RESISTANCE, 0.1D)
                 .add(Attributes.ATTACK_DAMAGE, 0.5D)
                 .add(Attributes.FOLLOW_RANGE, 128.0D)
-                .add(ForgeMod.ENTITY_REACH.get(), 0D)
+                .add(Attributes.ENTITY_INTERACTION_RANGE, 0D)
                 .add(Attributes.ATTACK_SPEED);
     }
 
     @Nullable
-    public SpawnGroupData finalizeSpawn(ServerLevelAccessor world, DifficultyInstance difficultyInstance, MobSpawnType reason, @Nullable SpawnGroupData data, @Nullable CompoundTag nbt) {
-        SpawnGroupData ilivingentitydata = super.finalizeSpawn(world, difficultyInstance, reason, data, nbt);
+    public SpawnGroupData finalizeSpawn(ServerLevelAccessor world, DifficultyInstance difficultyInstance, EntitySpawnReason reason, @Nullable SpawnGroupData data) {
+        SpawnGroupData ilivingentitydata = super.finalizeSpawn(world, difficultyInstance, reason, data);
         ((AsyncGroundPathNavigation)this.getNavigation()).setCanOpenDoors(true);
-        this.populateDefaultEquipmentEnchantments(random, difficultyInstance);
+        this.populateDefaultEquipmentEnchantments(world, random, difficultyInstance);
 
         this.initSpawn();
 
@@ -190,12 +190,12 @@ public class SiegeEngineerEntity extends AbstractRecruitEntity implements ICompa
     }
 
     @Override
-    public boolean startRiding(Entity entity) {
+    public boolean startRiding(Entity entity, boolean force, boolean sendEvent) {
         this.selectController(entity);
 
         if(this.siegeController != null)  siegeController.tryMount(entity);
 
-        return super.startRiding(entity);
+        return super.startRiding(entity, force, sendEvent);
     }
 
     @Override
@@ -266,7 +266,7 @@ public class SiegeEngineerEntity extends AbstractRecruitEntity implements ICompa
         else siegeController.setTargetPos(null);
 
 
-        if (!(this.getCommandSenderWorld() instanceof ServerLevel serverLevel)) return;
+        if (!(this.level() instanceof ServerLevel serverLevel)) return;
 
         AABB scanBox = this.getBoundingBox().inflate(200D);
         List<Entity> targets = new ArrayList<>();
@@ -350,7 +350,7 @@ public class SiegeEngineerEntity extends AbstractRecruitEntity implements ICompa
         }
 
         // Also check nearby siege weapons that have passengers
-        if (!(this.getCommandSenderWorld() instanceof ServerLevel serverLevel)) return null;
+        if (!(this.level() instanceof ServerLevel serverLevel)) return null;
         AABB scanBox = this.getBoundingBox().inflate(200D);
         List<Entity> allEntities = NearbyEntityCache.allEntities(serverLevel).stream()
                 .filter(e -> scanBox.contains(e.getX(), e.getY(), e.getZ()))
@@ -370,7 +370,7 @@ public class SiegeEngineerEntity extends AbstractRecruitEntity implements ICompa
         }
 
         // Also check nearby ships that have passengers
-        if (!(this.getCommandSenderWorld() instanceof ServerLevel serverLevel)) return null;
+        if (!(this.level() instanceof ServerLevel serverLevel)) return null;
         AABB scanBox = this.getBoundingBox().inflate(200D);
         List<Entity> ships = NearbyEntityCache.allEntities(serverLevel).stream()
                 .filter(e -> scanBox.contains(e.getX(), e.getY(), e.getZ()))

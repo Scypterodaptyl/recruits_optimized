@@ -29,7 +29,7 @@ public class RecruitFloatGoal extends Goal {
     }
 
     public boolean canUse() {
-        long i = this.mob.getCommandSenderWorld().getGameTime();
+        long i = this.mob.level().getGameTime();
         if (i - this.lastCanUseCheck >= 20L) {
             this.lastCanUseCheck = i;
             return this.mob.isInWater() && this.mob.getFluidHeight(FluidTags.WATER) > this.mob.getFluidJumpThreshold() || this.mob.isInLava() || this.mob.isInFluidType((fluidType, height) -> this.mob.canSwimInFluidType(fluidType) && height > this.mob.getFluidJumpThreshold());

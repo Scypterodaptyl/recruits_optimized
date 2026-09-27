@@ -42,7 +42,7 @@ public class ItemWithLabelWidget extends AbstractWidget {
         // Text rendern
         int textX = itemX + 20;
         int textY = getY() + (this.height - mc.font.lineHeight) / 2;
-        guiGraphics.drawString(mc.font, label, textX, textY, 0xFFFFFF);
+        guiGraphics.drawString(mc.font, label, textX, textY, 0xFFFFFFFF);
     }
 
     @Override

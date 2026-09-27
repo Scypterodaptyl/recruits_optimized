@@ -23,7 +23,7 @@ import net.minecraft.commands.synchronization.SuggestionProviders;
 import net.minecraft.core.BlockPos;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.network.chat.Component;
-import net.minecraft.resources.ResourceLocation;
+import net.minecraft.resources.Identifier;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.entity.Entity;
@@ -31,7 +31,6 @@ import net.minecraft.world.entity.EntityType;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.ChunkPos;
 import net.minecraft.world.scores.PlayerTeam;
-import net.minecraft.world.scores.Team;
 import net.minecraftforge.server.command.EnumArgument;
 
 import java.util.*;
@@ -42,7 +41,7 @@ public class RecruitsAdminCommands {
     private static final List<String> RELATIONS = List.of("Ally", "Neutral", "Enemy");
 
     private static final SuggestionProvider<CommandSourceStack> RELATION_SUGGESTIONS =
-            SuggestionProviders.register(new ResourceLocation("recruits:relations"),
+            SuggestionProviders.register(Identifier.parse("recruits:relations"),
                     (context, builder) -> {
                         for (String relation : RELATIONS) {
                             builder.suggest(relation);
@@ -50,7 +49,7 @@ public class RecruitsAdminCommands {
                         return builder.buildFuture();
                     });
     public static void register(CommandDispatcher<CommandSourceStack> dispatcher) {
-        LiteralArgumentBuilder<CommandSourceStack> literalBuilder = Commands.literal("recruits").requires((source) -> source.hasPermission(2));
+        LiteralArgumentBuilder<CommandSourceStack> literalBuilder = Commands.literal("recruits").requires(Commands.hasPermission(Commands.LEVEL_GAMEMASTERS));
         //TeamCommand
         literalBuilder.then(Commands.literal("admin")
                 .then(Commands.literal("tpRecruitsToOwner")
@@ -59,13 +58,13 @@ public class RecruitsAdminCommands {
                             ServerLevel level = conetext.getSource().getLevel();
 
 
-                            return tpToOwner(level, ScoreHolderArgument.getNamesWithDefaultWildcard(conetext, "Owner"));
+                            return tpToOwner(level, ScoreHolderArgument.getNamesWithDefaultWildcard(conetext, "Owner").stream().map(net.minecraft.world.scores.ScoreHolder::getScoreboardName).toList());
                         })))
                 .then(Commands.literal("unitsManager")
                         .then(Commands.literal("getUnitsCount")
                                 .then(Commands.argument("Player", ScoreHolderArgument.scoreHolders()).suggests(ScoreHolderArgument.SUGGEST_SCORE_HOLDERS)
                                         .executes((context) -> {
-                                            String playerName = ScoreHolderArgument.getName(context, "Player");
+                                            String playerName = ScoreHolderArgument.getName(context, "Player").getScoreboardName();
                                             ServerPlayer player = context.getSource().getLevel().getServer().getPlayerList().getPlayerByName(playerName);
 
                                             if(player == null) {
@@ -83,7 +82,7 @@ public class RecruitsAdminCommands {
                                 .then(Commands.argument("Player", ScoreHolderArgument.scoreHolders()).suggests(ScoreHolderArgument.SUGGEST_SCORE_HOLDERS)
                                         .then(Commands.argument("Amount", IntegerArgumentType.integer(0))
                                                 .executes((context) -> {
-                                                    String playerName = ScoreHolderArgument.getName(context, "Player");
+                                                    String playerName = ScoreHolderArgument.getName(context, "Player").getScoreboardName();
                                                     ServerPlayer player = context.getSource().getLevel().getServer().getPlayerList().getPlayerByName(playerName);
 
                                                     if(player == null) {
@@ -152,7 +151,7 @@ public class RecruitsAdminCommands {
                                                     PlayerTeam playerTeam = TeamArgument.getTeam(context, "Faction");
                                                     RecruitsFaction faction = FactionEvents.recruitsFactionManager.getFactionByStringID(playerTeam.getName());
 
-                                                    String playerName = ScoreHolderArgument.getName(context, "Player");
+                                                    String playerName = ScoreHolderArgument.getName(context, "Player").getScoreboardName();
                                                     ServerPlayer player = context.getSource().getLevel().getServer().getPlayerList().getPlayerByName(playerName);
 
                                                     if(faction == null) {
@@ -449,7 +448,7 @@ public class RecruitsAdminCommands {
                                                 return 0;
                                             }
 
-                                            Collection<String> ownerNames = ScoreHolderArgument.getNamesWithDefaultWildcard(ctx, "owner");
+                                            Collection<String> ownerNames = ScoreHolderArgument.getNamesWithDefaultWildcard(ctx, "owner").stream().map(net.minecraft.world.scores.ScoreHolder::getScoreboardName).toList();
                                             String ownerName = ownerNames.stream().findFirst().orElse(null);
 
                                             if (ownerName == null) {
@@ -591,8 +590,8 @@ public class RecruitsAdminCommands {
 
                                             if(handItem.getItem() instanceof RecruitsSpawnEgg recruitsSpawnEgg){
                                                 BlockPos pos = player.getOnPos();
-                                                EntityType<?> entitytype = recruitsSpawnEgg.getType(handItem.getTag());
-                                                CompoundTag itemTag = handItem.getTag();
+                                                EntityType<?> entitytype = recruitsSpawnEgg.getType(com.talhanation.recruits.util.NbtCompat.getCustomTag(handItem));
+                                                CompoundTag itemTag = com.talhanation.recruits.util.NbtCompat.getCustomTag(handItem);
 
                                                 if (itemTag != null) {
                                                     for (int i = 0; i < amount; i++) {
@@ -611,13 +610,13 @@ public class RecruitsAdminCommands {
                 )
                 .then(Commands.literal("nobleVillagerManager")
                         .then(Commands.literal("addNobleTrade")
-                                .then(Commands.argument("Resource", ResourceLocationArgument.id())
+                                .then(Commands.argument("Resource", IdentifierArgument.id())
                                         .then(Commands.argument("MaxUses", IntegerArgumentType.integer())
                                                 .then(Commands.argument("VillagerNoble", EntityArgument.entity())
                                                         .executes((context) -> {
                                                             Entity entity = EntityArgument.getEntity(context, "VillagerNoble");
                                                             if(entity instanceof VillagerNobleEntity nobleVillager){
-                                                                ResourceLocation resourceLocation = ResourceLocationArgument.getId(context, "Resource");
+                                                                Identifier resourceLocation = IdentifierArgument.getId(context, "Resource");
 
                                                                 RecruitsHireTrade hireTrade = RecruitsHireTradesRegistry.getByResourceLocation(resourceLocation);
 
@@ -684,13 +683,13 @@ public class RecruitsAdminCommands {
                                 )
                         )
                         .then(Commands.literal("removeNobleTrade")
-                                .then(Commands.argument("Resource", ResourceLocationArgument.id())
+                                .then(Commands.argument("Resource", IdentifierArgument.id())
                                         .then(Commands.argument("VillagerNoble", EntityArgument.entity())
                                                 .executes((context) -> {
                                                     Entity entity = EntityArgument.getEntity(context, "VillagerNoble");
 
                                                     if(entity instanceof VillagerNobleEntity nobleVillager){
-                                                        ResourceLocation resourceLocation = ResourceLocationArgument.getId(context, "Resource");
+                                                        Identifier resourceLocation = IdentifierArgument.getId(context, "Resource");
 
                                                         if(nobleVillager.hasTrade(resourceLocation)){
                                                             nobleVillager.removeTrade(resourceLocation);

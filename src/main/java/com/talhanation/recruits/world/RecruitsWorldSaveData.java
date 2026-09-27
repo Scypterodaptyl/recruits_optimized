@@ -1,5 +1,6 @@
 package com.talhanation.recruits.world;
 
+import net.minecraft.core.UUIDUtil;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.world.level.saveddata.SavedData;
@@ -21,24 +22,22 @@ public class RecruitsWorldSaveData extends SavedData {
     }
 
     public static RecruitsWorldSaveData get(ServerLevel level) {
-        return level.getDataStorage().computeIfAbsent(
-                RecruitsWorldSaveData::load,
-                RecruitsWorldSaveData::new,
-                FILE_ID);
+        return level.getDataStorage().computeIfAbsent(TYPE);
     }
 
     public static RecruitsWorldSaveData load(CompoundTag nbt) {
-        UUID worldId = nbt.hasUUID("WorldId") ? nbt.getUUID("WorldId") : null;
+        UUID worldId = nbt.read("WorldId", UUIDUtil.CODEC).isPresent() ? nbt.read("WorldId", UUIDUtil.CODEC).orElse(null) : null;
         return new RecruitsWorldSaveData(worldId);
     }
 
-    @Override
-    public CompoundTag save(CompoundTag nbt) {
-        nbt.putUUID("WorldId", worldId);
+        public CompoundTag save(CompoundTag nbt) {
+        nbt.store("WorldId", UUIDUtil.CODEC, worldId);
         return nbt;
     }
 
     public UUID getWorldId() {
         return worldId;
     }
+
+    public static final net.minecraft.world.level.saveddata.SavedDataType<RecruitsWorldSaveData> TYPE = com.talhanation.recruits.util.SavedDataUtil.type(FILE_ID, RecruitsWorldSaveData::new, RecruitsWorldSaveData::load, data -> data.save(new CompoundTag()));
 }

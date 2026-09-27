@@ -8,8 +8,8 @@ import net.minecraft.server.level.ServerLevel;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.ai.goal.Goal;
-import net.minecraft.world.entity.animal.horse.AbstractHorse;
-import net.minecraft.world.entity.vehicle.Boat;
+import net.minecraft.world.entity.animal.equine.AbstractHorse;
+import net.minecraft.world.entity.vehicle.boat.Boat;
 
 import java.util.EnumSet;
 
@@ -76,7 +76,7 @@ public class RecruitProtectEntityGoal extends Goal {
 
         if (this.protectingMob == null || !protectingMob.isAlive()) {
             if(this.protectingMob != null && !protectingMob.isAlive()){
-                if (recruit.getOwner() != null)recruit.getOwner().sendSystemMessage(TEXT_PROTECT_DIED(recruit.getName().getString()));
+                if (recruit.getOwner() != null)recruit.getOwner().displayClientMessage(TEXT_PROTECT_DIED(recruit.getName().getString()), false);
             }
             clear();
         }
@@ -89,7 +89,7 @@ public class RecruitProtectEntityGoal extends Goal {
 
     public void getProtecting(){
         if (recruit.getProtectUUID() == null) return;
-        if (!(recruit.getCommandSenderWorld() instanceof ServerLevel serverLevel)) return;
+        if (!(recruit.level() instanceof ServerLevel serverLevel)) return;
 
         if (serverLevel.getEntity(recruit.getProtectUUID()) instanceof LivingEntity living) {
             this.protectingMob = living;

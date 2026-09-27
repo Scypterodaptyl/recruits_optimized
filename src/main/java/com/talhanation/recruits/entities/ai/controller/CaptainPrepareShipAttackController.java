@@ -18,7 +18,7 @@ public class CaptainPrepareShipAttackController extends PatrolLeaderAttackContro
     }
 
     public void start() {
-        if(this.captain.getCommandSenderWorld().isClientSide()) return;
+        if(this.captain.level().isClientSide()) return;
 
         // When not on a ship, fall back to standard land attack behaviour
         if(captain.smallShipsController.ship == null) {

@@ -60,7 +60,7 @@ public class FleeTNT extends Goal {
         cooldown = 4 + entity.getRandom().nextInt(3);
 
         tntEntities.clear();
-        if (entity.getCommandSenderWorld() instanceof ServerLevel serverLevel) {
+        if (entity.level() instanceof ServerLevel serverLevel) {
             AABB aabb = entity.getBoundingBox().inflate(SAFE_RADIUS);
             for (Entity nearby : NearbyEntityCache.allEntities(serverLevel)) {
                 if (nearby instanceof PrimedTnt tnt && aabb.contains(tnt.getX(), tnt.getY(), tnt.getZ())) {

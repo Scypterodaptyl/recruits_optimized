@@ -19,30 +19,32 @@ import com.talhanation.recruits.init.ModItems;
 import com.talhanation.recruits.init.ModScreens;
 import com.talhanation.recruits.init.*;
 import com.talhanation.recruits.network.*;
-import de.maxhenkel.corelib.CommonRegistry;
 import net.minecraft.world.item.CreativeModeTabs;
 import net.minecraftforge.api.distmarker.Dist;
 import net.minecraftforge.api.distmarker.OnlyIn;
 import net.minecraftforge.common.MinecraftForge;
 import net.minecraftforge.event.BuildCreativeModeTabContentsEvent;
 import net.minecraftforge.event.RegisterCommandsEvent;
-import net.minecraftforge.eventbus.api.IEventBus;
-import net.minecraftforge.eventbus.api.SubscribeEvent;
-import net.minecraftforge.fml.*;
+import net.minecraftforge.event.entity.EntityAttributeCreationEvent;
+import net.minecraftforge.eventbus.api.bus.BusGroup;
+import net.minecraft.resources.Identifier;
+import net.minecraftforge.eventbus.api.listener.SubscribeEvent;
+import net.minecraftforge.fml.ModList;
+import net.minecraftforge.fml.loading.FMLEnvironment;
 import net.minecraftforge.fml.common.Mod;
 import net.minecraftforge.fml.config.ModConfig;
 import net.minecraftforge.fml.event.lifecycle.FMLClientSetupEvent;
 import net.minecraftforge.fml.event.lifecycle.FMLCommonSetupEvent;
 import net.minecraftforge.fml.javafmlmod.FMLJavaModLoadingContext;
 import net.minecraftforge.fml.loading.FMLPaths;
-import net.minecraftforge.network.simple.SimpleChannel;
+import net.minecraftforge.network.SimpleChannel;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
 @Mod(Main.MOD_ID)
 public class Main {
     public static final String MOD_ID = "recruits";
-    public static SimpleChannel SIMPLE_CHANNEL;
+    public static RecruitsChannel SIMPLE_CHANNEL;
     public static final Logger LOGGER = LogManager.getLogger(MOD_ID);
     public static boolean isMusketModLoaded;
     public static boolean isSmallShipsLoaded;
@@ -53,31 +55,35 @@ public class Main {
     public static boolean isCorpseLoaded;
     public static boolean isRPGZLoaded;
 
-    public Main() {
-        final IEventBus modEventBus = FMLJavaModLoadingContext.get().getModEventBus();
+    public Main(FMLJavaModLoadingContext context) {
+        final BusGroup modBusGroup = context.getModBusGroup();
 
-        ModLoadingContext.get().registerConfig(ModConfig.Type.SERVER, RecruitsServerConfig.SERVER);
-        ModLoadingContext.get().registerConfig(ModConfig.Type.CLIENT, RecruitsClientConfig.CLIENT);
+        context.registerConfig(ModConfig.Type.SERVER, RecruitsServerConfig.SERVER);
+        context.registerConfig(ModConfig.Type.CLIENT, RecruitsClientConfig.CLIENT);
         RecruitsClientConfig.loadConfig(RecruitsClientConfig.CLIENT, FMLPaths.CONFIGDIR.get().resolve("recruits-client.toml"));
 
-        DistExecutor.unsafeRunWhenOn(Dist.CLIENT, () -> () -> {
-                    FMLJavaModLoadingContext.get().getModEventBus().addListener(Main.this::clientSetup);
-                    FMLJavaModLoadingContext.get().getModEventBus().addListener(ModShortcuts::registerBindings);
-                }
-        );
+        if (FMLEnvironment.dist == Dist.CLIENT) {
+            FMLClientSetupEvent.getBus(modBusGroup).addListener(this::clientSetup);
+            ModShortcuts.registerModBusListeners(modBusGroup);
+            com.talhanation.recruits.client.events.ClientEvent.register(modBusGroup);
+        }
 
-        modEventBus.addListener(this::setup);
-        ModBlocks.BLOCKS.register(modEventBus);
-        ModPois.POIS.register(modEventBus);
-        ModProfessions.PROFESSIONS.register(modEventBus);
-        ModScreens.MENU_TYPES.register(modEventBus);
-        ModItems.ITEMS.register(modEventBus);
-        ModEntityTypes.ENTITY_TYPES.register(modEventBus);
+        FMLCommonSetupEvent.getBus(modBusGroup).addListener(this::setup);
+        ModBlocks.BLOCKS.register(modBusGroup);
+        ModPois.POIS.register(modBusGroup);
+        ModProfessions.PROFESSIONS.register(modBusGroup);
+        ModScreens.MENU_TYPES.register(modBusGroup);
+        ModItems.ITEMS.register(modBusGroup);
+        ModEntityTypes.ENTITY_TYPES.register(modBusGroup);
+        ModDataSerializers.SERIALIZERS.register(modBusGroup);
+        EntityAttributeCreationEvent.getBus(modBusGroup).addListener(AttributeEvent::entityAttributeEvent);
 
-        FMLJavaModLoadingContext.get().getModEventBus().addListener(this::addCreativeTabs);
+        BuildCreativeModeTabContentsEvent.getBus(modBusGroup).addListener(this::addCreativeTabs);
+
+        registerNetwork();
 
         //ModSounds.SOUNDS.register(modEventBus);
-        MinecraftForge.EVENT_BUS.register(this);
+        RegisterCommandsEvent.BUS.addListener(this::onRegisterCommands);
     }
 
     @SubscribeEvent
@@ -86,21 +92,40 @@ public class Main {
         RecruitsAdminCommands.register(event.getDispatcher());
     }
 
-    @SuppressWarnings({"unchecked", "rawtypes"})
     private void setup(final FMLCommonSetupEvent event) {
         MinecraftForge.EVENT_BUS.register(new RecruitEvents());
         MinecraftForge.EVENT_BUS.register(new VillagerEvents());
         MinecraftForge.EVENT_BUS.register(new PillagerEvents());
         MinecraftForge.EVENT_BUS.register(new CommandEvents());
-        MinecraftForge.EVENT_BUS.register(new DebugEvents());
         MinecraftForge.EVENT_BUS.register(new FactionEvents());
         MinecraftForge.EVENT_BUS.register(new DamageEvent());
         MinecraftForge.EVENT_BUS.register(new UpdateChecker());
         MinecraftForge.EVENT_BUS.register(new ClaimEvents());
         MinecraftForge.EVENT_BUS.register(new CollidableEntityTracker());
-        MinecraftForge.EVENT_BUS.register(this);
 
-        SIMPLE_CHANNEL = CommonRegistry.registerChannel(Main.MOD_ID, "default");
+        isMusketModLoaded = ModList.get().isLoaded("musketmod");//MusketMod
+        isSmallShipsLoaded = ModList.get().isLoaded("smallships");//small ships
+        isSiegeWeaponsLoaded = ModList.get().isLoaded("siegeweapons");//siege weapons
+        isRPGZLoaded = ModList.get().isLoaded("rpgz");//rpgz mod
+        isCorpseLoaded = ModList.get().isLoaded("corpse");//corpse mod
+        isEpicKnightsLoaded = ModList.get().isLoaded("magistuarmory");//epic knights mod
+
+        isSmallShipsCompatible = false;
+        if(isSmallShipsLoaded){
+            String smallshipsversion = ModList.get().getModFileById("smallships").versionString();
+            isSmallShipsCompatible = isVersionAtLeast(smallshipsversion, "2.0.0-b1.4");
+        }
+
+        isSiegeWeaponsCompatible = false;
+        if(isSiegeWeaponsLoaded){
+            String siegeweaponsVersion = ModList.get().getModFileById("siegeweapons").versionString();
+            isSiegeWeaponsCompatible = isVersionAtLeast(siegeweaponsVersion, "0.2.5");
+        }
+    }
+
+    @SuppressWarnings({"unchecked", "rawtypes"})
+    private static void registerNetwork() {
+        SIMPLE_CHANNEL = new RecruitsChannel(Identifier.fromNamespaceAndPath(Main.MOD_ID, "default"), 1);
 
         Class[] messages = {
                 MessageAggro.class,
@@ -215,32 +240,12 @@ public class Main {
 
 
         for (int i = 0; i < messages.length; i++){
-            CommonRegistry.registerMessage(SIMPLE_CHANNEL, i, messages[i]);
+            SIMPLE_CHANNEL.registerMessage(i, messages[i]);
         }
 
 
-        isMusketModLoaded = ModList.get().isLoaded("musketmod");//MusketMod
-        isSmallShipsLoaded = ModList.get().isLoaded("smallships");//small ships
-        isSiegeWeaponsLoaded = ModList.get().isLoaded("siegeweapons");//siege weapons
-        isRPGZLoaded = ModList.get().isLoaded("rpgz");//rpgz mod
-        isCorpseLoaded = ModList.get().isLoaded("corpse");//corpse mod
-        isEpicKnightsLoaded = ModList.get().isLoaded("magistuarmory");//epic knights mod
-
-        isSmallShipsCompatible = false;
-        if(isSmallShipsLoaded){
-            String smallshipsversion = ModList.get().getModFileById("smallships").versionString();
-            isSmallShipsCompatible = isVersionAtLeast(smallshipsversion, "2.0.0-b1.4");
-        }
-
-        isSiegeWeaponsCompatible = false;
-        if(isSiegeWeaponsLoaded){
-            String siegeweaponsVersion = ModList.get().getModFileById("siegeweapons").versionString();
-            isSiegeWeaponsCompatible = isVersionAtLeast(siegeweaponsVersion, "0.2.5");
-        }
     }
 
-    @SubscribeEvent
-    @OnlyIn(Dist.CLIENT)
     public void clientSetup(FMLClientSetupEvent event) {
         event.enqueueWork(ModScreens::registerMenus);
         MinecraftForge.EVENT_BUS.register(new KeyEvents());

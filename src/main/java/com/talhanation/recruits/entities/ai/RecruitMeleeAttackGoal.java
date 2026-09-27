@@ -11,7 +11,6 @@ import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.AxeItem;
 import net.minecraft.world.item.BowItem;
 import net.minecraft.world.item.CrossbowItem;
-import net.minecraft.world.item.SwordItem;
 import net.minecraft.world.level.pathfinder.Path;
 import net.minecraft.world.phys.Vec3;
 
@@ -79,7 +78,7 @@ public class RecruitMeleeAttackGoal extends Goal {
         this.recruit.setAggressive(true);
         this.pathingCooldown = 0;
 
-        this.recruit.switchMainHandItem(itemStack -> itemStack.getItem() instanceof SwordItem || itemStack.getItem() instanceof AxeItem);
+        this.recruit.switchMainHandItem(itemStack -> com.talhanation.recruits.util.ItemCompat.isSword(itemStack) || itemStack.getItem() instanceof AxeItem);
     }
 
     public void stop() {

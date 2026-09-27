@@ -1,7 +1,6 @@
 package com.talhanation.recruits.world;
 
 import net.minecraft.nbt.CompoundTag;
-import net.minecraft.server.MinecraftServer;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.world.level.saveddata.SavedData;
 
@@ -20,19 +19,18 @@ public class RecruitPlayerUnitSaveData extends SavedData {
 
     public static RecruitPlayerUnitSaveData load(CompoundTag nbt) {
         RecruitPlayerUnitSaveData data = new RecruitPlayerUnitSaveData();
-        CompoundTag recruitCounts = nbt.getCompound("recruitCounts");
+        CompoundTag recruitCounts = nbt.getCompoundOrEmpty("recruitCounts");
 
-        for (String uuidKey : recruitCounts.getAllKeys()) {
+        for (String uuidKey : recruitCounts.keySet()) {
             UUID uuid = UUID.fromString(uuidKey);
-            int count = recruitCounts.getInt(uuidKey);
+            int count = recruitCounts.getIntOr(uuidKey, 0);
             data.recruitCountMap.put(uuid, count);
         }
 
         return data;
     }
 
-    @Override
-    public CompoundTag save(CompoundTag nbt) {
+        public CompoundTag save(CompoundTag nbt) {
         CompoundTag recruitCounts = new CompoundTag();
 
         for (Map.Entry<UUID, Integer> entry : recruitCountMap.entrySet()) {
@@ -54,6 +52,8 @@ public class RecruitPlayerUnitSaveData extends SavedData {
     public static RecruitPlayerUnitSaveData get(ServerLevel level) {
         return level
                 .getDataStorage()
-                .computeIfAbsent(RecruitPlayerUnitSaveData::load, RecruitPlayerUnitSaveData::new, DATA_NAME);
+                .computeIfAbsent(TYPE);
     }
+
+    public static final net.minecraft.world.level.saveddata.SavedDataType<RecruitPlayerUnitSaveData> TYPE = com.talhanation.recruits.util.SavedDataUtil.type(DATA_NAME, RecruitPlayerUnitSaveData::new, RecruitPlayerUnitSaveData::load, data -> data.save(new CompoundTag()));
 }
