@@ -37,7 +37,10 @@ public class RecruitHoldPosGoal extends Goal {
     public void tick() {
         Vec3 pos = this.recruit.getHoldPos();
         if (pos != null) {
-            double distance = recruit.distanceToSqr(pos);
+            // Horizontal only, so gravity still applies when the ground under the hold pos is removed.
+            double dx = recruit.getX() - pos.x();
+            double dz = recruit.getZ() - pos.z();
+            double distance = dx * dx + dz * dz;
             if(distance >= 0.36) {
                 if (--this.timeToRecalcPath <= 0) {
                     this.timeToRecalcPath = this.recruit.getVehicle() != null ? this.adjustedTickDelay(5) : this.adjustedTickDelay(10);
@@ -47,10 +50,10 @@ public class RecruitHoldPosGoal extends Goal {
                 if (recruit.horizontalCollision || recruit.minorHorizontalCollision) {
                     this.recruit.getJumpControl().jump();
                 }
-            } else if (distance > 1.0E-4) {
+            } else if (distance > 1.0E-4 && recruit.onGround()) {
                 recruit.getNavigation().stop();
-                recruit.setPos(pos.x(), pos.y(), pos.z());
-                recruit.setDeltaMovement(Vec3.ZERO);
+                recruit.setPos(pos.x(), recruit.getY(), pos.z());
+                recruit.setDeltaMovement(0, recruit.getDeltaMovement().y, 0);
             }
         }
     }
