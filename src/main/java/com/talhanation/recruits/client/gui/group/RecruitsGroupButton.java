@@ -150,4 +150,15 @@ public class RecruitsGroupButton extends ExtendedButton {
 
         return y + (int)(mc.font.lineHeight * scale) + 1;
     }
+
+    // Since 1.21.9 inactive widgets no longer receive clicks; this button is clickable in both states.
+    @Override
+    public boolean isMouseOver(double mouseX, double mouseY) {
+        return this.visible && mouseX >= this.getX() && mouseY >= this.getY() && mouseX < this.getX() + this.width && mouseY < this.getY() + this.height;
+    }
+
+    @Override
+    protected void handleCursor(net.minecraft.client.gui.GuiGraphics guiGraphics) {
+        if (this.isHovered()) guiGraphics.requestCursor(com.mojang.blaze3d.platform.cursor.CursorTypes.POINTING_HAND);
+    }
 }
