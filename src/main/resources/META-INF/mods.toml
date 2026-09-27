@@ -8,7 +8,7 @@ loaderVersion="[61,62)" #mandatory This is typically bumped every Minecraft vers
 
 modId="recruits"
 
-version='1.15.4'
+version='2.0.0-pre1'
 
 displayName="Villager Recruits Mod"
 updateJSONURL="https://raw.githubusercontent.com/talhanation/recruits/main/update.json"
