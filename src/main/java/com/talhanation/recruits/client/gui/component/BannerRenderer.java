@@ -31,12 +31,14 @@ public class BannerRenderer {
     public void renderBanner(GuiGraphics guiGraphics, int left, int top, int width, int height, int scale0) {
         if (bannerItem.isEmpty() || this.flag == null) return;
 
-        float s = scale0 / 24.0F;
-        int x0 = left + 10 + Math.round(2 * s);
-        int y0 = top + 20 - Math.round(44 * s);
-        int x1 = x0 + Math.max(1, Math.round(20 * s));
-        int y1 = y0 + Math.max(1, Math.round(40 * s));
-        guiGraphics.submitBannerPatternRenderState(this.flag, this.baseColor, this.resultBannerPatterns, x0, y0, x1, y1);
+        // Same placement and size as the pre-1.21 pose-based rendering (scale0 * 2/3 pixels per model unit).
+        float scale = scale0 * 2.0F / 3.0F;
+        int x0 = left + 10 - Math.round(0.625F * scale);
+        int x1 = left + 10 + Math.round(0.625F * scale);
+        int y0 = top + 20 - Math.round(2.0F * scale);
+        int y1 = top + 20 + Math.round(0.5F * scale);
+        guiGraphics.getRenderState().submitPicturesInPictureState(new com.talhanation.recruits.client.render.pip.ScaledBannerRenderState(
+                this.flag, this.baseColor, this.resultBannerPatterns, x0, y0, x1, y1, scale, guiGraphics.getScissorStack().peek()));
     }
 
     public void setBannerItem(ItemStack bannerItem) {

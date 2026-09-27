@@ -42,6 +42,8 @@ public class ClientEvent {
             new ModelLayerLocation(Identifier.fromNamespaceAndPath(Main.MOD_ID, "recruit_armor"), "boots"));
 
     public static void register(BusGroup modBusGroup) {
+        net.minecraftforge.client.event.RegisterPictureInPictureRendererEvent.BUS.addListener(e ->
+                e.register(new com.talhanation.recruits.client.render.pip.ScaledBannerRenderer(e.getBufferSource())));
         EntityRenderersEvent.RegisterRenderers.getBus(modBusGroup).addListener(ClientEvent::entityRenderersEvent);
         EntityRenderersEvent.RegisterLayerDefinitions.getBus(modBusGroup).addListener(ClientEvent::layerDefinitions);
         ModelEvent.BakingCompleted.getBus(modBusGroup).addListener(ClientEvent::modelBakingCompleted);
