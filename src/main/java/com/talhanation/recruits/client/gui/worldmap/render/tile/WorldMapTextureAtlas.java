@@ -132,7 +132,7 @@ final class WorldMapTextureAtlas implements AutoCloseable {
             GpuDevice device = RenderSystem.getDevice();
             this.texture = device.createTexture(
                     () -> "Recruits world map atlas",
-                    GpuTexture.USAGE_COPY_DST | GpuTexture.USAGE_TEXTURE_BINDING,
+                    GpuTexture.USAGE_COPY_DST | GpuTexture.USAGE_TEXTURE_BINDING | GpuTexture.USAGE_RENDER_ATTACHMENT,
                     TextureFormat.RGBA8,
                     ATLAS_SIZE,
                     ATLAS_SIZE,

@@ -42,8 +42,9 @@ public class RecruitsFactionEntry extends ListScreenEntryBase<RecruitsFactionEnt
     public void renderContent(GuiGraphics guiGraphics, int mouseX, int mouseY, boolean hovered, float delta) {
         int index = 0;
         int top = this.getY();
-        int left = this.getX() + 3; // center the row between the list border and the scrollbar
-        int width = this.getWidth();
+        // Pre-1.21.9 lists inset rows by 2px and shrank them by 4px.
+        int left = this.getX() + 2;
+        int width = this.getWidth() - 4;
         int height = this.getHeight() - 4;
         int skinX = left + PADDING;
         int skinY = top + (height - SKIN_SIZE) / 2;
