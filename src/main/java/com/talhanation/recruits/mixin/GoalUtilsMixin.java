@@ -13,8 +13,7 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
 public class GoalUtilsMixin {
     @Inject(method = "hasGroundPathNavigation", at = @At(value = "HEAD", target = "Lnet/minecraft/world/entity/ai/util/GoalUtils;hasGroundPathNavigation(Lnet/minecraft/world/entity/Mob;)Z"), cancellable = true)
     private static void hasGroundPathNavigation(Mob p_26895_, CallbackInfoReturnable<Boolean> cb) {
-        cb.setReturnValue(p_26895_.getNavigation() instanceof GroundPathNavigation ||
-                p_26895_.getNavigation() instanceof AsyncGroundPathNavigation);
-        cb.cancel();
+        // Only extend the vanilla check (canNavigateGround) with the async navigation.
+        if (p_26895_.getNavigation() instanceof AsyncGroundPathNavigation) cb.setReturnValue(true);
     }
 }

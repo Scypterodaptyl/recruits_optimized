@@ -30,7 +30,7 @@ public class WaypointEditPopup {
     private static final int BTN_COLOR = 0x80222222;
     private static final int BTN_HOVERED_COLOR = 0x80444444;
     private static final int BTN_SELECTED_COLOR = 0xBB444444;
-    private static final int TEXT_COLOR = 0xFFFFFF;
+    private static final int TEXT_COLOR = 0xFFFFFFFF;
     private static final int TEXT_MUTED = 0xAAAAAA;
     private static final int BTN_H = 14;
     private static final int BTN_W = 62;

@@ -27,7 +27,22 @@ public class FleeFire extends Goal {
 
     @Override
     public boolean canUse() {
-        return true;
+        if (--cooldown <= 0) {
+            cooldown = CHECK_INTERVAL;
+            nearLava = isNearLava();
+        }
+        return nearLava;
+    }
+
+    @Override
+    public boolean canContinueToUse() {
+        return nearLava;
+    }
+
+    @Override
+    public void stop() {
+        if (entity instanceof AbstractRecruitEntity recruit) recruit.setFleeing(false);
+        if (entity instanceof AssassinEntity assassin) assassin.setFleeing(false);
     }
 
     @Override

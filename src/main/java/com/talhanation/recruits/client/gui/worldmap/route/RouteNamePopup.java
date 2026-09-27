@@ -26,7 +26,7 @@ public class RouteNamePopup {
     private static final int OUTLINE_COLOR = 0x40FFFFFF;
     private static final int BTN_COLOR = 0x80222222;
     private static final int BTN_HOVERED_COLOR = 0x80444444;
-    private static final int TEXT_COLOR = 0xFFFFFF;
+    private static final int TEXT_COLOR = 0xFFFFFFFF;
 
     private final WorldMapScreen parent;
 

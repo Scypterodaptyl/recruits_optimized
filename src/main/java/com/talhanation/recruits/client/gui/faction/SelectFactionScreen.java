@@ -85,7 +85,7 @@ public class SelectFactionScreen extends ListScreenBase implements IFactionSelec
         String string = searchBox != null ? searchBox.getValue() : "";
         searchBox = new EditBox(font, guiLeft + 8, guiTop + HEADER_SIZE, 220, SEARCH_HEIGHT, Component.literal("SEARCH_HINT"));
         searchBox.setMaxLength(16);
-        searchBox.setTextColor(0xFFFFFF);
+        searchBox.setTextColor(0xFFFFFFFF);
         searchBox.setValue(string);
         searchBox.setResponder(this::checkSearchStringUpdate);
         addWidget(searchBox);

@@ -95,7 +95,7 @@ public class DiplomacyTeamListScreen extends ListScreenBase {
         String string = searchBox != null ? searchBox.getValue() : "";
         searchBox = new EditBox(font, guiLeft + 8, guiTop + HEADER_SIZE - 4, 156, SEARCH_HEIGHT + 4, Component.literal(""));
         searchBox.setMaxLength(16);
-        searchBox.setTextColor(0xFFFFFF);
+        searchBox.setTextColor(0xFFFFFFFF);
         searchBox.setValue(string);
         searchBox.setResponder(this::checkSearchStringUpdate);
         addWidget(searchBox);

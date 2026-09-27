@@ -38,7 +38,7 @@ public class RouteEditPopup {
     private static final int BTN_HOVERED_COLOR = 0x80444444;
     private static final int BTN_DELETE_COLOR = 0x80330000;
     private static final int BTN_DELETE_HOVERED = 0x80660000;
-    private static final int TEXT_COLOR = 0xFFFFFF;
+    private static final int TEXT_COLOR = 0xFFFFFFFF;
     private static final int BTN_H = 16;
     private static final int BTN_W_FULL = WIDTH - 16;
 
