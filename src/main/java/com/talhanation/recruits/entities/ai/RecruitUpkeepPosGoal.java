@@ -1,5 +1,6 @@
 package com.talhanation.recruits.entities.ai;
 
+import com.talhanation.recruits.ClaimEvents;
 import com.talhanation.recruits.entities.*;
 import net.minecraft.core.BlockPos;
 import net.minecraft.nbt.CompoundTag;
@@ -79,6 +80,14 @@ public class RecruitUpkeepPosGoal extends Goal {
                 this.chestPos = null;
                 recruit.clearUpkeepPos();
             }
+            if(chestPos != null && !ClaimEvents.canRecruitAccessBlock(recruit, chestPos)){
+                if(recruit.getOwner() != null){
+                    recruit.getOwner().displayClientMessage(TEXT_CANT_INTERACT(recruit.getName().getString()), false);
+                }
+                this.chestPos = null;
+                this.container = null;
+                recruit.clearUpkeepPos();
+            }
             if(chestPos != null){
                 double distance = this.recruit.position().distanceToSqr(Vec3.atCenterOf(chestPos));
                 if(distance > 10000){
@@ -98,6 +107,12 @@ public class RecruitUpkeepPosGoal extends Goal {
         super.tick();
         if(this.chestPos != recruit.getUpkeepPos()){
             this.chestPos = recruit.getUpkeepPos();
+            this.stop();
+            return;
+        }
+
+        if (container != null && chestPos != null && !ClaimEvents.canRecruitAccessBlock(recruit, chestPos)) {
+            recruit.clearUpkeepPos();
             this.stop();
             return;
         }
@@ -210,7 +225,7 @@ public class RecruitUpkeepPosGoal extends Goal {
                     for (int z = -range; z < range; z++) {
                         chestPos = recruit.getUpkeepPos().offset(x, y, z);
                         BlockEntity block = recruit.level().getBlockEntity(chestPos);
-                        if (block instanceof Container blockContainer){
+                        if (block instanceof Container blockContainer && ClaimEvents.canRecruitAccessBlock(recruit, chestPos)){
                             if(isFoodInContainer(blockContainer)) return chestPos;
                             else list.add(chestPos);
                         }
