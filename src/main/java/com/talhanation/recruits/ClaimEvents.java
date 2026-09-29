@@ -503,6 +503,21 @@ public class ClaimEvents {
         if(!isInTeam) event.setCanceled(true);
     }
 
+    /** Recruits may only use containers inside a claim if they or their owner belong to the claim's faction. */
+    public static boolean canRecruitAccessBlock(AbstractRecruitEntity recruit, BlockPos pos) {
+        if (recruitsClaimManager == null || recruit.level().dimension() != Level.OVERWORLD) return true;
+
+        RecruitsClaim claim = recruitsClaimManager.getClaim(new net.minecraft.world.level.ChunkPos(pos));
+        if (claim == null || claim.isBlockInteractionAllowed()) return true;
+
+        String faction = claim.getOwnerFactionStringID();
+        if (faction == null) return false;
+        if (recruit.getTeam() != null && faction.equals(recruit.getTeam().getName())) return true;
+
+        Player owner = recruit.getOwner();
+        return owner != null && owner.getTeam() != null && faction.equals(owner.getTeam().getName());
+    }
+
     @SubscribeEvent
     public void onBlockInteract(PlayerInteractEvent.RightClickBlock event) {
         if(event.getLevel().isClientSide()) return;
