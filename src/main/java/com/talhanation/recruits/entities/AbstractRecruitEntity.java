@@ -509,7 +509,8 @@ public abstract class AbstractRecruitEntity extends AbstractInventoryEntity{
         this.setIsOwned(nbt.getBoolean("isOwned"));
         this.setCost(nbt.getInt("Cost"));
         this.setMountTimer(nbt.getInt("mountTimer"));
-        this.setUpkeepTimer(nbt.getInt("UpkeepTimer"));
+        this.setUpkeepTimer(nbt.getInt("upkeepTimer"));
+        this.setShouldRanged(nbt.getBoolean("ShouldRanged"));
         this.setColor(nbt.getByte("Color"));
 
         this.setMaxFallDistance(nbt.getInt("MaxFallDistance"));
@@ -1220,7 +1221,7 @@ public abstract class AbstractRecruitEntity extends AbstractInventoryEntity{
     }
 
     public boolean isOwnedBy(Player player){
-        return player.getUUID() == this.getOwnerUUID() || player == this.getOwner();
+        return player.getUUID().equals(this.getOwnerUUID()) || player == this.getOwner();
     }
 
     ////////////////////////////////////ON FUNCTIONS////////////////////////////////////
@@ -1381,7 +1382,7 @@ public abstract class AbstractRecruitEntity extends AbstractInventoryEntity{
                 if(this.getFollowState() == 5){//Protecting
                     List<AbstractRecruitEntity> list = this.getCommandSenderWorld().getEntitiesOfClass(AbstractRecruitEntity.class, this.getBoundingBox().inflate(32D));
                     for(AbstractRecruitEntity recruit : list){
-                        if (recruit.getUUID().equals(recruit.getProtectUUID()) && recruit.isAlive() && !recruit.equals(living)){
+                        if (recruit.getUUID().equals(this.getProtectUUID()) && recruit.isAlive() && !recruit.equals(living)){
                             //Patrolleader
                             recruit.setTarget(living);
                         }
