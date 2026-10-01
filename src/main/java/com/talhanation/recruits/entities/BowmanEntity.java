@@ -1,5 +1,6 @@
 package com.talhanation.recruits.entities;
 
+import com.talhanation.recruits.util.ArrowBallistics;
 import com.talhanation.recruits.config.RecruitsServerConfig;
 import com.talhanation.recruits.entities.ai.RecruitMoveTowardsTargetGoal;
 import com.talhanation.recruits.entities.ai.RecruitStrategicFire;
@@ -40,6 +41,7 @@ import java.util.Optional;
 import java.util.function.Predicate;
 
 public class BowmanEntity extends AbstractRecruitEntity implements IRangedRecruit, IStrategicFire {
+    private static final double STRATEGIC_FIRE_PITCH = Math.toRadians(45.0D);
 
     private final Predicate<ItemEntity> ALLOWED_ITEMS = (item) ->
             (!item.hasPickUpDelay() && item.isAlive() && getInventory().canAddItem(item.getItem()) && this.wantsToPickUp(item.getItem()));
@@ -199,7 +201,7 @@ public class BowmanEntity extends AbstractRecruitEntity implements IRangedRecrui
         return 1.0D;
     }
 
-    public void performRangedAttackXYZ(double x, double y, double z, float v, float angle, float force) {
+    public void performRangedAttackXYZ(double x, double y, double z, float v) {
         if(this.level().isClientSide()) return;
         if (this.getMainHandItem().getItem() instanceof BowItem) {
             ItemStack itemstack = this.getProjectile(this.getItemInHand(InteractionHand.MAIN_HAND));
@@ -217,13 +219,17 @@ public class BowmanEntity extends AbstractRecruitEntity implements IRangedRecrui
             if (fireLevel > 0) arrow.setSecondsOnFire(100);
 
             double d0 = x - this.getX();
-            double d1 = y - this.getY();
             double d2 = z - this.getZ();
-            double d3 = Mth.sqrt((float) (d0 * d0 + d2 * d2));
+            double d3 = Math.sqrt(d0 * d0 + d2 * d2);
+            if (d3 < 1.0E-3D) {
+                d0 = -Math.sin(Math.toRadians(this.getYRot()));
+                d2 = Math.cos(Math.toRadians(this.getYRot()));
+                d3 = 1.0D;
+            }
+            float speed = ArrowBallistics.speedForDistance(d3, y - arrow.getY(), STRATEGIC_FIRE_PITCH);
             double morale = this.getMorale();
             float accuracy = 3F + Math.max(6 - (float) (0.1F * morale), 0);
-                                                     //angle            //force             //accuracy 0 = 100%
-            arrow.shoot(d0, d1 + d3 + angle, d2, force + 1.95F, accuracy);
+            arrow.shoot(d0, d3 * Math.tan(STRATEGIC_FIRE_PITCH), d2, speed, accuracy);
 
             this.playSound(SoundEvents.ARROW_SHOOT, 1.0F, 1.0F / (this.getRandom().nextFloat() * 0.4F + 0.8F));
             this.getCommandSenderWorld().addFreshEntity(arrow);

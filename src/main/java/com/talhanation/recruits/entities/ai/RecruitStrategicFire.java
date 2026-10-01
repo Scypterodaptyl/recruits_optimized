@@ -66,61 +66,7 @@ public class RecruitStrategicFire extends Goal {
                 int i = this.bowman.getTicksUsingItem();
                 if (i >= 20) {
 
-                    float angle = 0;// increase = ++ / decrease = --
-                    float force = 0;
-                    if (0 < d0 && d0 < 500){
-                        angle = -7F;
-                        force = -0.75F;
-                    }
-                    else if (500 < d0 && d0 < 1000){
-                        angle = -5F;
-                        force = -0.65F;
-                    }
-                    else if (1000 < d0 && d0 < 2000){
-                        angle = -2.5F;
-                        force = -0.35F;
-                    }
-                    else if (2000 < d0 && d0 < 3000){
-                        angle = -2.5F;
-                        force = -0.1F;
-                    }
-                    else if (3000 < d0 && d0 < 4000){
-                        angle = -2.5F;
-                        force = 0.0F;
-                    }
-
-                    else if (4000 < d0 && d0 < 5000){
-                        angle = -2.5F;
-                        force = 0.4F;
-                    }
-
-                    else if (5000 < d0 && d0 < 6000){
-                        angle = 0F;
-                        force = 0.4F;
-                    }
-
-                    else if (6000 < d0 && d0 < 7000){
-                        angle = 0.1F;
-                        force = 0.5F;
-                    }
-
-                    else if (7000 < d0 && d0 < 8000){
-                        angle = 0.2F;
-                        force = 0.6F;
-                    }
-
-                    else if (8000 < d0 && d0 < 9000){
-                        angle = 0.3F;
-                        force = 0.7F;
-                    }
-
-                    else if (9000 < d0){
-                        angle = 0.4F;
-                        force = 0.8F;
-                    }
-
-
-                    this.bowman.performRangedAttackXYZ(pos.getX(), pos.getY(), pos.getZ(), BowItem.getPowerForTime(i), angle, force);
+                    this.bowman.performRangedAttackXYZ(pos.getX() + 0.5D, pos.getY() + 1.0D, pos.getZ() + 0.5D, BowItem.getPowerForTime(i));
                     float f = Mth.sqrt((float) d0) / 44F;
                     this.attackTime = Mth.floor(f * (float) (this.attackIntervalMax - this.attackIntervalMin) + (float) this.attackIntervalMin);
                     this.bowman.stopUsingItem();
