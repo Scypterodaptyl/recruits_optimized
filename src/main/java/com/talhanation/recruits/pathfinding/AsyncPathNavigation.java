@@ -168,7 +168,7 @@ public abstract class AsyncPathNavigation extends PathNavigation {
             this.path = null;
             return false;
         }
-        if (!p_26537_.sameAs(this.path)) {
+        if (!isSamePath(p_26537_, this.path)) {
             this.path = p_26537_;
         }
 
@@ -293,5 +293,14 @@ public abstract class AsyncPathNavigation extends PathNavigation {
     @Override
     public boolean isStuck() {
         return this.isStuck;
+    }
+
+    // Node lists of unfinished async paths are still written by the pathfinder thread.
+    private static boolean isSamePath(Path a, @Nullable Path b) {
+        if (a == b) return true;
+        if (b == null) return false;
+        if (a instanceof AsyncPath pa && !pa.isProcessed()) return false;
+        if (b instanceof AsyncPath pb && !pb.isProcessed()) return false;
+        return a.sameAs(b);
     }
 }
