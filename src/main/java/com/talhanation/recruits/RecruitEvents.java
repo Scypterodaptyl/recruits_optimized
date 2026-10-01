@@ -168,6 +168,7 @@ public class RecruitEvents {
 
         // Fix: Async-Executor sauber herunterfahren damit der Server nicht hängt
         AsyncPathProcessor.shutdown();
+        DelayedExecutor.shutdown();
     }
 
     @SubscribeEvent
