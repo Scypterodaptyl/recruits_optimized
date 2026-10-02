@@ -248,7 +248,7 @@ public class RecruitRangedCrossbowAttackGoal extends Goal {
     }
 
     private boolean hasArrows(){
-        return !consumeArrows || this.crossBowman.getInventory().hasAnyMatching(item -> item.is(ItemTags.ARROWS));
+        return !consumeArrows || this.crossBowman.hasArrows();
     }
 
     private boolean canAttackMovePos() {

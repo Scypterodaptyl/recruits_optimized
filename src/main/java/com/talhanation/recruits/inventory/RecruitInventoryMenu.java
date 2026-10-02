@@ -6,6 +6,8 @@ import com.talhanation.recruits.entities.AbstractRecruitEntity;
 import com.talhanation.recruits.init.ModScreens;
 import de.maxhenkel.corelib.inventory.ContainerBase;
 import net.minecraft.resources.ResourceLocation;
+import com.talhanation.recruits.entities.IRangedRecruit;
+import net.minecraft.tags.ItemTags;
 import net.minecraft.world.Container;
 import net.minecraft.world.entity.EquipmentSlot;
 import net.minecraft.world.entity.player.Inventory;
@@ -47,6 +49,7 @@ public class RecruitInventoryMenu extends ContainerBase {
         addRecruitHandSlots();
         addRecruitEquipmentSlots();
         addRecruitInventorySlots();
+        addRecruitAmmoSlot();
     }
 
     public AbstractRecruitEntity getRecruit() {
@@ -152,6 +155,20 @@ public class RecruitInventoryMenu extends ContainerBase {
         }
     }
 
+    public boolean hasAmmoSlot() {
+        return recruit instanceof IRangedRecruit;
+    }
+
+    public void addRecruitAmmoSlot() {
+        if (!hasAmmoSlot()) return;
+        this.addSlot(new Slot(recruit.ammoSlot, 0, 8, 90) {
+            @Override
+            public boolean mayPlace(ItemStack stack) {
+                return stack.is(ItemTags.ARROWS);
+            }
+        });
+    }
+
     public void addRecruitInventorySlots() {
         for (int k = 0; k < 3; ++k) {
             for (int l = 0; l < 3; ++l) {
@@ -181,8 +198,14 @@ public class RecruitInventoryMenu extends ContainerBase {
             itemstack = stack.copy();
             if (index <= 35){// <= 35 Itemstack from player inventory
 
+                //AMMO
+                if (hasAmmoSlot() && stack.is(ItemTags.ARROWS) && !this.getSlot(this.slots.size() - 1).hasItem()) {
+                    if (!this.moveItemStackTo(stack, this.slots.size() - 1, this.slots.size(), false)) {
+                        return ItemStack.EMPTY;
+                    }
+                }
                 //HEAD
-                if (this.getSlot(38).mayPlace(stack) && !this.getSlot(38).hasItem()) {
+                else if (this.getSlot(38).mayPlace(stack) && !this.getSlot(38).hasItem()) {
                     if (!this.moveItemStackTo(stack, 38, this.slots.size(), false)) {
                         return ItemStack.EMPTY;
                     }
