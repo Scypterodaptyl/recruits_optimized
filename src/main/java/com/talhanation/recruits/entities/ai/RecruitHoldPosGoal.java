@@ -45,13 +45,17 @@ public class RecruitHoldPosGoal extends Goal {
                     this.recruit.getNavigation().moveTo(pos.x(), pos.y(), pos.z(), this.recruit.moveSpeed);
                 }
 
+                if (distance < 4.0D && this.recruit.getNavigation().isDone() && this.recruit.hurtTime == 0) {
+                    this.recruit.getMoveControl().setWantedPosition(pos.x(), pos.y(), pos.z(), this.recruit.moveSpeed);
+                }
+
                 if (recruit.horizontalCollision || recruit.minorHorizontalCollision) {
                     this.recruit.getJumpControl().jump();
                 }
-            } else if (distance > 1.0E-4) {
+            } else if (distance > 1.0E-4 && recruit.hurtTime == 0) {
                 recruit.getNavigation().stop();
-                recruit.setPos(pos.x(), pos.y(), pos.z());
-                recruit.setDeltaMovement(Vec3.ZERO);
+                recruit.setPos(pos.x(), recruit.getY(), pos.z());
+                recruit.setDeltaMovement(0.0D, recruit.getDeltaMovement().y, 0.0D);
             }
         }
     }
