@@ -12,6 +12,7 @@ import net.minecraft.world.entity.projectile.AbstractHurtingProjectile;
 import net.minecraft.world.entity.projectile.Arrow;
 import net.minecraft.world.item.CrossbowItem;
 import net.minecraft.world.item.Item;
+import net.minecraft.world.item.ArrowItem;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.Items;
 import net.minecraft.world.item.enchantment.EnchantmentHelper;
@@ -56,6 +57,10 @@ public class CrossbowWeapon implements IWeapon {
     }
     @Override
     public AbstractArrow getProjectileArrow(LivingEntity shooter) {
+        ItemStack ammo = shooter instanceof AbstractRecruitEntity recruit ? recruit.getAmmo() : ItemStack.EMPTY;
+        if (ammo.getItem() instanceof ArrowItem arrowItem) {
+            return arrowItem.createArrow(shooter.getCommandSenderWorld(), ammo, shooter);
+        }
         return new Arrow(shooter.getCommandSenderWorld(), shooter);
     }
 
@@ -135,7 +140,9 @@ public class CrossbowWeapon implements IWeapon {
     @Override
     public void performRangedAttackIWeapon(AbstractRecruitEntity shooter, double x, double y, double z, float projectileSpeed) {
         AbstractArrow projectileEntity = this.getProjectileArrow(shooter);
-		
+        ItemStack ammo = shooter.getAmmo();
+        boolean specialAmmo = !ammo.isEmpty() && !ammo.is(Items.ARROW);
+
         int i = EnchantmentHelper.getItemEnchantmentLevel(Enchantments.PIERCING, shooter.getMainHandItem());
         if (i > 0) {
             projectileEntity.setPierceLevel((byte)i);
@@ -151,7 +158,7 @@ public class CrossbowWeapon implements IWeapon {
         shooter.playSound(this.getShootSound(), 1.0F, 1.0F / (shooter.getRandom().nextFloat() * 0.4F + 0.8F));
         shooter.getCommandSenderWorld().addFreshEntity(projectileEntity);
 
-        if(RecruitsServerConfig.RangedRecruitsNeedArrowsToShoot.get()){
+        if(RecruitsServerConfig.RangedRecruitsNeedArrowsToShoot.get() || specialAmmo){
             shooter.consumeArrow();
             projectileEntity.pickup = AbstractArrow.Pickup.ALLOWED;
         }
