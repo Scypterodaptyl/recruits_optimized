@@ -111,7 +111,7 @@ public class FormationUtils {
                         new BlockPos((int) pos.x, (int) pos.y, (int) pos.z)
                 );
 
-                recruit.setHoldPos(new Vec3(blockPos.getX(), blockPos.getY(), blockPos.getZ()));
+                recruit.setHoldPos(new Vec3(pos.x, blockPos.getY(), pos.z));
                 //recruit.ownerRot = player.getYRot();
                 recruit.setFollowState(3);
                 recruit.isInFormation = true;
@@ -186,7 +186,7 @@ public class FormationUtils {
                         new BlockPos((int) pos.x, (int) pos.y, (int) pos.z)
                 );
 
-                recruit.setHoldPos(new Vec3(blockPos.getX(), blockPos.getY(), blockPos.getZ()));
+                recruit.setHoldPos(new Vec3(pos.x, blockPos.getY(), pos.z));
                 //recruit.ownerRot = forwar;
                 recruit.setFollowState(3);
                 recruit.isInFormation = true;
@@ -351,8 +351,8 @@ public class FormationUtils {
         int outerRingCount = numRecruits - innerRingCount - middleRingCount; // Äußerer Ring bekommt den Rest
 
         double innerRadius = spacing * innerRingCount / (2 * Math.PI); // Radius des inneren Rings
-        double middleRadius = spacing * middleRingCount / (2 * Math.PI); // Radius des mittleren Rings
-        double outerRadius = spacing * outerRingCount / (2 * Math.PI); // Radius des äußeren Rings
+        double middleRadius = middleRingCount > 0 ? Math.max(spacing * middleRingCount / (2 * Math.PI), innerRadius + spacing) : 0;
+        double outerRadius = outerRingCount > 0 ? Math.max(spacing * outerRingCount / (2 * Math.PI), Math.max(middleRadius, innerRadius) + spacing) : 0;
 
         List<FormationPosition> possiblePositions = new ArrayList<>();
 
@@ -679,18 +679,28 @@ public class FormationUtils {
     }
 
     public static BlockPos getPositionOrSurface(Level level, BlockPos pos) {
-        boolean positionFree = true;
-        for(int i = 0; i < 3; i++) {
-            if(!level.getBlockState(pos.above(i)).isAir( )) {
-                positionFree = false;
-                break;
+        if (isFreeSpot(level, pos.above(2)) && isFreeSpot(level, pos.above()) && isFreeSpot(level, pos)) {
+            return pos;
+        }
+
+        // Stay on the same floor: only 1-2 blocks up or down, never the roof.
+        for (int d = 1; d <= 2; d++) {
+            for (int sign : new int[]{1, -1}) {
+                BlockPos candidate = pos.above(d * sign);
+                if (isStandable(level, candidate)) return candidate;
             }
         }
 
-        return positionFree ? pos : new BlockPos(
-                pos.getX(),
-                level.getHeightmapPos(Heightmap.Types.WORLD_SURFACE, pos).getY(),
-                pos.getZ()
-        );
+        return pos;
+    }
+
+    private static boolean isFreeSpot(Level level, BlockPos pos) {
+        return level.getBlockState(pos).isAir();
+    }
+
+    private static boolean isStandable(Level level, BlockPos pos) {
+        return level.getBlockState(pos).getCollisionShape(level, pos).isEmpty()
+                && level.getBlockState(pos.above()).getCollisionShape(level, pos.above()).isEmpty()
+                && !level.getBlockState(pos.below()).getCollisionShape(level, pos.below()).isEmpty();
     }
 }
