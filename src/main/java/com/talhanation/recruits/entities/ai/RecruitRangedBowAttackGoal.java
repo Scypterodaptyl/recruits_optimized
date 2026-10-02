@@ -83,7 +83,7 @@ public class RecruitRangedBowAttackGoal<T extends BowmanEntity> extends Goal {
     }
 
     private boolean hasArrows(){
-        return !consumeArrows || this.recruit.getInventory().hasAnyMatching(item -> item.is(ItemTags.ARROWS));
+        return !consumeArrows || this.recruit.hasArrows();
     }
 
     public boolean canContinueToUse() {

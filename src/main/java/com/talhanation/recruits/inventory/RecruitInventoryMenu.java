@@ -5,6 +5,8 @@ import com.talhanation.recruits.entities.AbstractRecruitEntity;
 import com.talhanation.recruits.init.ModScreens;
 import de.maxhenkel.corelib.inventory.ContainerBase;
 import net.minecraft.resources.ResourceLocation;
+import com.talhanation.recruits.entities.IRangedRecruit;
+import net.minecraft.tags.ItemTags;
 import net.minecraft.world.Container;
 import net.minecraft.world.entity.EquipmentSlot;
 import net.minecraft.world.entity.player.Inventory;
@@ -53,6 +55,7 @@ public class RecruitInventoryMenu extends ContainerBase {
         addRecruitHandSlots();
         addRecruitEquipmentSlots();
         addRecruitInventorySlots();
+        addRecruitAmmoSlot();
     }
 
     public AbstractRecruitEntity getRecruit() {
@@ -158,6 +161,20 @@ public class RecruitInventoryMenu extends ContainerBase {
         }
     }
 
+    public boolean hasAmmoSlot() {
+        return recruit instanceof IRangedRecruit;
+    }
+
+    public void addRecruitAmmoSlot() {
+        if (!hasAmmoSlot()) return;
+        this.addSlot(new Slot(recruit.ammoSlot, 0, 8, 90) {
+            @Override
+            public boolean mayPlace(ItemStack stack) {
+                return stack.is(ItemTags.ARROWS);
+            }
+        });
+    }
+
     public void addRecruitInventorySlots() {
         for (int k = 0; k < 3; ++k) {
             for (int l = 0; l < 3; ++l) {
@@ -190,7 +207,8 @@ public class RecruitInventoryMenu extends ContainerBase {
         ItemStack original = stack.copy();
 
         if (index >= PLAYER_INV_START && index < PLAYER_INV_END) {
-            boolean equipped = moveToFirstEmptySlot(stack, ARMOR_SLOT_START, ARMOR_SLOT_END)
+            boolean equipped = (hasAmmoSlot() && stack.is(ItemTags.ARROWS) && moveToEmptySlot(stack, this.slots.size() - 1))
+                    || moveToFirstEmptySlot(stack, ARMOR_SLOT_START, ARMOR_SLOT_END)
                     || moveToEmptySlot(stack, OFFHAND_SLOT)
                     || (stack.getMaxStackSize() == 1 && moveToEmptySlot(stack, MAINHAND_SLOT));
 

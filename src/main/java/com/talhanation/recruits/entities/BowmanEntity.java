@@ -151,7 +151,7 @@ public class BowmanEntity extends AbstractRecruitEntity implements IRangedRecrui
                 }
             }
 
-            ItemStack itemstack = this.getProjectile(this.getItemInHand(InteractionHand.MAIN_HAND));
+            ItemStack itemstack = this.getAmmo();
 
             AbstractArrow arrow = ProjectileUtil.getMobArrow(this, itemstack, v);
             arrow = ((net.minecraft.world.item.BowItem) this.getMainHandItem().getItem()).customArrow(arrow);
@@ -181,7 +181,7 @@ public class BowmanEntity extends AbstractRecruitEntity implements IRangedRecrui
                                                 //angle   = 0.196F           //force     //accuracy 0 = 100%
             arrow.shoot(d0, d1 + d3 * angle, d2, force, accuracy);
 
-            if(RecruitsServerConfig.RangedRecruitsNeedArrowsToShoot.get()){
+            if(RecruitsServerConfig.RangedRecruitsNeedArrowsToShoot.get() || isSpecialAmmo(itemstack)){
                 int k = EnchantmentHelper.getItemEnchantmentLevel(Enchantments.INFINITY_ARROWS, this.getMainHandItem());
                 if (k == 0) {
                     this.consumeArrow();
@@ -197,6 +197,10 @@ public class BowmanEntity extends AbstractRecruitEntity implements IRangedRecrui
         }
     }
 
+    private static boolean isSpecialAmmo(ItemStack stack) {
+        return !stack.isEmpty() && !stack.is(Items.ARROW);
+    }
+
     public double arrowDamageModifier() {
         return 1.0D;
     }
@@ -204,7 +208,7 @@ public class BowmanEntity extends AbstractRecruitEntity implements IRangedRecrui
     public void performRangedAttackXYZ(double x, double y, double z, float v) {
         if(this.level().isClientSide()) return;
         if (this.getMainHandItem().getItem() instanceof BowItem) {
-            ItemStack itemstack = this.getProjectile(this.getItemInHand(InteractionHand.MAIN_HAND));
+            ItemStack itemstack = this.getAmmo();
 
             AbstractArrow arrow = ProjectileUtil.getMobArrow(this, itemstack, v);
             arrow = ((net.minecraft.world.item.BowItem) this.getMainHandItem().getItem()).customArrow(arrow);
@@ -234,7 +238,7 @@ public class BowmanEntity extends AbstractRecruitEntity implements IRangedRecrui
             this.playSound(SoundEvents.ARROW_SHOOT, 1.0F, 1.0F / (this.getRandom().nextFloat() * 0.4F + 0.8F));
             this.getCommandSenderWorld().addFreshEntity(arrow);
 
-            if(RecruitsServerConfig.RangedRecruitsNeedArrowsToShoot.get()){
+            if(RecruitsServerConfig.RangedRecruitsNeedArrowsToShoot.get() || isSpecialAmmo(itemstack)){
                 this.consumeArrow();
                 arrow.pickup = AbstractArrow.Pickup.ALLOWED;
             }

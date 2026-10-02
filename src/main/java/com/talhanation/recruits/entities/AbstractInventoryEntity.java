@@ -38,6 +38,7 @@ public abstract class AbstractInventoryEntity extends AsyncPathfinderMob {
     //rest = inv
 
     public RecruitSimpleContainer inventory;
+    public final SimpleContainer ammoSlot = new SimpleContainer(1);
     private int beforeItemSlot = -1;
     private net.minecraftforge.common.util.LazyOptional<?> itemHandler = null;
 
@@ -78,6 +79,7 @@ public abstract class AbstractInventoryEntity extends AsyncPathfinderMob {
         }
 
         nbt.put("Items", listnbt);
+        nbt.put("AmmoSlot", this.ammoSlot.getItem(0).save(new CompoundTag()));
         nbt.putInt("BeforeItemSlot", this.getBeforeItemSlot());
     }
 
@@ -93,6 +95,8 @@ public abstract class AbstractInventoryEntity extends AsyncPathfinderMob {
                 this.inventory.setItem(j, ItemStack.of(compoundnbt));
             }
         }
+
+        this.ammoSlot.setItem(0, ItemStack.of(nbt.getCompound("AmmoSlot")));
 
         ListTag armorItems = nbt.getList("ArmorItems", 10);
         for (int i = 0; i < this.armorItems.size(); ++i) {
@@ -262,6 +266,7 @@ public abstract class AbstractInventoryEntity extends AsyncPathfinderMob {
             for (int i = 0; i < this.inventory.getContainerSize(); i++) {
                 this.spawnAtLocation(this.inventory.getItem(i));// Containers.dropItemStack(this.getCommandSenderWorld(), getX(), getY(), getZ(), );
             }
+            this.spawnAtLocation(this.ammoSlot.getItem(0));
         }
     }
 
@@ -459,12 +464,48 @@ public abstract class AbstractInventoryEntity extends AsyncPathfinderMob {
     }
 
     public void consumeArrow(){
-        for(ItemStack itemStack : this.inventory.items){
-            if(itemStack.is(ItemTags.ARROWS)){
-                itemStack.shrink(1);
-                break;
+        ItemStack ammo = this.ammoSlot.getItem(0);
+        if(ammo.is(ItemTags.ARROWS)){
+            ammo.shrink(1);
+            if(ammo.isEmpty()) this.ammoSlot.setItem(0, ItemStack.EMPTY);
+        }
+        else {
+            for(ItemStack itemStack : this.inventory.items){
+                if(itemStack.is(ItemTags.ARROWS)){
+                    itemStack.shrink(1);
+                    break;
+                }
             }
         }
+        this.refillAmmoSlot();
+    }
+
+    // Empty ammo slot takes the next arrow stack from the inventory.
+    public void refillAmmoSlot(){
+        if(!this.ammoSlot.getItem(0).isEmpty()) return;
+        for(int i = 6; i < this.inventory.getContainerSize(); i++){
+            ItemStack itemStack = this.inventory.getItem(i);
+            if(itemStack.is(ItemTags.ARROWS)){
+                this.ammoSlot.setItem(0, itemStack);
+                this.inventory.setItem(i, ItemStack.EMPTY);
+                return;
+            }
+        }
+    }
+
+    // Arrow stack the next shot is taken from; normal arrow if none.
+    public ItemStack getAmmo(){
+        this.refillAmmoSlot();
+        ItemStack ammo = this.ammoSlot.getItem(0);
+        if(ammo.is(ItemTags.ARROWS)) return ammo;
+        for(ItemStack itemStack : this.inventory.items){
+            if(itemStack.is(ItemTags.ARROWS)) return itemStack;
+        }
+        return ItemStack.EMPTY;
+    }
+
+    public boolean hasArrows(){
+        return !this.getAmmo().isEmpty();
     }
 
     public boolean canTakeArrows() {
@@ -474,6 +515,7 @@ public abstract class AbstractInventoryEntity extends AsyncPathfinderMob {
                  count += itemstack.getCount();
              }
         }
+        if(this.ammoSlot.getItem(0).is(ItemTags.ARROWS)) count += this.ammoSlot.getItem(0).getCount();
 
         return count < 32;
     }

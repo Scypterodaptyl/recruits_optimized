@@ -82,7 +82,7 @@ public class RecruitStrategicFire extends Goal {
     }
 
     private boolean hasArrows(){
-        return !consumeArrows || this.bowman.getInventory().hasAnyMatching(item -> item.is(ItemTags.ARROWS));
+        return !consumeArrows || this.bowman.hasArrows();
     }
 
 }

@@ -77,7 +77,7 @@ public class NomadAttackAI extends Goal {
     }
 
     private boolean hasArrows(){
-        return !consumeArrows || this.nomad.getInventory().hasAnyMatching(item -> item.is(ItemTags.ARROWS));
+        return !consumeArrows || this.nomad.hasArrows();
     }
     public void tick() {
         if(nomad.getFollowState() == 0) {
