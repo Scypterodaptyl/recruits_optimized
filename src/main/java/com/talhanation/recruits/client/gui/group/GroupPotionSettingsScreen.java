@@ -53,10 +53,7 @@ public class GroupPotionSettingsScreen extends Screen {
         });
         addRenderableWidget(combatButton);
 
-        addRenderableWidget(new ExtendedButton(leftPos + 7, topPos + 137, 181, 20, Component.translatable("gui.recruits.groups.potions.back"), b -> {
-            Main.SIMPLE_CHANNEL.sendToServer(new MessageUpdateGroup(group));
-            minecraft.setScreen(parent);
-        }));
+        addRenderableWidget(new ExtendedButton(leftPos + 7, topPos + 137, 181, 20, Component.translatable("gui.recruits.groups.potions.back"), b -> onClose()));
         refresh();
     }
 
@@ -84,6 +81,13 @@ public class GroupPotionSettingsScreen extends Screen {
         }
         combatButton.setMessage(Component.translatable("gui.recruits.groups.potions.combat",
                 Component.translatable(combatOnly() ? "gui.recruits.groups.potions.yes" : "gui.recruits.groups.potions.no")));
+    }
+
+    // Esc and Back both save the settings.
+    @Override
+    public void onClose() {
+        Main.SIMPLE_CHANNEL.sendToServer(new MessageUpdateGroup(group));
+        minecraft.setScreen(parent);
     }
 
     @Override
