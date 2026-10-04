@@ -189,7 +189,7 @@ public class RecruitRangedBowAttackGoal<T extends BowmanEntity> extends Goal {
     }
 
     private void handleHoldPos(@NotNull Vec3 pos, boolean inRange){
-        boolean posClose = pos.distanceToSqr(this.recruit.position()) <= 50;
+        boolean posClose = pos.distanceToSqr(this.recruit.position()) <= 2.25D;
 
         if (posClose) {
             if (inRange) this.recruit.getNavigation().stop();

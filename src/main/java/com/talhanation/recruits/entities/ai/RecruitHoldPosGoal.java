@@ -8,6 +8,8 @@ import net.minecraft.world.phys.Vec3;
 import java.util.EnumSet;
 
 public class RecruitHoldPosGoal extends Goal {
+    // Recruits walk right up to their spot and are pulled in from 0.7 blocks.
+    private static final double SNAP_DISTANCE_SQR = 0.49D;
     private final AbstractRecruitEntity recruit;
 
     private int timeToRecalcPath;
@@ -38,8 +40,11 @@ public class RecruitHoldPosGoal extends Goal {
     public void tick() {
         Vec3 pos = this.recruit.getHoldPos();
         if (pos != null) {
-            double distance = recruit.distanceToSqr(pos);
-            if(distance >= 0.36) {
+            double dx = pos.x() - recruit.getX();
+            double dz = pos.z() - recruit.getZ();
+            // Same floor: only the horizontal distance counts, so a slot a block higher or lower still pulls in.
+            double distance = Math.abs(pos.y() - recruit.getY()) <= 1.5D ? dx * dx + dz * dz : recruit.distanceToSqr(pos);
+            if(distance >= SNAP_DISTANCE_SQR) {
                 if (--this.timeToRecalcPath <= 0) {
                     this.timeToRecalcPath = this.recruit.getVehicle() != null ? this.adjustedTickDelay(5) : this.adjustedTickDelay(10);
                     this.recruit.getNavigation().moveTo(pos.x(), pos.y(), pos.z(), this.recruit.moveSpeed);
