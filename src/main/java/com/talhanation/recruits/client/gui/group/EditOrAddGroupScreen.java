@@ -144,7 +144,13 @@ public class EditOrAddGroupScreen extends Screen {
         splitButton.active = groupToEdit != null;
         addRenderableWidget(splitButton);
 
-        Button putRecruits = new ExtendedButton(leftPos + 7, topPos + 110, 180, 20, BUTTON_NEARBY,
+        Button potionButton = new ExtendedButton(leftPos + 97, topPos + 110, 90, 20, Component.translatable("gui.recruits.groups.potions"),
+            btn -> minecraft.setScreen(new GroupPotionSettingsScreen(this, groupToEdit))
+        );
+        potionButton.active = groupToEdit != null;
+        addRenderableWidget(potionButton);
+
+        Button putRecruits = new ExtendedButton(leftPos + 7, topPos + 110, 90, 20, BUTTON_NEARBY,
             btn -> {
                 Main.SIMPLE_CHANNEL.sendToServer(new MessageAssignNearbyRecruitsInGroup(this.groupToEdit.getUUID()));
                 minecraft.setScreen(this.parent);

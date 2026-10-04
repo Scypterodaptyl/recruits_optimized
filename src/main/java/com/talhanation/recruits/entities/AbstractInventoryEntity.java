@@ -39,6 +39,9 @@ public abstract class AbstractInventoryEntity extends AsyncPathfinderMob {
 
     public RecruitSimpleContainer inventory;
     public final SimpleContainer ammoSlot = new SimpleContainer(1);
+    public final SimpleContainer potionSlots = new SimpleContainer(2);
+    public int forcedPotionSlot = -1;
+    public boolean isDrinkingPotion;
     private int beforeItemSlot = -1;
     private net.minecraftforge.common.util.LazyOptional<?> itemHandler = null;
 
@@ -80,6 +83,8 @@ public abstract class AbstractInventoryEntity extends AsyncPathfinderMob {
 
         nbt.put("Items", listnbt);
         nbt.put("AmmoSlot", this.ammoSlot.getItem(0).save(new CompoundTag()));
+        nbt.put("PotionSlot1", this.potionSlots.getItem(0).save(new CompoundTag()));
+        nbt.put("PotionSlot2", this.potionSlots.getItem(1).save(new CompoundTag()));
         nbt.putInt("BeforeItemSlot", this.getBeforeItemSlot());
     }
 
@@ -97,6 +102,8 @@ public abstract class AbstractInventoryEntity extends AsyncPathfinderMob {
         }
 
         this.ammoSlot.setItem(0, ItemStack.of(nbt.getCompound("AmmoSlot")));
+        this.potionSlots.setItem(0, ItemStack.of(nbt.getCompound("PotionSlot1")));
+        this.potionSlots.setItem(1, ItemStack.of(nbt.getCompound("PotionSlot2")));
 
         ListTag armorItems = nbt.getList("ArmorItems", 10);
         for (int i = 0; i < this.armorItems.size(); ++i) {
@@ -108,6 +115,17 @@ public abstract class AbstractInventoryEntity extends AsyncPathfinderMob {
         for (int i = 0; i < this.handItems.size(); ++i) {
             int index = i == 0 ? 5 : 4; //5 = mainhand 4 = offhand
             this.inventory.setItem(index, ItemStack.of(handItems.getCompound(i)));
+        }
+        // Saved while drinking: the weapon sits in the potion slot, the potion in the main hand.
+        for (int i = 0; i < 2; i++) {
+            ItemStack stored = this.potionSlots.getItem(i);
+            if (!stored.is(Items.POTION) && this.inventory.getItem(5).is(Items.POTION)) {
+                ItemStack potion = this.inventory.getItem(5);
+                this.inventory.setItem(5, stored);
+                this.setItemSlot(MAINHAND, stored);
+                this.potionSlots.setItem(i, potion);
+                break;
+            }
         }
         int beforeItemSlot = nbt.getInt("BeforeItemSlot");
         this.setBeforeItemSlot(beforeItemSlot);
@@ -267,6 +285,8 @@ public abstract class AbstractInventoryEntity extends AsyncPathfinderMob {
                 this.spawnAtLocation(this.inventory.getItem(i));// Containers.dropItemStack(this.getCommandSenderWorld(), getX(), getY(), getZ(), );
             }
             this.spawnAtLocation(this.ammoSlot.getItem(0));
+            this.spawnAtLocation(this.potionSlots.getItem(0));
+            this.spawnAtLocation(this.potionSlots.getItem(1));
         }
     }
 

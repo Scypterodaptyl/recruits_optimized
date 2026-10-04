@@ -17,6 +17,7 @@ import net.minecraft.world.inventory.InventoryMenu;
 import net.minecraft.world.inventory.Slot;
 import net.minecraft.world.item.BannerItem;
 import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.item.Items;
 import net.minecraft.world.item.ShieldItem;
 import net.minecraftforge.api.distmarker.Dist;
 import net.minecraftforge.api.distmarker.OnlyIn;
@@ -49,6 +50,7 @@ public class RecruitInventoryMenu extends ContainerBase {
         addRecruitHandSlots();
         addRecruitEquipmentSlots();
         addRecruitInventorySlots();
+        addRecruitPotionSlots();
         addRecruitAmmoSlot();
     }
 
@@ -155,6 +157,22 @@ public class RecruitInventoryMenu extends ContainerBase {
         }
     }
 
+    public void addRecruitPotionSlots() {
+        for (int i = 0; i < 2; i++) {
+            this.addSlot(new Slot(recruit.potionSlots, i, 8 + i * 18, 110) {
+                @Override
+                public boolean mayPlace(ItemStack stack) {
+                    return stack.is(Items.POTION);
+                }
+
+                @Override
+                public int getMaxStackSize() {
+                    return 1;
+                }
+            });
+        }
+    }
+
     public boolean hasAmmoSlot() {
         return recruit instanceof IRangedRecruit;
     }
@@ -201,6 +219,12 @@ public class RecruitInventoryMenu extends ContainerBase {
                 //AMMO
                 if (hasAmmoSlot() && stack.is(ItemTags.ARROWS) && !this.getSlot(this.slots.size() - 1).hasItem()) {
                     if (!this.moveItemStackTo(stack, this.slots.size() - 1, this.slots.size(), false)) {
+                        return ItemStack.EMPTY;
+                    }
+                }
+                //POTION
+                else if (stack.is(Items.POTION) && !this.getSlot(51).hasItem()) {
+                    if (!this.moveItemStackTo(stack, 51, 53, false)) {
                         return ItemStack.EMPTY;
                     }
                 }

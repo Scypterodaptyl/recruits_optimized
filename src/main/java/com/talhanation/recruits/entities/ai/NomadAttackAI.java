@@ -80,6 +80,7 @@ public class NomadAttackAI extends Goal {
         return !consumeArrows || this.nomad.hasArrows();
     }
     public void tick() {
+        if (this.nomad.isDrinkingPotion) return;
         if(nomad.getFollowState() == 0) {
             switch (state) {
                 case SELECT_TARGET -> {

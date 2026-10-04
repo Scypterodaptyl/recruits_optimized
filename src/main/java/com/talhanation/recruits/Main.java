@@ -171,6 +171,7 @@ public class Main {
                 MessageToClientReceiveRoute.class,
                 MessageFormationFollowMovement.class,
                 MessageRest.class,
+                MessageDrinkPotion.class,
                 MessageRangedFire.class,
                 MessageSaveFormationFollowMovement.class,
                 MessageClearUpkeep.class,

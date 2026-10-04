@@ -105,6 +105,7 @@ public class RecruitRangedBowAttackGoal<T extends BowmanEntity> extends Goal {
     }
 
     public void tick() {
+        if (this.recruit.isDrinkingPotion) return;
         if(target != null && target.isAlive()) {
             double distance = target.distanceToSqr(this.recruit);
             boolean isClose = distance <= 150;

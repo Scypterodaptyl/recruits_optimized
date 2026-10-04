@@ -178,6 +178,23 @@ public class OtherCategory implements ICommandCategory {
         restButton.setTooltip(Tooltip.create(TOOLTIP_REST));
         restButton.active = isOneGroupActive;
         screen.addRenderableWidget(restButton);
+
+        //DRINK POTION SLOTS
+        for (int slot = 0; slot < 2; slot++) {
+            final int potionSlot = slot;
+            RecruitsCommandButton drinkButton = new RecruitsCommandButton(slot == 0 ? x - 100 : x + 100, y - 25,
+                    Component.translatable("gui.recruits.command.text.drink_potion", slot + 1),
+                    button -> {
+                        for (RecruitsGroup group : groups) {
+                            if (!group.isDisabled()) {
+                                Main.SIMPLE_CHANNEL.sendToServer(new MessageDrinkPotion(player.getUUID(), group.getUUID(), potionSlot));
+                            }
+                        }
+                    });
+            drinkButton.setTooltip(Tooltip.create(Component.translatable("gui.recruits.command.tooltip.drink_potion", slot + 1)));
+            drinkButton.active = isOneGroupActive;
+            screen.addRenderableWidget(drinkButton);
+        }
     }
 
 
