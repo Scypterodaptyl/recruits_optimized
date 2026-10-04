@@ -183,7 +183,7 @@ public class BowmanEntity extends AbstractRecruitEntity implements IRangedRecrui
                 int k = EnchantmentHelper.getItemEnchantmentLevel(Enchantments.INFINITY_ARROWS, this.getMainHandItem());
                 if (k == 0) {
                     this.consumeArrow();
-                    arrow.pickup = AbstractArrow.Pickup.ALLOWED;
+                    arrow.pickup = isSpecialAmmo(itemstack) ? AbstractArrow.Pickup.DISALLOWED : AbstractArrow.Pickup.ALLOWED;
                 }
             }
 
@@ -234,7 +234,7 @@ public class BowmanEntity extends AbstractRecruitEntity implements IRangedRecrui
 
             if(RecruitsServerConfig.RangedRecruitsNeedArrowsToShoot.get() || isSpecialAmmo(itemstack)){
                 this.consumeArrow();
-                arrow.pickup = AbstractArrow.Pickup.ALLOWED;
+                arrow.pickup = isSpecialAmmo(itemstack) ? AbstractArrow.Pickup.DISALLOWED : AbstractArrow.Pickup.ALLOWED;
             }
 
             this.damageMainHandItem();

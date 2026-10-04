@@ -160,7 +160,7 @@ public class CrossbowWeapon implements IWeapon {
 
         if(RecruitsServerConfig.RangedRecruitsNeedArrowsToShoot.get() || specialAmmo){
             shooter.consumeArrow();
-            projectileEntity.pickup = AbstractArrow.Pickup.ALLOWED;
+            projectileEntity.pickup = specialAmmo ? AbstractArrow.Pickup.DISALLOWED : AbstractArrow.Pickup.ALLOWED;
         }
 
         shooter.damageMainHandItem();
