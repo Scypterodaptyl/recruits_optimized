@@ -128,6 +128,7 @@ public abstract class AbstractRecruitEntity extends AbstractInventoryEntity{
     public float ownerRot;
     public int rotateTicks;
     public int formationPos = -1;
+    public int lastFormation = -1;
     private int maxFallDistance;
     // Stagger periodic work (target search, arrow pickup, LoS re-check) across ticks so the cost
     // is spread evenly instead of spiking every 20th tick. Derived from the entity id (uniformly

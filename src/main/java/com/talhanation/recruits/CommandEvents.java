@@ -206,6 +206,12 @@ public class CommandEvents {
     }
 
     public static void applyFormation(int formation, List<AbstractRecruitEntity> recruits, ServerPlayer player, Vec3 targetPos, boolean tight, boolean holdFormation) {
+        for (AbstractRecruitEntity recruit : recruits) {
+            if (recruit.lastFormation != formation) {
+                recruit.formationPos = -1;
+                recruit.lastFormation = formation;
+            }
+        }
         saveFormationCenter(player, targetPos);
         double spacingMultiplier = tight ? 0.5 : 1.0;
         switch (formation){

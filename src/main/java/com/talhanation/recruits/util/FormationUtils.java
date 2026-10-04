@@ -94,14 +94,12 @@ public class FormationUtils {
                 position.isFree = false;
                 pos = position.position;
             } else {
-                for (int i = 0; i < possiblePositions.size(); i++) {
-                    FormationPosition position = possiblePositions.get(i);
-                    if (position.isFree) {
-                        pos = possiblePositions.get(i).position;
-                        recruit.formationPos = i;
-                        position.isFree = false;
-                        break;
-                    }
+                int nearest = nearestFreeSlot(possiblePositions, recruit);
+                if (nearest >= 0) {
+                    FormationPosition position = possiblePositions.get(nearest);
+                    pos = position.position;
+                    recruit.formationPos = nearest;
+                    position.isFree = false;
                 }
             }
 
@@ -169,14 +167,12 @@ public class FormationUtils {
                 pos = position.position;
             }
             else {
-                for (int i = 0; i < possiblePositions.size(); i++) {
-                    FormationPosition position = possiblePositions.get(i);
-                    if (position.isFree) {
-                        pos = position.position;
-                        recruit.formationPos = i; // Remember this position for next time
-                        position.isFree = false;
-                        break;
-                    }
+                int nearest = nearestFreeSlot(possiblePositions, recruit);
+                if (nearest >= 0) {
+                    FormationPosition position = possiblePositions.get(nearest);
+                    pos = position.position;
+                    recruit.formationPos = nearest;
+                    position.isFree = false;
                 }
             }
 
@@ -241,14 +237,12 @@ public class FormationUtils {
                 position.isFree = false;
                 pos = position.position;
             } else {
-                for (int i = 0; i < possiblePositions.size(); i++) {
-                    FormationPosition position = possiblePositions.get(i);
-                    if (position.isFree) {
-                        pos = possiblePositions.get(i).position;
-                        recruit.formationPos = i;
-                        position.isFree = false;
-                        break;
-                    }
+                int nearest = nearestFreeSlot(possiblePositions, recruit);
+                if (nearest >= 0) {
+                    FormationPosition position = possiblePositions.get(nearest);
+                    pos = position.position;
+                    recruit.formationPos = nearest;
+                    position.isFree = false;
                 }
             }
 
@@ -304,14 +298,12 @@ public class FormationUtils {
                 position.isFree = false;
                 pos = position.position;
             } else {
-                for (int i = 0; i < possiblePositions.size(); i++) {
-                    FormationPosition position = possiblePositions.get(i);
-                    if (position.isFree) {
-                        pos = possiblePositions.get(i).position;
-                        recruit.formationPos = i;
-                        position.isFree = false;
-                        break;
-                    }
+                int nearest = nearestFreeSlot(possiblePositions, recruit);
+                if (nearest >= 0) {
+                    FormationPosition position = possiblePositions.get(nearest);
+                    pos = position.position;
+                    recruit.formationPos = nearest;
+                    position.isFree = false;
                 }
             }
 
@@ -392,14 +384,12 @@ public class FormationUtils {
                 position.isFree = false;
                 pos = position.position;
             } else {
-                for (int i = 0; i < possiblePositions.size(); i++) {
-                    FormationPosition position = possiblePositions.get(i);
-                    if (position.isFree) {
-                        pos = possiblePositions.get(i).position;
-                        recruit.formationPos = i;
-                        position.isFree = false;
-                        break;
-                    }
+                int nearest = nearestFreeSlot(possiblePositions, recruit);
+                if (nearest >= 0) {
+                    FormationPosition position = possiblePositions.get(nearest);
+                    pos = position.position;
+                    recruit.formationPos = nearest;
+                    position.isFree = false;
                 }
             }
 
@@ -470,14 +460,12 @@ public class FormationUtils {
             }
 
             else {
-                for (int i = 0; i < possiblePositions.size(); i++) {
-                    FormationPosition position = possiblePositions.get(i);
-                    if (position.isFree) {
-                        pos = position.position;
-                        recruit.formationPos = i; // Remember this position for next time
-                        position.isFree = false;
-                        break;
-                    }
+                int nearest = nearestFreeSlot(possiblePositions, recruit);
+                if (nearest >= 0) {
+                    FormationPosition position = possiblePositions.get(nearest);
+                    pos = position.position;
+                    recruit.formationPos = nearest;
+                    position.isFree = false;
                 }
             }
 
@@ -551,6 +539,22 @@ public class FormationUtils {
             recruit.isInFormation = true;
             recruit.holdFormation = hold;
         }
+    }
+
+    // Free slot closest to the recruit, so recruits don't cross the whole formation to reach a random spot.
+    private static int nearestFreeSlot(List<FormationPosition> slots, AbstractRecruitEntity recruit) {
+        int best = -1;
+        double bestDist = Double.MAX_VALUE;
+        for (int i = 0; i < slots.size(); i++) {
+            FormationPosition slot = slots.get(i);
+            if (!slot.isFree) continue;
+            double dist = slot.position.distanceToSqr(recruit.getX(), slot.position.y, recruit.getZ());
+            if (dist < bestDist) {
+                bestDist = dist;
+                best = i;
+            }
+        }
+        return best;
     }
 
     public static class FormationPosition{
