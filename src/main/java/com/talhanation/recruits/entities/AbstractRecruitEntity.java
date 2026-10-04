@@ -135,6 +135,7 @@ public abstract class AbstractRecruitEntity extends AbstractInventoryEntity{
     public float ownerRot;
     public int rotateTicks;
     public int formationPos = -1;
+    public int lastFormation = -1;
     private int maxFallDistance;
     private int getTickPhase() {
         return Math.floorMod(this.getId(), 60);
