@@ -380,7 +380,7 @@ public abstract class AbstractRecruitEntity extends AbstractInventoryEntity{
     protected void registerGoals() {
         this.goalSelector.addGoal(4, new BlockWithWeapon(this));
         this.goalSelector.addGoal(0, new RecruitFloatGoal(this));
-        this.goalSelector.addGoal(1, new RecruitQuaffGoal(this));
+        this.goalSelector.addGoal(1, new RecruitDrinkSlotPotionGoal(this));
         this.goalSelector.addGoal(1, new FleeTNT(this));
         this.goalSelector.addGoal(1, new FleeFire(this));
         this.goalSelector.addGoal(6, new RecruitsOpenDoorGoal(this, true) {});
@@ -1675,14 +1675,6 @@ public abstract class AbstractRecruitEntity extends AbstractInventoryEntity{
             return true;
         }
         else return getHealth() <= (getMaxHealth() * 0.30) && this.getTarget() == null;
-    }
-
-    public boolean needsToPotion(){
-        LivingEntity target = this.getTarget();
-        if(target != null){
-            return getHealth() <= (getMaxHealth() * 0.60) || target.getHealth() > this.getHealth();
-        }
-        return false;
     }
 
     public boolean isStarving(){

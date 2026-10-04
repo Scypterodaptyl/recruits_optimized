@@ -60,6 +60,9 @@ public class RecruitsGroup {
     public boolean allowRest;
     public int groupMorale;
     public int groupHealth;
+    // -1 = use the server config value
+    public int[] potionMinHealth = {-1, -1};
+    public int potionCombatOnly = -1;
 
     public RecruitsGroup(String name, RecruitsPlayerInfo playerInfo, int image){
         this(name, playerInfo.getUUID(), playerInfo.getName(), image);
@@ -173,6 +176,9 @@ public class RecruitsGroup {
         tag.putBoolean("removed", this.removed);
         tag.putInt("image", this.image);
         if(leaderUUID != null) tag.putUUID("leaderUUID", this.leaderUUID);
+        tag.putInt("potionMinHealth1", this.potionMinHealth[0]);
+        tag.putInt("potionMinHealth2", this.potionMinHealth[1]);
+        tag.putInt("potionCombatOnly", this.potionCombatOnly);
 
         ListTag uuidList = new ListTag();
         for (UUID id : members) {
@@ -203,6 +209,12 @@ public class RecruitsGroup {
         RecruitsGroup group = new RecruitsGroup(name, playerUUID, playerName, size, image, disbandContext);
         group.setUUID(uuid);
         group.removed = removed;
+
+        if(tag.contains("potionMinHealth1")){
+            group.potionMinHealth[0] = tag.getInt("potionMinHealth1");
+            group.potionMinHealth[1] = tag.getInt("potionMinHealth2");
+            group.potionCombatOnly = tag.getInt("potionCombatOnly");
+        }
 
         if(tag.contains("leaderUUID")){
             group.leaderUUID = tag.getUUID("leaderUUID");

@@ -98,7 +98,6 @@ public abstract class AbstractOrderAbleEntity extends AbstractInventoryEntity{
     ////////////////////////////////////REGISTER////////////////////////////////////
 
     protected void registerGoals() {
-        //this.goalSelector.addGoal(0, new RecruitQuaffGoal(this));
 
         this.goalSelector.addGoal(0, new FleeTNT(this));
         this.goalSelector.addGoal(0, new FleeTarget(this));

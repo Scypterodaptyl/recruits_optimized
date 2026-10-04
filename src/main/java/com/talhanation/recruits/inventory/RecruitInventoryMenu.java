@@ -15,6 +15,7 @@ import net.minecraft.world.inventory.InventoryMenu;
 import net.minecraft.world.inventory.Slot;
 import net.minecraft.world.item.BannerItem;
 import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.item.Items;
 import net.minecraft.world.item.ShieldItem;
 import net.minecraftforge.api.distmarker.Dist;
 import net.minecraftforge.api.distmarker.OnlyIn;
@@ -27,6 +28,7 @@ public class RecruitInventoryMenu extends ContainerBase {
     private static final int ARMOR_SLOT_START = 38;
     private static final int ARMOR_SLOT_END = 42;
     private static final int RECRUIT_INV_START = 42;
+    private static final int POTION_SLOT_START = 51;
 
     private final Container recruitInventory;
     private final AbstractRecruitEntity recruit;
@@ -55,6 +57,7 @@ public class RecruitInventoryMenu extends ContainerBase {
         addRecruitHandSlots();
         addRecruitEquipmentSlots();
         addRecruitInventorySlots();
+        addRecruitPotionSlots();
         addRecruitAmmoSlot();
     }
 
@@ -161,6 +164,22 @@ public class RecruitInventoryMenu extends ContainerBase {
         }
     }
 
+    public void addRecruitPotionSlots() {
+        for (int i = 0; i < 2; i++) {
+            this.addSlot(new Slot(recruit.potionSlots, i, 8 + i * 18, 110) {
+                @Override
+                public boolean mayPlace(ItemStack stack) {
+                    return stack.is(Items.POTION);
+                }
+
+                @Override
+                public int getMaxStackSize() {
+                    return 1;
+                }
+            });
+        }
+    }
+
     public boolean hasAmmoSlot() {
         return recruit instanceof IRangedRecruit;
     }
@@ -207,7 +226,8 @@ public class RecruitInventoryMenu extends ContainerBase {
         ItemStack original = stack.copy();
 
         if (index >= PLAYER_INV_START && index < PLAYER_INV_END) {
-            boolean equipped = (hasAmmoSlot() && stack.is(ItemTags.ARROWS) && moveToEmptySlot(stack, this.slots.size() - 1))
+            boolean equipped = (stack.is(Items.POTION) && moveToFirstEmptySlot(stack, POTION_SLOT_START, POTION_SLOT_START + 2))
+                    || (hasAmmoSlot() && stack.is(ItemTags.ARROWS) && moveToEmptySlot(stack, this.slots.size() - 1))
                     || moveToFirstEmptySlot(stack, ARMOR_SLOT_START, ARMOR_SLOT_END)
                     || moveToEmptySlot(stack, OFFHAND_SLOT)
                     || (stack.getMaxStackSize() == 1 && moveToEmptySlot(stack, MAINHAND_SLOT));

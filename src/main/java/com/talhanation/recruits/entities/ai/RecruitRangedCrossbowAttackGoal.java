@@ -91,6 +91,7 @@ public class RecruitRangedCrossbowAttackGoal extends Goal {
     }
 
     public void tick() {
+        if (this.crossBowman.isDrinkingPotion) return;
         if(target != null && target.isAlive()) {
             double distance = target.distanceToSqr(this.crossBowman);
             boolean isClose = distance <= 150;

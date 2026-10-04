@@ -62,6 +62,10 @@ public class RecruitsServerConfig {
     public static ForgeConfigSpec.BooleanValue GlobalTeamSetting;
     public static ForgeConfigSpec.BooleanValue RecruitHorseUnitsHorse;
     public static ForgeConfigSpec.BooleanValue RangedRecruitsNeedArrowsToShoot;
+    public static ForgeConfigSpec.IntValue PotionSlot1MinHealth;
+    public static ForgeConfigSpec.IntValue PotionSlot2MinHealth;
+    public static ForgeConfigSpec.BooleanValue PotionOnlyInCombat;
+    public static ForgeConfigSpec.IntValue PotionCooldownSeconds;
     public static ForgeConfigSpec.BooleanValue RecruitsChunkLoading;
     public static ForgeConfigSpec.BooleanValue UpdateCheckerServerside;
     public static ForgeConfigSpec.BooleanValue CompatCorpseMod;
@@ -312,6 +316,44 @@ public class RecruitsServerConfig {
 
                 .worldRestart()
                 .define("RangedRecruitsNeedArrowsToShoot", false);
+
+        PotionSlot1MinHealth = BUILDER.comment("""
+                        
+                        PotionSlot1MinHealth
+                        \t
+                        A recruit drinks the potion of potion slot 1 when its health (in half hearts) is at or below this value. 0 = never automatically.
+                        Can be overridden per group in the group settings.
+                        Suggestions: healing/regeneration in slot 1 at 6 (3 hearts), a buff (strength, turtle master, fire resistance) in slot 2 and "only in combat".
+                        \t
+                        """)
+                .defineInRange("PotionSlot1MinHealth", 6, 0, 40);
+
+        PotionSlot2MinHealth = BUILDER.comment("""
+                        
+                        PotionSlot2MinHealth
+                        \t
+                        Same as PotionSlot1MinHealth, for potion slot 2. 0 = never automatically (the potion can still be ordered with the command buttons).
+                        \t
+                        """)
+                .defineInRange("PotionSlot2MinHealth", 0, 0, 40);
+
+        PotionOnlyInCombat = BUILDER.comment("""
+                        
+                        PotionOnlyInCombat
+                        \t
+                        Recruits only drink their slot potions automatically while they have a target.
+                        \t
+                        """)
+                .define("PotionOnlyInCombat", true);
+
+        PotionCooldownSeconds = BUILDER.comment("""
+                        
+                        PotionCooldownSeconds
+                        \t
+                        Minimum time between two automatic potions of one recruit.
+                        \t
+                        """)
+                .defineInRange("PotionCooldownSeconds", 10, 1, 600);
 
         RecruitsChunkLoading = BUILDER.comment("""
                         RecruitsChunkLoading
