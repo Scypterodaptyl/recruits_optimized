@@ -162,7 +162,10 @@ public class RecruitsGroup {
     }
 
     public RecruitsGroup copy(){
-        return new RecruitsGroup(this.name, this.playerUUID, this.playerName, this.size, this.image, this.disbandContext);
+        RecruitsGroup copy = new RecruitsGroup(this.name, this.playerUUID, this.playerName, this.size, this.image, this.disbandContext);
+        copy.potionMinHealth = this.potionMinHealth.clone();
+        copy.potionCombatOnly = this.potionCombatOnly;
+        return copy;
     }
 
     public CompoundTag toNBT() {

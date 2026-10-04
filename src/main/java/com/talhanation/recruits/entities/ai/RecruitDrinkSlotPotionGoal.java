@@ -26,7 +26,17 @@ public class RecruitDrinkSlotPotionGoal extends Goal {
 
     @Override
     public boolean canUse() {
-        if (recruit.isUsingItem()) return false;
+        // A raised shield doesn't stop a recruit from drinking.
+        if (recruit.isUsingItem()) {
+            if (recruit.getUsedItemHand() != InteractionHand.OFF_HAND || !recruit.getUseItem().getItem().canPerformAction(recruit.getUseItem(), net.minecraftforge.common.ToolActions.SHIELD_BLOCK)) return false;
+            if (!wantsToDrink()) return false;
+            recruit.stopUsingItem();
+            return true;
+        }
+        return wantsToDrink();
+    }
+
+    private boolean wantsToDrink() {
 
         int forced = recruit.forcedPotionSlot;
         if (forced >= 0) {
