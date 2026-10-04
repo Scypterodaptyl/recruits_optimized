@@ -25,6 +25,7 @@ public class UseShield extends Goal {
 
     public boolean canUse() {
         if (entity instanceof AbstractRecruitEntity recruit){
+            if (recruit.isDrinkingPotion) return false;
             boolean forced = recruit.getShouldBlock();
             boolean normal = canRaiseShield() && !recruit.isFollowing() && recruit.canBlock() && !recruit.getShouldMovePos();
 
@@ -51,7 +52,7 @@ public class UseShield extends Goal {
     }
     public  void stop(){
         this.entity.getAttribute(Attributes.MOVEMENT_SPEED).setBaseValue(0.3D);
-        entity.stopUsingItem();
+        if (!(entity instanceof AbstractRecruitEntity recruit && recruit.isDrinkingPotion)) entity.stopUsingItem();
     }
 
     public void tick() {
