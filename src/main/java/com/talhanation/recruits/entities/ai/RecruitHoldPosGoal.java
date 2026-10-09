@@ -30,7 +30,15 @@ public class RecruitHoldPosGoal extends Goal {
             return false;
         }
         else
-            return this.recruit.getShouldHoldPos() && !recruit.getFleeing() && !recruit.needsToGetFood() && !recruit.getShouldMount();
+            return this.recruit.getShouldHoldPos() && !recruit.getFleeing() && !recruit.needsToGetFood() && !recruit.getShouldMount() && !isShootingTarget();
+    }
+
+    private boolean isShootingTarget() {
+        if (!(recruit instanceof com.talhanation.recruits.entities.BowmanEntity || recruit instanceof com.talhanation.recruits.entities.CrossBowmanEntity)) return false;
+        net.minecraft.world.entity.LivingEntity target = recruit.getTarget();
+        if (target == null || !target.isAlive() || !recruit.getShouldRanged() || recruit.getState() == 3) return false;
+        if (!recruit.getSensing().hasLineOfSight(target)) return false;
+        return target.distanceToSqr(recruit) >= 36.0D && recruit.canAttack(target);
     }
 
     public boolean canContinueToUse() {
